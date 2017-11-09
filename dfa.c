@@ -44,11 +44,11 @@ set_t* DFAedge(set_t* states, int symbol) {
 	return (closure(&target));
 }
 
-static void gen_require_header(void) {
+static void out_require_header(void) {
 	puts("#include <stdint.h>\n");
 }
 
-static void gen_get_tok_id(void) {
+static void out_get_tok_id(void) {
 	puts(STATIC" "INT" "FUNC(get_tok_from_state, int state)" "BEG_BLOCK);
 	puts(TAB FOR(int i = 0, i < SIZE_FINAL_TAB, ++i)" "BEG_BLOCK);
 	puts(TAB TAB IF(final_table[i][0] == state));
@@ -58,7 +58,7 @@ static void gen_get_tok_id(void) {
 	puts(END_BLOCK);
 }
 
-static void gen_enum(vector_t* elst) {
+static void out_enum(vector_t* elst) {
 	puts(ENUM" "BEG_BLOCK);
 	puts(TAB"TNONE,");
 	for (size_t i = 0; i < size_vector(elst); ++i) {
@@ -69,11 +69,49 @@ static void gen_enum(vector_t* elst) {
 	puts(END_BLOCK""SEMI"\n");
 }
 
-static void gen_final_table(vector_t* dfa_states, vector_t* elst) {
-	puts("static uint8_t final_table[][2] = {");
-	size_t count_final = 0;
-	for (size_t i = 1; i < size_vector(dfa_states); ++i) {
-		set_t* set_state = (set_t*)at_vector(dfa_states, i);
+static vector_t* gen_state_table(state_t* master, vector_t** states) {
+	(*states) = vector();
+	set_t* start = set(master);
+
+	push_back_vector(*states, EMPTY_SET);
+	push_back_vector(*states, closure(&start));
+
+	vector_t* trans = vector();
+	long j = 0, p = 1;
+
+	while (j <= p) {
+		push_back_vector(trans, vector());
+		vector_t* row = (vector_t*)back_vector(trans);
+		for (int i = MIN_ASCII; i < MAX_ASCII; ++i) {
+			set_t* next = DFAedge(at_vector(*states, j), i);
+			if (next == EMPTY_SET) {
+				push_back_vector(row, (void*)0L);	
+				continue;
+			}
+			long l = 1;
+			for (; l <= p; ++l) {
+				if (equal_set(next, at_vector(*states, l)))
+					{ break; }
+			}
+			if (l <= p) {
+				push_back_vector(row, (void*)l);
+				del_set(next);
+			}
+			else {
+				push_back_vector(row, (void*)++p);
+				push_back_vector(*states, next);
+			}
+		}
+		++j;
+	}
+	
+	return (trans);
+}
+
+static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
+	vector_t* final = vector();
+	for (size_t i = 1; i < size_vector(states); ++i) {
+		set_t* set_state = (set_t*)at_vector(states, i);
 		int min_tok = 0;
 		set_t* it = set_state;
 		while (it) {
@@ -81,63 +119,70 @@ static void gen_final_table(vector_t* dfa_states, vector_t* elst) {
 			if (crt_state->final) {
 				if (!min_tok || min_tok > crt_state->final)
 					{ min_tok = crt_state->final; }
-				++count_final;
 			}
 			it = it->next;
 		}
 		if (min_tok) {
-			char* name = ((token_entry_t*)at_vector(elst, min_tok - 1))->name;
-			printf(TAB"{%zu, "TAB"T%s},\n", i, name);
+			char* name = ((token_entry_t*)
+					at_vector(elst, min_tok - 1))->name;
+			push_back_vector(final, (void*)i);
+			push_back_vector(final, name);
 		}
 	}
-	printf("};\n\n#define SIZE_FINAL_TAB %zu\n\n", count_final);
+	return (final);
 }
 
-static vector_t* gen_state_table(state_t* master) {
-	vector_t* dfa_states = vector();
-	set_t* start = set(master);
+static void gen_table(state_t* master, vector_t** trans,
+					vector_t** final, vector_t* elst) {
+	vector_t* states = NULL;
+	*trans = gen_state_table(master, &states);
+	*final = gen_final_table(states, elst);
+	for (size_t i = 0; i < size_vector(states); ++i)
+		{ del_set((set_t*)at_vector(states, i)); }
+	del_vector(states);
+}
 
-	push_back_vector(dfa_states, EMPTY_SET);
-	push_back_vector(dfa_states, closure(&start));
-
+static void out_state_table(vector_t* trans) {
 	printf("static uint16_t state_table[][%d] = {\n", CHAR_MAX);
-	int j = 0, p = 1;
-	while (j <= p) {
+	for (size_t i = 0; i < size_vector(trans); ++i) {
+		vector_t* state = (vector_t*)at_vector(trans, i);
 		printf(TAB BEG_BLOCK);
-		for (int i = MIN_ASCII; i < MAX_ASCII; ++i) {
-			set_t* next = DFAedge(at_vector(dfa_states, j), i);
-			if (next == EMPTY_SET)
-				{ continue; }
-			int l = 1;
-			for (; l <= p; ++l) {
-				if (equal_set(next, at_vector(dfa_states, l)))
-					{ break; }
-			}
-			if (l <= p) {
-				printf("[%d]=%d, ", i, l);
-				del_set(next);
-			}
-			else {
-				++p;
-				printf("[%d]=%d, ", i, p);
-				push_back_vector(dfa_states, next);
-			}
+		for (size_t j = 0; j < size_vector(state); ++j) {
+			long out = (long)at_vector(state, j);
+			if (out)
+				{ printf("[%zu]=%ld, ", j, out); }
 		}
-		++j;
 		puts(END_BLOCK",");
 	}
 	puts(END_BLOCK""SEMI"\n");
-	return (dfa_states);
+}
+
+static void out_final_table(vector_t* final) {
+	puts("static uint8_t final_table[][2] = {");
+	size_t count_final = size_vector(final) / 2;
+	for (size_t i = 0; i < count_final; ++i) {
+		printf(TAB"{%ld, "TAB"T%s},\n", (long)at_vector(final, i*2),
+				(char const*)at_vector(final, i*2+1));
+	}
+	printf("};\n\n#define SIZE_FINAL_TAB %zu\n\n", count_final);
 }
 
 void DFAgen(token_spec_t* spec) {
 	if (!spec)
 		{ return; }
-	gen_require_header();
-	gen_enum(spec->entry_lst);
-	vector_t* dfa_states = gen_state_table(spec->master);
-	gen_final_table(dfa_states, spec->entry_lst);
-	gen_get_tok_id();
-	del_vector(dfa_states);
+	vector_t* trans = NULL;
+	vector_t* final = NULL;
+	gen_table(spec->master, &trans, &final, spec->entry_lst);
+
+	out_require_header();
+	out_enum(spec->entry_lst);
+	out_state_table(trans);
+	out_final_table(final);
+	out_get_tok_id();
+
+	for (size_t i = 0; i < size_vector(trans); ++i)
+		{ del_vector(at_vector(trans, i)); }
+	del_vector(trans);
+	del_vector(final);
 }
 
