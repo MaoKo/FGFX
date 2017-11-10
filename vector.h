@@ -24,5 +24,6 @@ void erase_vector(vector_t*, size_t);
 void push_back_vector(vector_t*, void*);
 void* pop_back_vector(vector_t*);
 void reverse_vector(vector_t*);
+int get_index_vector(vector_t*, void*);
 
 #endif /* VECTOR_H */

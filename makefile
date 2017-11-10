@@ -1,6 +1,7 @@
 .PHONY: all clean mrproper re
 CC		:=	cc
 CC_FLAGS	:=	-Wall -Wextra -Werror
+CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
 OBJ		:=	set.o vector.o main.o tokendef.o regex.o\
 			nfa.o dfa.o utils.o
@@ -13,7 +14,7 @@ $(TARGET): $(OBJ)
 	$(CC) $^ -o $@ $(LD_FLAGS)
 
 %.o: %.c
-	$(CC) -c $< -o $@ $(CC_FLAGS)
+	$(CC) -c $< -o $@ $(CC_FLAGS) $(CC_MACRO)
 
 clean:
 	@rm -rf $(OBJ)

@@ -135,3 +135,11 @@ void reverse_vector(vector_t* vect) {
 	}
 }
 
+int get_index_vector(vector_t* vect, void* obj) {
+	for (size_t i = 0; i < size_vector(vect); ++i) {
+		if (obj == at_vector(vect, i))
+			{ return (i); }
+	}
+	return (-1);
+}
+
