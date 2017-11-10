@@ -84,6 +84,25 @@ bool equal_set(set_t const* s1, set_t const* s2) {
 	return (is_subset(s1, s2) && is_subset(s2, s1));
 }
 
+void del_item_set(set_t** st, void* item) {
+	if (!st || !*st)
+		{ return; }
+	if ((*st)->item == item)
+		{ *st = (*st)->next; }
+	else {
+		set_t* it = (*st);
+		while (it->next) {
+			if (it->next->item == item) {
+				set_t* next = it->next->next;
+				FREE(it->next);
+				it->next = next;
+				return;
+			}	
+			it = it->next;
+		}
+	}
+}
+
 void print_set(set_t const* st) {
 	printf("{");
 	set_t const* it = st;

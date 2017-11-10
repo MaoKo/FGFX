@@ -3,6 +3,13 @@
 static char const* parse_stream = NULL;
 static vector_t const* crt_symbol = NULL;
 
+static node_ast_t* reg_expr(void);
+static node_ast_t* reg_term(void);
+static node_ast_t* reg_fact(void);
+static node_ast_t* reg_atom(void);
+static node_ast_t* reg_quote(void);
+static node_ast_t* reg_range(void);
+
 static node_ast_t* node_ast(int kind, ...) {
 	node_ast_t* node = NEW(node_ast_t, 1);
 	if (!node)
@@ -110,10 +117,9 @@ static int get_c(void) {
 	return (input_c);
 }
 
-static node_ast_t* expected_char(node_ast_t* root, char expect_c) {
+static void expected(char expect_c) {
 	if (!match(expect_c))
 		{ /* ERROR */ }
-	return (root);
 }
 
 static int str2int(void) {
@@ -123,42 +129,73 @@ static int str2int(void) {
 	return (digit);
 }
 
-static node_ast_t* finite_seq(node_ast_t* root) {
+static node_ast_t* diff_range(node_ast_t* root) {
+	if (root->alone != MULTI_S)
+		{ /* ERROR */ }
+	expected(REG_RBRACE);
+	if (!match(REG_LBRACK))
+		{ /* ERROR */ }
+	node_ast_t* diff = reg_range();
+	if (diff->alone != MULTI_S)
+		{ /* ERROR */ }
+	set_t* it = diff->cclass;
+	while (it) {
+		del_item_set(&root->cclass, it->item);
+		it = it->next;
+	}
+	return (root);
+}
+
+static node_ast_t* bound_name(node_ast_t* root) {
 	node_ast_t* rep_node = NULL;
-	if (!isdigit(peek())) {
-		for (size_t i = 0; i < size_vector(crt_symbol); ++i) {
-			token_entry_t* en = (token_entry_t*)at_vector(crt_symbol, i);
-			if (!strncmp(parse_stream, en->name, strlen(en->name))) {
-				parse_stream += strlen(en->name);
-				rep_node = cpy_node_ast(en->reg);
-				break;
-			}
-		}
-		if (rep_node)
-			{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
-	}
-	else {
-		int start = str2int();
-		rep_node = cpy_concat_node_ast(root, start);
-		if (match(REG_COMMA)) {
-			if (isdigit(peek())) {
-				int until = str2int();
-				if (until < start)
-					{ /* ERROR */ }	
-				for (int i = start + 1; i <= until; ++i) {
-					root = cpy_node_ast(root);
-					rep_node = node_ast(AST_UNION, rep_node,
-							cpy_concat_node_ast(root, i));
-				}
-			}
-			else {
-				rep_node = node_ast(AST_CONCAT, rep_node,
-						node_ast(AST_CLOSURE,
-						cpy_node_ast(rep_node), NULL));
-			}	
+	for (size_t i = 0; i < size_vector(crt_symbol); ++i) {
+		token_entry_t* en = (token_entry_t*)at_vector(crt_symbol, i);
+		if (!strncmp(parse_stream, en->name, strlen(en->name))) {
+			parse_stream += strlen(en->name);
+			rep_node = cpy_node_ast(en->reg);
+			break;
 		}
 	}
-	return (expected_char(rep_node, REG_RBRACE));
+	if (rep_node)
+		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
+	else
+		{ /* ERROR */ }
+	return (rep_node);
+}
+
+static node_ast_t* finite_seq(node_ast_t* root) {
+	int start = str2int();
+	node_ast_t* rep_node = cpy_concat_node_ast(root, start);
+	if (match(REG_COMMA)) {
+		if (isdigit(peek())) {
+			int until = str2int();
+			if (until < start)
+				{ /* ERROR */ }	
+			for (int i = start + 1; i <= until; ++i) {
+				root = cpy_node_ast(root);
+				rep_node = node_ast(AST_UNION, rep_node,
+						cpy_concat_node_ast(root, i));
+			}
+		}
+		else {
+			rep_node = node_ast(AST_CONCAT, rep_node,
+					node_ast(AST_CLOSURE,
+					cpy_node_ast(rep_node), NULL));
+		}
+	}
+	return (rep_node);
+}
+
+static node_ast_t* curly_regex(node_ast_t* root) {
+	node_ast_t* rep_node = NULL;
+	if (match(REG_HYPHEN))
+		{ return (diff_range(root));  }
+	else if (!isdigit(peek()))
+		{ rep_node = bound_name(root); }
+	else
+		{ rep_node = finite_seq(root); }
+	expected(REG_RBRACE);
+	return (rep_node);
 }
 
 static set_t* complement_negate_range(set_t* base) {
@@ -176,13 +213,6 @@ static inline node_ast_t* dot_regex(void) {
 	add_set(&nl, (void*)'\n');
 	return (node_ast(AST_SYMBOL, MULTI_S, complement_negate_range(nl)));
 }
-
-static node_ast_t* reg_expr(void);
-static node_ast_t* reg_term(void);
-static node_ast_t* reg_fact(void);
-static node_ast_t* reg_atom(void);
-static node_ast_t* reg_quote(void);
-static node_ast_t* reg_range(void);
 
 node_ast_t* regex2ast(char const* regexstr, vector_t const* symbol) {
 	if (!regexstr)
@@ -228,7 +258,7 @@ static node_ast_t* reg_fact(void) {
 			case REG_KLEENE:
 				root = node_ast(AST_CLOSURE, root, NULL);
 				break;
-			case REG_LBRACE: root = finite_seq(root);
+			case REG_LBRACE: root = curly_regex(root);
 				break;
 		}
 	}
@@ -236,10 +266,14 @@ static node_ast_t* reg_fact(void) {
 }
 
 static node_ast_t* reg_atom(void) {
-	if (match(REG_LPAREN)) { return (expected_char(reg_expr(), REG_RPAREN)); }
-	else if (match(REG_LBRACK)) { return (expected_char(reg_range(), REG_RBRACK)); }
+	if (match(REG_LPAREN)) { 
+		node_ast_t* expr = reg_expr();
+		expected(REG_RPAREN);
+		return (expr);
+	}
+	else if (match(REG_LBRACK)) { return (reg_range()); }
 	else if (match(REG_DOT)) { return (dot_regex()); }
-	else if (match(DQUOTE))	{ return (expected_char(reg_quote(), DQUOTE)); }
+	else if (match(REG_DQUOTE)) { return (reg_quote()); }
 	else if (!is_metachar(peek()))
 		{ return (node_ast(AST_SYMBOL, ALONE_S, get_c())); }
 	return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
@@ -247,7 +281,7 @@ static node_ast_t* reg_atom(void) {
 
 static node_ast_t* reg_quote(void) {
 	node_ast_t* root_concat = NULL;
-	while (peek() != DQUOTE && !is_end()) {
+	while (peek() != REG_DQUOTE && !is_end()) {
 		int c = get_c();
 		node_ast_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
 		if (!root_concat)
@@ -257,6 +291,7 @@ static node_ast_t* reg_quote(void) {
 	}
 	if (!root_concat)
 		{ root_concat = node_ast(AST_SYMBOL, ALONE_S, EPSILON); }
+	expected(REG_DQUOTE);
 	return (root_concat);
 }
 
@@ -287,5 +322,6 @@ static node_ast_t* reg_range(void) {
 
 	if (negate)
 		{ range = complement_negate_range(range); }
+	expected(REG_RBRACK);
 	return (node_ast(AST_SYMBOL, MULTI_S, range));
 }

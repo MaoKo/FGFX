@@ -17,7 +17,8 @@
 #define REG_COMMA		','
 #define REG_CARET		'^'
 #define REG_DOT			'.'
-#define DQUOTE			'"'
+#define REG_DQUOTE		'"'
+#define REG_HYPHEN		'-'
 
 #define ALONE_S			true
 #define MULTI_S			false
