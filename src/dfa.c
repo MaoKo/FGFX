@@ -25,6 +25,7 @@ set_t* closure(set_t** set_state) {
 		while (it) {
 			set_t* pass_state = edges((state_t*)it->item, EPSILON);
 			union_set(set_state, pass_state);
+			del_set(pass_state);
 			it = it->next;
 		}
 	} while (!equal_set(*set_state, last));
@@ -71,26 +72,34 @@ static void out_enum(vector_t* elst) {
 
 static vector_t* gen_state_table(state_t* master, vector_t** states) {
 	(*states) = vector();
+	vector_t* hash_state = vector();
+	
 	set_t* start = set(master);
 
 	push_back_vector(*states, EMPTY_SET);
 	push_back_vector(*states, closure(&start));
 
+	push_back_vector(hash_state, (void*)hash_set(NULL));
+	push_back_vector(hash_state, (void*)hash_set(start));
+
 	vector_t* trans = vector();
 	long j = 0, p = 1;
 
 	while (j <= p) {
+		printf("J = %ld\n", j);
 		push_back_vector(trans, vector());
 		vector_t* row = (vector_t*)back_vector(trans);
-		for (int i = MIN_ASCII; i < MAX_ASCII; ++i) {
+		for (unsigned char i = MIN_ASCII; i < MAX_ASCII; ++i) {
 			set_t* next = DFAedge(at_vector(*states, j), i);
 			if (next == EMPTY_SET) {
 				push_back_vector(row, (void*)0L);	
 				continue;
 			}
 			long l = 1;
+			size_t hash_next = hash_set(next);
 			for (; l <= p; ++l) {
-				if (equal_set(next, at_vector(*states, l)))
+				if (hash_next == (size_t)at_vector(hash_state, l) &&
+					equal_set(next, at_vector(*states, l)))
 					{ break; }
 			}
 			if (l <= p) {
@@ -100,11 +109,13 @@ static vector_t* gen_state_table(state_t* master, vector_t** states) {
 			else {
 				push_back_vector(row, (void*)++p);
 				push_back_vector(*states, next);
+				push_back_vector(hash_state, (void*)hash_next);
 			}
 		}
 		++j;
 	}
-	
+
+	del_vector(hash_state);
 	return (trans);
 }
 
@@ -180,11 +191,12 @@ static void out_final_table(vector_t* final) {
 
 static void out_useful_macro(void) {
 	puts("#define START_STATE"TAB"1");
-	puts("#define DEAD_SATE"TAB"0\n");
+	puts("#define DEAD_STATE"TAB"0\n");
 }
 
 #ifdef OPTIMIZE
 static void redirect_trans(vector_t* trans, long s1, long s2) {
+	del_vector(at_vector(trans, s2));
 	erase_vector(trans, s2);
 	for (size_t i = 0; i < size_vector(trans); ++i) {
 		vector_t* row = (vector_t*)at_vector(trans, i);

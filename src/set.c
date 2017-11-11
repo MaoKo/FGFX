@@ -103,6 +103,16 @@ void del_item_set(set_t** st, void* item) {
 	}
 }
 
+size_t hash_set(set_t const* st) {
+	size_t hash = 0;
+	set_t const* it = st;
+	while (it) {
+		hash += (size_t)st->item;
+		it = it->next;
+	}
+	return (hash >> 4);
+}
+
 void print_set(set_t const* st) {
 	printf("{");
 	set_t const* it = st;

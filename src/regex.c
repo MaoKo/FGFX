@@ -300,7 +300,7 @@ static node_ast_t* reg_range(void) {
 	set_t* range = EMPTY_SET;
 	if (match(REG_CARET))
 		{ negate = true; }
-	int last;
+	int last = 0;
 	bool in_range = true;
 	while (peek() != REG_RBRACK && !is_end()) {
 		long crt_c = get_c();

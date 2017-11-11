@@ -1,6 +1,6 @@
 .PHONY: all clean mrproper re
 CC		:=	cc
-CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc
+CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc -O0
 CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
 OBJ		:=	set.o vector.o main.o tokendef.o regex.o\
