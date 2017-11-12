@@ -7,6 +7,30 @@ size_t round_up(size_t size) {
 	return (close2);
 }
 
+char* strjoin(char const* str1, char const* str2) {
+	size_t const s1 = strlen(str1);
+	size_t const s2 = strlen(str2);
+	char* frame = NEW(char, s1 + s2 + 1);
+	if (!frame)
+		{ return (NULL); }
+	memcpy(frame, str1, sizeof(char) * s1);
+	memcpy(frame + s1, str2, sizeof(char) * s2);
+	frame[s1 + s2] = EOS;
+	return (frame);
+}
+
+int write_str_fd(int filde, char const* str) {
+	return (write(filde, str, strlen(str)));
+}
+
+int write_str(char const* str) {
+	return (write(fileno(stdout), str, strlen(str)));
+}
+
+int write_str_err(char const* str) {
+	return (write(fileno(stderr), str, strlen(str)));
+}
+
 void* __pmalloc(size_t size) {
 	if (!size)
 		{ size = 1; }
@@ -15,7 +39,7 @@ void* __pmalloc(size_t size) {
 	assert(chunk);
 #else
 	if (!chunk) {
-		WRITE_ERR("No enough memory for this process.\n");
+		write_str_err("No enough memory for this process.\n");
 		errno = ENOMEM;
 	}
 #endif
@@ -32,7 +56,7 @@ void* __prealloc(void* ptr, size_t size) {
 	assert(new_chunk);
 #else
 	if (!chunck) {
-		WRITE_ERR("The reallocation has failed.\n");
+		write_str_err("The reallocation has failed.\n");
 		errno = ENOMEM;
 	}
 #endif

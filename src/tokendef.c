@@ -9,18 +9,6 @@ static int is_letter(int c) {
 	return (isalpha(c) || c == '_');
 }
 
-static char* strjoin(char const* str1, char const* str2) {
-	size_t const s1 = strlen(str1);
-	size_t const s2 = strlen(str2);
-	char* frame = NEW(char, s1 + s2 + 1);
-	if (!frame)
-		{ return (NULL); }
-	memcpy(frame, str1, sizeof(char) * s1);
-	memcpy(frame + s1, str2, sizeof(char) * s2);
-	frame[s1 + s2] = EOS;
-	return (frame);
-}
-
 static char* get_token_name(char** line) {
 	if (!is_letter(**line))
 		{ return (NULL); }

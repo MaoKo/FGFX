@@ -45,32 +45,6 @@ set_t* DFAedge(set_t* states, int symbol) {
 	return (closure(&target));
 }
 
-static void out_require_header(void) {
-	puts("#include <stdint.h>\n");
-}
-
-static void out_get_tok_id(void) {
-	puts(STATIC" "INT" "FUNC(get_tok_from_state, int state)" "BEG_BLOCK);
-	puts(TAB FOR(int i = 0, i < SIZE_FINAL_TAB, ++i)" "BEG_BLOCK);
-	puts(TAB TAB IF(final_table[i][0] == state));
-	puts(TAB TAB TAB BEG_BLOCK" "RETURN(final_table[i][1])""SEMI" "END_BLOCK);
-	puts(TAB END_BLOCK);
-	puts(TAB RETURN(TNONE)""SEMI);
-	puts(END_BLOCK);
-}
-
-static void out_enum(vector_t* elst) {
-	puts(ENUM" "BEG_BLOCK);
-	puts(TAB"TNONE,");
-	for (size_t i = 0; i < size_vector(elst); ++i) {
-		token_entry_t* te = (token_entry_t*)at_vector(elst, i);
-		if (!te->local)
-			{ printf(TAB"T%s,\n", te->name); }
-	}
-	puts(TAB"TEOF,");
-	puts(END_BLOCK""SEMI"\n");
-}
-
 static vector_t* gen_state_table(state_t* master, vector_t** states) {
 	(*states) = vector();
 	vector_t* hash_state = vector();
@@ -153,47 +127,6 @@ static void gen_table(state_t* master, vector_t** trans,
 	del_vector(states);
 }
 
-static size_t min_size_type(size_t size) {
-	if (size <= UCHAR_MAX) { return (8); }
-	else if (size > UCHAR_MAX && size <= USHRT_MAX)
-		{ return (16); }
-	return (32);
-}
-
-static void out_state_table(vector_t* trans) {
-	printf("//Size of state table = %zu\n", size_vector(trans));
-	printf("static uint%zu_t state_table[][%d] = {\n",
-			min_size_type(size_vector(trans)), MAX_ASCII);
-
-	for (size_t i = 0; i < size_vector(trans); ++i) {
-		vector_t* state = (vector_t*)at_vector(trans, i);
-		printf(TAB BEG_BLOCK);
-		for (size_t j = 0; j < size_vector(state); ++j) {
-			long out = (long)at_vector(state, j);
-			if (out)
-				{ printf("[%zu]=%ld, ", j, out); }
-		}
-		puts(END_BLOCK",");
-	}
-	puts(END_BLOCK""SEMI"\n");
-}
-
-static void out_final_table(vector_t* final) {
-	printf("static uint%zu_t final_table[][2] = {\n",
-			min_size_type(size_vector(final)));
-	size_t count_final = size_vector(final) / 2;
-	for (size_t i = 0; i < count_final; ++i) {
-		printf(TAB"{%ld, "TAB"T%s},\n", (long)at_vector(final, i*2),
-				(char const*)at_vector(final, i*2+1));
-	}
-	printf("};\n\n#define SIZE_FINAL_TAB %zu\n\n", count_final);
-}
-
-static void out_useful_macro(void) {
-	puts("#define START_STATE"TAB"1");
-	puts("#define DEAD_STATE"TAB"0\n");
-}
-
 #ifdef OPTIMIZE
 static void redirect_trans(vector_t* trans, long s1, long s2) {
 	del_vector(at_vector(trans, s2));
@@ -226,7 +159,6 @@ static void redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
 }
 
 static void equivalent_state(vector_t* trans, vector_t* finalt) {
-	puts("//Debug optimization DFA (equivalent state)");
 	for (size_t i = 0; i < size_vector(trans); ++i) {
 		vector_t* s1 = (vector_t*)at_vector(trans, i);
 		for (size_t j = i + 1; j < size_vector(trans); ++j) {
@@ -252,7 +184,6 @@ static void equivalent_state(vector_t* trans, vector_t* finalt) {
 			bool nonfinal = (fs1 == -1 && fs2 == -1);
 			
 			if (final || nonfinal) {
-				printf("//State %zu - %zu\n", i, j);
 				redirect_trans(trans, i, j);
 				redirect_final(finalt, final, fs2, j);
 			}
@@ -261,7 +192,7 @@ static void equivalent_state(vector_t* trans, vector_t* finalt) {
 }
 #endif /* OPTIMIZE */
 
-void DFAgen(token_spec_t* spec) {
+void DFAgen(token_spec_t* spec, char const* base) {
 	if (!spec)
 		{ return; }
 	vector_t* trans = NULL;
@@ -272,12 +203,14 @@ void DFAgen(token_spec_t* spec) {
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	out_require_header();
-	out_useful_macro();
-	out_enum(spec->entry_lst);
-	out_state_table(trans);
-	out_final_table(final);
-	out_get_tok_id();
+	char const* header_filename = strjoin(base, ".h");
+	char const* body_filename = strjoin(base, ".c");
+
+	out_header(header_filename, spec->entry_lst);
+	out_body(body_filename, header_filename, trans, final);
+
+	FREE(header_filename);
+	FREE(body_filename);
 
 	for (size_t i = 0; i < size_vector(trans); ++i)
 		{ del_vector(at_vector(trans, i)); }

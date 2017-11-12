@@ -21,18 +21,24 @@
 #define REALLOC(ptr, size)	__prealloc(ptr, size)
 #define FREE(ptr)		free((void*)ptr)
 
-//Output Macro
-#define WRITE(filde, str)	write(filde, str, sizeof(str))
-#define WRITE_ERR(str)		WRITE(STDERR_FILENO, str)
-
+#define BUFF_SIZE		16
 #define VECT_SIZE		8
+
 #define EOS			'\0'
 #define EMPTY_SET		NULL
+
 #define MIN_ASCII		0
 #define MAX_ASCII		(UCHAR_MAX + 1)
+
 #define EPSILON			(MAX_ASCII + 1)
 
+#define ERROR			-1
+
 size_t round_up(size_t);
+char* strjoin(char const*, char const*);
+int write_str(char const*);
+int write_str_err(char const*);
+int write_str_fd(int, char const*);
 void* __pmalloc(size_t);
 void* __prealloc(void*, size_t);
 

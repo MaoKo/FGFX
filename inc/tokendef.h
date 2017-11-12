@@ -12,9 +12,6 @@
 
 #define READ			1
 #define NO_READ			0
-#define ERROR			-1
-
-#define BUFF_SIZE		16
 
 void del_token_spec(token_spec_t*);
 int retreive_token_entry(char const*, token_spec_t**);
