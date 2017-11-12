@@ -86,7 +86,6 @@ static vector_t* gen_state_table(state_t* master, vector_t** states) {
 	long j = 0, p = 1;
 
 	while (j <= p) {
-		printf("J = %ld\n", j);
 		push_back_vector(trans, vector());
 		vector_t* row = (vector_t*)back_vector(trans);
 		for (unsigned char i = MIN_ASCII; i < MAX_ASCII; ++i) {

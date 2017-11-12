@@ -93,7 +93,8 @@ static bool is_metachar(int symbl) {
 	switch (symbl) {
 		case REG_UNION: case REG_LPAREN: case REG_RPAREN:
 		case REG_LBRACK: case REG_KLEENE: case REG_PKLEENE:
-		case REG_OKLEENE: case REG_LBRACE: return (true);
+		case REG_OKLEENE: case REG_LBRACE: case REG_DQUOTE:
+		case REG_DOT: return (true);
 	}
 	return (false);
 } 
