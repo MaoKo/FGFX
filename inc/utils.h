@@ -28,9 +28,9 @@
 #define VECT_SIZE		8
 #define EOS			'\0'
 #define EMPTY_SET		NULL
-#define EPSILON			(UCHAR_MAX + 1)
 #define MIN_ASCII		0
-#define MAX_ASCII		SCHAR_MAX
+#define MAX_ASCII		(UCHAR_MAX + 1)
+#define EPSILON			(MAX_ASCII + 1)
 
 size_t round_up(size_t);
 void* __pmalloc(size_t);

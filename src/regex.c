@@ -9,6 +9,7 @@ static node_ast_t* reg_fact(void);
 static node_ast_t* reg_atom(void);
 static node_ast_t* reg_quote(void);
 static node_ast_t* reg_range(void);
+static int get_c(void);
 
 static node_ast_t* node_ast(int kind, ...) {
 	node_ast_t* node = NEW(node_ast_t, 1);
@@ -99,12 +100,60 @@ static bool is_metachar(int symbl) {
 	return (false);
 } 
 
+static bool isoctprefix(int c) {
+	return (c == 'o' || c == 'O');
+}
+
+static bool isoct(int c) {
+	return (c >= '0' && c <= '7');
+}
+
+static bool ishexprefix(int c) {
+	return (c == 'x' || c == 'X');
+}
+
+static bool ishex(int c) {
+	return ((c >= '0' && c <= '9') ||
+			(c >= 'a' && c <= 'z') ||
+			(c >= 'A' && c <= 'Z'));
+}
+
+static int hex2dec(int c) {
+	if (isdigit(c)) { return (c - '0'); }
+	else if (islower(c)) { return ((c - 'a') + 10); }
+	else if (isupper(c)) { return ((c - 'A') + 10); }
+	return (-1);
+}
+
+static int read_oct(void) {
+	if (!isoct(peek()))
+		{ /* ERROR */ }
+	int oct_num = get_c() - '0';
+	if (isoct(peek())) { oct_num = (get_c() - '0') + (oct_num * 8); }
+	return (oct_num);
+}
+
+static int read_hex(void) {
+	if (!ishex(peek()))
+		{ /* ERROR */ }
+	int hex_num = hex2dec(get_c());
+	if (ishex(peek()))
+		{ hex_num = hex2dec(get_c()) + (hex_num * 16); }
+	return (hex_num);
+}
+
 static int get_c(void) {
 	int input_c;
 	if (*parse_stream == EOS)
 		{ return (EOS); }
 	else if (match(REG_ESCAPE)) {
 		input_c = *parse_stream++;
+	
+		if (isoctprefix(input_c))
+			{ return (read_oct()); }
+		else if (ishexprefix(input_c))
+			{ return (read_hex()); }
+
 		switch (input_c) {
 			case 'n': input_c = '\n'; break; case 'a': input_c = '\a'; break;
 			case 'b': input_c = '\b'; break; case 'f': input_c = '\f'; break;

@@ -67,6 +67,7 @@ static void out_enum(vector_t* elst) {
 		if (!te->local)
 			{ printf(TAB"T%s,\n", te->name); }
 	}
+	puts(TAB"TEOF,");
 	puts(END_BLOCK""SEMI"\n");
 }
 
@@ -88,7 +89,7 @@ static vector_t* gen_state_table(state_t* master, vector_t** states) {
 	while (j <= p) {
 		push_back_vector(trans, vector());
 		vector_t* row = (vector_t*)back_vector(trans);
-		for (unsigned char i = MIN_ASCII; i < MAX_ASCII; ++i) {
+		for (int i = MIN_ASCII; i < MAX_ASCII; ++i) {
 			set_t* next = DFAedge(at_vector(*states, j), i);
 			if (next == EMPTY_SET) {
 				push_back_vector(row, (void*)0L);	
@@ -162,7 +163,7 @@ static size_t min_size_type(size_t size) {
 static void out_state_table(vector_t* trans) {
 	printf("//Size of state table = %zu\n", size_vector(trans));
 	printf("static uint%zu_t state_table[][%d] = {\n",
-			min_size_type(size_vector(trans)), CHAR_MAX);
+			min_size_type(size_vector(trans)), MAX_ASCII);
 
 	for (size_t i = 0; i < size_vector(trans); ++i) {
 		vector_t* state = (vector_t*)at_vector(trans, i);
