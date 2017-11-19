@@ -13,12 +13,11 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
-//DEBUG
 #include <stdio.h>
 
 //Allocation Macro
-#define NEW(type, size)		(type*)__pmalloc(sizeof(type)*size)
-#define REALLOC(ptr, size)	__prealloc(ptr, size)
+#define NEW(type, size)		(type*)_pmalloc(sizeof(type)*size)
+#define REALLOC(ptr, size)	_prealloc(ptr, size)
 #define FREE(ptr)		free((void*)ptr)
 
 #define BUFF_SIZE		16
@@ -39,7 +38,7 @@ char* strjoin(char const*, char const*);
 int write_str(char const*);
 int write_str_err(char const*);
 int write_str_fd(int, char const*);
-void* __pmalloc(size_t);
-void* __prealloc(void*, size_t);
+void* _pmalloc(size_t);
+void* _prealloc(void*, size_t);
 
 #endif /* UTILS_H */

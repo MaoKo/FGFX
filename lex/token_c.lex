@@ -4,106 +4,102 @@
 
 ## C Identifier token
 
-@ESC_UN		=	(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})
-@LETTER		=	[A-Za-z_]
-@DIGIT		=	[0-9]
-IDENT		= 	({LETTER}|{ESC_UN})({LETTER}|{ESC_UN}|{DIGIT})*
+@ESC_UN		=	(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}) ;
+@LETTER		=	[A-Za-z_] ;
+@DIGIT		=	[0-9] ;
+IDENT		= 	(a|b|c) ;
 
 ## C Char token
 
-@ESC_OCT	=	(\\[0-7]{1,3})
-@ESC_HEX	=	(\\x[0-9a-fA-F]+)
-@ESC_SEQ	=	(\\'|\\\"|\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)
-@REG_ESCAPE	=	({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN})
-CHAR		=	[LuU]?'([^\n'\\]|{REG_ESCAPE})+'
+#@ESC_OCT	=	(\\[0-7]{1,3}) ;
+#@ESC_HEX	=	(\\x[0-9a-fA-F]+) ;
+#@ESC_SEQ	=	(\\'|\\\"|\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v) ;
+#@REG_ESCAPE	=	({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN}) ;
+#CHAR		=	[LuU]?'([^\n'\\]|{REG_ESCAPE})+' ;
 
 ## C String token
 
-STR		=	(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"
+#STR		=	(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\" ;
 
 ## C Punctuation
 
-COMMA		=	,
-SEMICOLON	=	;
-LPAREN		=	\(
-RPAREN		=	\)
-LBRACK		=	\{
-RBRACK		=	}
-LSUB		=	\[
-RSUB		=	]
-QUES		=	?
-ELLIP		=	"..."
-EXCLA		=	!
+#COMMA		=	,	;
+#SEMICOLON	=	\;	;
+#LPAREN		=	\(	;
+#RPAREN		=	\)	; 
+#LBRACK		=	\{	;
+#RBRACK		=	}	;
+#LSUB		=	\[	;
+#RSUB		=	]	;
+#QUES		=	\?	;
+#ELLIP		=	"..."	;
+#EXCLA		=	!	;
 
-PLUS		=	\+
-PLUSPLUS	=	"++"
-MINUS		=	-
-MINUSMINUS	=	--
-DIV		=	/
-MUL		=	\*
-MOD		=	%
-XOR		=	^
-ORB		=	\|
-ANDB		=	&
-ORL		=	"||"
-ANDL		=	&&
-TILDE		=	~
-ASSIGN		=	=
+#PLUS		=	\+	;
+#PLUSPLUS	=	"++"	;
+#MINUS		=	-	;
+#MINUSMINUS	=	--	;
+#DIV		=	/	;
+#MUL		=	\*	;
+#MOD		=	%	;
+#XOR		=	^	;
+#ORB		=	\|	;
+#ANDB		=	&	;
+#ORL		=	"||"	;
+#ANDL		=	&&	;
+#TILDE		=	~	;
+#ASSIGN		=	=	;
 
-PLUSE		=	\+=
-MINUSE		=	-=
-DIVE		=	/=
-MULE		=	\*=
-MODE		=	%=
-XORE		=	^=
-ORBE		=	\|=
-ANDBE		=	&=
-ORLE		=	"||="
-ANDLE		=	&&=
-TILDEE		=	~=
+#PLUSE		=	\+=	;
+#MINUSE		=	-=	;
+#DIVE		=	/=	;
+#MULE		=	\*=	;
+#MODE		=	%=	;
+#XORE		=	^=	;
+#ORBE		=	\|=	;
+#ANDBE		=	&=	;
+#ORLE		=	"||="	;
+#ANDLE		=	&&=	;
+#TILDEE		=	~=	;
 
-EQ		=	==
-NEQ		=	!=
-LESS		=	<
-GREAT		=	>
-LESSE		=	<=
-GREATE		=	>=
+#EQ		=	==	;
+#NEQ		=	!=	;
+#LESS		=	<	;
+#GREAT		=	>	;
+#LESSE		=	<=	;
+#GREATE		=	>=	;
 
-COLON		=	:
-DASH		=	#
+#COLON		=	:	;
+#DASH		=	#	;
 
 ## C Comment
 
-COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/)
+#COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
 
 ## C Number
 
 ## Int
 
-@DEC		=	([1-9][0-9]*)
-@OCT		=	(0[0-7]*)
-@HEX		=	(0[xX][0-9a-fA-F]+)
-@U_S		=	[uU]
-@L_S		=	[lL]
-@LL_S		=	(ll|LL)
-@INT_S		=	(({U_S}{L_S}?)|({U_S}{LL_S})|({L_S}{U_S}?)|({LL_S}{U_S}?))
-INTEGER		=	({DEC}|{OCT}|{HEX}){INT_S}?
+#@DEC		=	([1-9][0-9]*)
+#@OCT		=	(0[0-7]*)
+#@HEX		=	(0[xX][0-9a-fA-F]+)
+#@U_S		=	[uU]
+#@L_S		=	[lL]
+#@LL_S		=	(ll|LL)
+#@INT_S		=	(({U_S}{L_S}?)|({U_S}{LL_S})|({L_S}{U_S}?)|({LL_S}{U_S}?))
+#INTEGER		=	({DEC}|{OCT}|{HEX}){INT_S}?
 
 ## Float
 
-#hex_fract_const	-> (hex_digit_seq? \. hex_digit_seq) | (hex_digit_seq \.)
-#hex_float	-> (hex_pfx hex_fract_const binary_exp float_sfx?) |
-#		   (hex_pfx hex_digit_seq binary_exp float_sfx?)
+#@SIGN		=	[-+]
 
-@SIGN		=	[-+]
+#@F_S		=	[flFL]
 
-@F_S		=	[flFL]
+#@SCF_EXP	=	[eE]{SIGN}?{DIGIT}+
+#@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+
 
-@SCF_EXP	=	[eE]{SIGN}?{DIGIT}+
-@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+
+#@D_FRACT	=	({DIGIT}+\.)
 
-@D_FRACT	=	({DIGIT}+\.)
-
-@DECF		=	({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?)
-FLOAT		=	{DECF}
+#@DECF		=	({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?)
+#FLOAT		=	{DECF}
 

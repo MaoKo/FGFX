@@ -107,17 +107,17 @@ size_t hash_set(set_t const* st) {
 	size_t hash = 0;
 	set_t const* it = st;
 	while (it) {
-		hash += (size_t)st->item;
+		hash += (long)st->item;
 		it = it->next;
 	}
-	return (hash >> 4);
+	return (hash);
 }
 
 void print_set(set_t const* st) {
 	printf("{");
 	set_t const* it = st;
 	while (it) {
-		printf("%p", it->item);
+		printf("%ld", (long)it->item);
 		if (it->next)
 			{ printf(", "); }
 		it = it->next;

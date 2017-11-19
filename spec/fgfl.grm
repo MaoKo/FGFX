@@ -1,0 +1,13 @@
+###################################
+# Syntactic Specification of FGFL #
+###################################
+
+<LineDef>	->	<Atom> EQUAL SEMI
+		 ;
+
+#<Regex>		->
+#		 ;
+
+<Atom>		->	L_IDENT
+		 |	G_IDENT
+		 ;

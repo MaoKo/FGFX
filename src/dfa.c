@@ -1,14 +1,12 @@
 #include "dfa.h"
 
-set_t* edges(state_t* st, int symbol) {
-	if (!st)
-		{ return (NULL); }
+set_t* edges(long st, int symbol) {
 	set_t* out_states = EMPTY_SET;
-	set_t* it = st->edges;
+	set_t* it = state_at(st)->edges;
 	while (it) {
 		edge_t* edg = (edge_t*)it->item;
 		if (edg->symbol == symbol)
-			{ add_set(&out_states, edg->out_state); }
+			{ add_set(&out_states, (void*)edg->out_state); }
 		it = it->next;
 	}
 	return (out_states);
@@ -23,7 +21,7 @@ set_t* closure(set_t** set_state) {
 		last = cpy_set(*set_state);
 		set_t* it = last;
 		while (it) {
-			set_t* pass_state = edges((state_t*)it->item, EPSILON);
+			set_t* pass_state = edges((long)it->item, EPSILON);
 			union_set(set_state, pass_state);
 			del_set(pass_state);
 			it = it->next;
@@ -37,7 +35,7 @@ set_t* DFAedge(set_t* states, int symbol) {
 	set_t* target = EMPTY_SET;
 	set_t* it = states;
 	while (it) {
-		set_t* pass_state = edges((state_t*)it->item, symbol);
+		set_t* pass_state = edges((long)it->item, symbol);
 		union_set(&target, pass_state);
 		del_set(pass_state);
 		it = it->next;
@@ -45,15 +43,17 @@ set_t* DFAedge(set_t* states, int symbol) {
 	return (closure(&target));
 }
 
-static vector_t* gen_state_table(state_t* master, vector_t** states) {
+static vector_t* gen_state_table(long master, vector_t** states) {
 	(*states) = vector();
 	vector_t* hash_state = vector();
-	
-	set_t* start = set(master);
 
+	set_t* start = set((void*)master);
+	
 	push_back_vector(*states, EMPTY_SET);
 	push_back_vector(*states, closure(&start));
 
+	print_set(start);
+	
 	push_back_vector(hash_state, (void*)hash_set(NULL));
 	push_back_vector(hash_state, (void*)hash_set(start));
 
@@ -71,9 +71,10 @@ static vector_t* gen_state_table(state_t* master, vector_t** states) {
 			}
 			long l = 1;
 			size_t hash_next = hash_set(next);
+			print_set(next);
 			for (; l <= p; ++l) {
-				if (hash_next == (size_t)at_vector(hash_state, l) &&
-					equal_set(next, at_vector(*states, l)))
+				if (hash_next == (size_t)at_vector(hash_state, l)
+					&& equal_set(next, at_vector(*states, l)))
 					{ break; }
 			}
 			if (l <= p) {
@@ -100,7 +101,7 @@ static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
 		int min_tok = 0;
 		set_t* it = set_state;
 		while (it) {
-			state_t* crt_state = (state_t*)(it->item);
+			state_t* crt_state = state_at((long)(it->item));
 			if (crt_state->final) {
 				if (!min_tok || min_tok > crt_state->final)
 					{ min_tok = crt_state->final; }
@@ -117,7 +118,7 @@ static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
 	return (final);
 }
 
-static void gen_table(state_t* master, vector_t** trans,
+static void gen_table(int master, vector_t** trans,
 					vector_t** final, vector_t* elst) {
 	vector_t* states = NULL;
 	*trans = gen_state_table(master, &states);
@@ -128,15 +129,16 @@ static void gen_table(state_t* master, vector_t** trans,
 }
 
 #ifdef OPTIMIZE
-static void redirect_trans(vector_t* trans, long s1, long s2) {
+static void
+redirect_trans(vector_t* trans, long s1, long s2) {
 	del_vector(at_vector(trans, s2));
 	erase_vector(trans, s2);
-	for (size_t i = 0; i < size_vector(trans); ++i) {
+	for (size_t i = 1; i < size_vector(trans); ++i) {
 		vector_t* row = (vector_t*)at_vector(trans, i);
 		for (size_t j = 0; j < size_vector(row); ++j) {
-			if ((long)at_vector(row, j) == s2)
-				{ set_vector(row, j, (void*)s1); }
-			else if ((long)at_vector(row, j) > s2) {
+			if ((long)at_vector(row, j) == s1)
+				{ set_vector(row, j, (void*)s2); }
+			else if ((long)at_vector(row, j) > s1) {
 				long old = (long)at_vector(row, j) - 1;
 				set_vector(row, j, (void*)old);
 			}
@@ -144,7 +146,8 @@ static void redirect_trans(vector_t* trans, long s1, long s2) {
 	}
 }
 
-static void redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
+static void
+redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
 	if (isf) {
 		erase_vector(finalt, fs2);
 		erase_vector(finalt, fs2);
@@ -158,10 +161,11 @@ static void redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
 	}
 }
 
-static void equivalent_state(vector_t* trans, vector_t* finalt) {
-	for (size_t i = 0; i < size_vector(trans); ++i) {
+static void 
+equivalent_state(vector_t* trans, vector_t* finalt) {
+	for (size_t i = size_vector(trans) - 1; i > 1; --i) {
 		vector_t* s1 = (vector_t*)at_vector(trans, i);
-		for (size_t j = i + 1; j < size_vector(trans); ++j) {
+		for (size_t j = i - 1; j > 1; --j) {
 			vector_t* s2 = (vector_t*)at_vector(trans, j);
 			bool equiv = true;
 			for (int k = MIN_ASCII; k < MAX_ASCII; ++k) {
@@ -170,22 +174,25 @@ static void equivalent_state(vector_t* trans, vector_t* finalt) {
 					break;
 				}
 			}
-			
+		
 			if (!equiv)
 				{ continue; }
+			
+			//printf("I, J = %zu, %zu\n", i, j);
 
 			int fs1 = get_index_vector(finalt, (void*)i);
 			int fs2 = get_index_vector(finalt, (void*)j);
 
 			bool final = (fs1 >= 0 && fs2 >= 0) &&
-				(at_vector(finalt, fs1 + 1) ==
-				 at_vector(finalt, fs2 + 1));
+				(at_vector(finalt, fs1 + 1)
+				== at_vector(finalt, fs2 + 1));
 			
 			bool nonfinal = (fs1 == -1 && fs2 == -1);
-			
+		
 			if (final || nonfinal) {
 				redirect_trans(trans, i, j);
 				redirect_final(finalt, final, fs2, j);
+				--i;
 			}
 		}
 	}
@@ -216,5 +223,6 @@ void DFAgen(token_spec_t* spec, char const* base) {
 		{ del_vector(at_vector(trans, i)); }
 	del_vector(trans);
 	del_vector(final);
+	del_record();
 }
 

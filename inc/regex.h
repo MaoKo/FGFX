@@ -19,11 +19,12 @@
 #define REG_DOT			'.'
 #define REG_DQUOTE		'"'
 #define REG_HYPHEN		'-'
+#define REG_SEMI		';'
 
 #define ALONE_S			true
 #define MULTI_S			false
 
-node_ast_t* regex2ast(char const*, vector_t const*);
+node_ast_t* regex2ast(token_spec_t*);
 void del_node_ast(node_ast_t*);
 
 #endif /* REGEX_H */

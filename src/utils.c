@@ -31,7 +31,7 @@ int write_str_err(char const* str) {
 	return (write(fileno(stderr), str, strlen(str)));
 }
 
-void* __pmalloc(size_t size) {
+void* _pmalloc(size_t size) {
 	if (!size)
 		{ size = 1; }
 	void* chunk = malloc(size);
@@ -46,7 +46,7 @@ void* __pmalloc(size_t size) {
 	return (chunk);
 }
 
-void* __prealloc(void* ptr, size_t size) {
+void* _prealloc(void* ptr, size_t size) {
 	if (!size) {
 		FREE(ptr);
 		return (NULL);

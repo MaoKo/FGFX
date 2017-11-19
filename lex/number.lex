@@ -1,2 +1,1 @@
-OCT	=	\o77
-HEX	=	\xFF
+IDENT	=	(a|b|c) ;

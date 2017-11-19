@@ -3,6 +3,7 @@
 
 #include "vector.h"
 #include "set.h"
+#include "buffer.h"
 
 typedef struct node_ast_t {
 	enum { AST_UNION, AST_CONCAT, AST_CLOSURE, AST_SYMBOL, } kind_ast;
@@ -28,25 +29,31 @@ typedef struct {
 
 typedef struct {
 	int symbol;
-	state_t* out_state;
+	long out_state;
 } edge_t;
 
 typedef struct {
 	edge_t* tail;
-	state_t* head;
+	int head;
 } nfa_fragment_t;
 
 typedef struct {
 	bool local;
 	char* name;
-	node_ast_t* reg;
-	nfa_fragment_t* frag;	
+	enum { AST, FRAGMENT, } phase;
+	union {
+		node_ast_t* reg;
+		nfa_fragment_t* frag;
+	};
 } token_entry_t;
 
 typedef struct {
 	int filde;
+	int last_char;
+	buffer_t* last_lexeme;
+	int lineno;
 	vector_t* entry_lst;
-	state_t* master;
+	long master;
 } token_spec_t;
 
 #endif /* FGFL_H */
