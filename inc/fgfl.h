@@ -39,6 +39,7 @@ typedef struct {
 
 typedef struct {
 	bool local;
+	bool used;
 	char* name;
 	enum { AST, FRAGMENT, } phase;
 	union {

@@ -1,13 +1,15 @@
 #include "utils.h"
 
-size_t round_up(size_t size) {
+size_t
+round_up(size_t size) {
 	size_t close2 = 1;
 	while (close2 <= size)
 		{ close2 *= 2; }
 	return (close2);
 }
 
-char* strjoin(char const* str1, char const* str2) {
+char*
+strjoin(char const* str1, char const* str2) {
 	size_t const s1 = strlen(str1);
 	size_t const s2 = strlen(str2);
 	char* frame = NEW(char, s1 + s2 + 1);
@@ -17,6 +19,11 @@ char* strjoin(char const* str1, char const* str2) {
 	memcpy(frame + s1, str2, sizeof(char) * s2);
 	frame[s1 + s2] = EOS;
 	return (frame);
+}
+
+bool
+file_exist(char const* filename) {
+	return (open(filename, O_WRONLY | O_EXCL) != -1);
 }
 
 int write_str_fd(int filde, char const* str) {
@@ -31,7 +38,8 @@ int write_str_err(char const* str) {
 	return (write(fileno(stderr), str, strlen(str)));
 }
 
-void* _pmalloc(size_t size) {
+void*
+_pmalloc(size_t size) {
 	if (!size)
 		{ size = 1; }
 	void* chunk = malloc(size);
@@ -46,7 +54,8 @@ void* _pmalloc(size_t size) {
 	return (chunk);
 }
 
-void* _prealloc(void* ptr, size_t size) {
+void*
+_prealloc(void* ptr, size_t size) {
 	if (!size) {
 		FREE(ptr);
 		return (NULL);

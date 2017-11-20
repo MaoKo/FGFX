@@ -1,10 +1,11 @@
 #include "regex.h"
 
 static token_spec_t* local_spec = NULL;
+static bool escaped = false;
 
 // Static Prototype
 
-static node_ast_t* reg_expr();
+static node_ast_t* reg_expr(void);
 static node_ast_t* reg_term(void);
 static node_ast_t* reg_fact(void);
 static node_ast_t* reg_atom(void);
@@ -15,6 +16,8 @@ static bool is_oct_prefix(int);
 static bool is_hex_prefix(int);
 static int read_oct(void);
 static int read_hex(void);
+
+static int get_c(void);
 
 // Node Function
 
@@ -103,7 +106,7 @@ skip_until(int(*predF)(int)) {
 			&& !((*predF)(local_spec->last_char)))
 		{ return (local_spec->last_char);  }
 	do {
-		if ((c = read_c()) == EOF)
+		if ((c = get_c()) == EOF)
 			{ return (EOF); }
 	} while ((*predF)(c));
 	return (c);
@@ -122,10 +125,12 @@ is_tab_or_space(int c) {
 static int
 get_c(void) {
 	int input_c = read_c();
+	escaped = false;
 	if (input_c == EOF)
 		{ return (EOF); }
-	while (input_c == '\\') {
+	else if (input_c == '\\') {
 		input_c = read_c();
+		escaped = true;
 	
 		if (is_oct_prefix(input_c))
 			{ return (read_oct()); }
@@ -141,6 +146,7 @@ get_c(void) {
 			case 't': input_c = '\t'; break;
 			case 'v': input_c = '\v'; break;
 			case '\n':
+				++local_spec->lineno;
 				input_c = skip_until(&is_tab_or_space);
 				break;
 			case EOF: /* ERROR */ ; break;
@@ -201,7 +207,7 @@ is_metachar(int symbl) {
 		case REG_UNION: case REG_LPAREN: case REG_RPAREN:
 		case REG_LBRACK: case REG_KLEENE: case REG_PKLEENE:
 		case REG_OKLEENE: case REG_LBRACE: case REG_DQUOTE:
-		case REG_DOT: case REG_SEMI: return (true);
+		case REG_DOT: case REG_SEMI: return (!escaped);
 	}
 	return (false);
 } 
@@ -268,7 +274,7 @@ static int
 str2int(void) {
 	int digit = 0;
 	while (isdigit(peek()))
-		{ digit = (digit + (get_c() - '0')) + (digit * 10); }
+		{ digit = (digit + (advance() - '0')) + (digit * 10); }
 	return (digit);
 }
 
@@ -306,8 +312,11 @@ bound_name(node_ast_t* root) {
 	for (size_t i = 0; i < size_vector(local_spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)
 					at_vector(local_spec->entry_lst, i);
-		if (!strcmp(body_buffer(bound), entry->name))
-			{ rep_node = entry->reg; }
+		if (!strcmp(body_buffer(bound), entry->name)) {
+			rep_node = cpy_node_ast(entry->reg);
+			USED_ENTRY(entry);
+			break;
+		}
 	}
 	if (rep_node)
 		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
@@ -384,37 +393,45 @@ regex2ast(token_spec_t* spec) {
 	return (reg_expr());
 }
 
+static bool
+is_in_follow(int alone, ...) {
+	va_list arg;
+	va_start(arg, alone);
+	bool is_match = (peek() == alone);
+	while (!is_match) {
+		int next = va_arg(arg, int);
+		if (next == -1)
+			{ return (false); }
+		is_match = (peek() == next);
+	}
+
+	va_end(arg);
+	return (is_match && !escaped);
+}
+
 static node_ast_t*
 reg_expr(void) {
 	node_ast_t* root = reg_term();
-	while (match(REG_UNION))
-		{ root = node_ast(AST_UNION, root, reg_term()); }
+	while (is_in_follow(REG_UNION, -1)) {
+		advance();
+		root = node_ast(AST_UNION, root, reg_term());
+	}
 	return (root);
-}
-
-static inline bool
-follow_term(void) {
-	return (peek() != REG_UNION && peek() != REG_RPAREN && !is_end());
 }
 
 static node_ast_t*
 reg_term(void) {
 	node_ast_t* root = reg_fact();
-	while (follow_term())
+	while (!is_in_follow(REG_UNION, REG_RPAREN, -1) && !is_end())
 		{ root = node_ast(AST_CONCAT, root, reg_fact()); }
 	return (root);
-}
-
-static inline bool
-follow_fact(void) {
-	return (peek() == REG_KLEENE || peek() == REG_PKLEENE ||
-			peek() == REG_OKLEENE || peek() == REG_LBRACE);
 }
 
 static node_ast_t*
 reg_fact(void) {
 	node_ast_t* root = reg_atom();
-	while (follow_fact()) {
+	while (is_in_follow(REG_KLEENE, REG_PKLEENE,
+						REG_OKLEENE, REG_LBRACE, -1)) {
 		int closure_kind = advance();
 		switch (closure_kind) {
 			case REG_PKLEENE:
@@ -439,7 +456,9 @@ reg_fact(void) {
 
 static node_ast_t*
 reg_atom(void) {
-	if (match(REG_LPAREN)) { 
+	if (!is_metachar(peek()))
+		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
+	else if (match(REG_LPAREN)) { 
 		node_ast_t* expr = reg_expr();
 		expected(REG_RPAREN);
 		return (expr);
@@ -447,16 +466,14 @@ reg_atom(void) {
 	else if (match(REG_LBRACK)) { return (reg_range()); }
 	else if (match(REG_DOT)) { return (dot_regex()); }
 	else if (match(REG_DQUOTE)) { return (reg_quote()); }
-	else if (!is_metachar(peek()))
-		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
 	return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
 }
 
 static node_ast_t*
 reg_quote(void) {
 	node_ast_t* root_concat = NULL;
-	while (peek() != REG_DQUOTE && !is_end()) {
-		int c = get_c();
+	while (!is_in_follow(REG_DQUOTE, -1) && !is_end_input()) {
+		int c = advance();
 		node_ast_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
 		if (!root_concat)
 			{ root_concat = symbol; }
@@ -477,11 +494,11 @@ reg_range(void) {
 		{ negate = true; }
 	int last = 0;
 	bool in_range = true;
-	while (peek() != REG_RBRACK && !is_end()) {
-		long crt_c = get_c();
+	while (!is_in_follow(REG_RBRACK, -1) && !is_end_input()) {
+		long crt_c = advance();
 		if (crt_c == '-' && !in_range &&
 				(peek() != REG_RBRACK && !is_end())) {
-			crt_c = get_c();
+			crt_c = advance();
 			for (long i = last + 1; i <= crt_c; ++i)
 				{ add_set(&range, (void*)i); }
 			in_range = true;

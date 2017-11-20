@@ -92,10 +92,14 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 	token_entry_t* entry = NEW(token_entry_t, 1);
 	if (!entry)
 		{ return (-1); }
-	if (token == TL_IDENT)
-		{ entry->local = true; }
+	entry->used = true;
+	if (token == TL_IDENT) {
+		entry->local = true;
+		entry->used = false;
+	}
 	int offset = (token == TL_IDENT);
 	entry->name = strdup(body_buffer(spec->last_lexeme) + offset);
+	puts(entry->name);
 	if (!entry->name)
 		{ return (-1); }
 	entry->phase = AST;

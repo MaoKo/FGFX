@@ -23,7 +23,6 @@
 #define INCLUDE(x)	"#include \""#x"\""
 #define DEFINE(x,y)	"#define "#x""TAB""#y
 
-int out_header(char const*, vector_t*);
-int out_body(char const*, char const*, vector_t*, vector_t*);
+int out_header(char const*, vector_t const*, vector_t const*, vector_t const*);
 
 #endif /* OUT_GEN_H */

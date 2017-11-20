@@ -7,74 +7,74 @@
 @ESC_UN		=	(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}) ;
 @LETTER		=	[A-Za-z_] ;
 @DIGIT		=	[0-9] ;
-IDENT		= 	(a|b|c) ;
+IDENT		= 	({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})* ;
 
 ## C Char token
 
-#@ESC_OCT	=	(\\[0-7]{1,3}) ;
-#@ESC_HEX	=	(\\x[0-9a-fA-F]+) ;
-#@ESC_SEQ	=	(\\'|\\\"|\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v) ;
-#@REG_ESCAPE	=	({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN}) ;
-#CHAR		=	[LuU]?'([^\n'\\]|{REG_ESCAPE})+' ;
+@ESC_OCT	=	(\\[0-7]{1,3}) ;
+@ESC_HEX	=	(\\x[0-9a-fA-F]+) ;
+@ESC_SEQ	=	(\\'|\\\"|\\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v) ;
+@REG_ESCAPE	=	({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN}) ;
+CHAR		=	[LuU]?'([^\n'\\]|{REG_ESCAPE})+' ;
 
 ## C String token
 
-#STR		=	(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\" ;
+STR		=	(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\" ;
 
 ## C Punctuation
 
-#COMMA		=	,	;
-#SEMICOLON	=	\;	;
-#LPAREN		=	\(	;
-#RPAREN		=	\)	; 
-#LBRACK		=	\{	;
-#RBRACK		=	}	;
-#LSUB		=	\[	;
-#RSUB		=	]	;
-#QUES		=	\?	;
-#ELLIP		=	"..."	;
-#EXCLA		=	!	;
+COMMA		=	,	;
+SEMICOLON	=	\;	;
+LPAREN		=	\(	;
+RPAREN		=	\)	; 
+LBRACK		=	\{	;
+RBRACK		=	}	;
+LSUB		=	\[	;
+RSUB		=	]	;
+QUES		=	\?	;
+ELLIP		=	"..."	;
+EXCLA		=	!	;
 
-#PLUS		=	\+	;
-#PLUSPLUS	=	"++"	;
-#MINUS		=	-	;
-#MINUSMINUS	=	--	;
-#DIV		=	/	;
-#MUL		=	\*	;
-#MOD		=	%	;
-#XOR		=	^	;
-#ORB		=	\|	;
-#ANDB		=	&	;
-#ORL		=	"||"	;
-#ANDL		=	&&	;
-#TILDE		=	~	;
-#ASSIGN		=	=	;
+PLUS		=	\+	;
+PLUSPLUS	=	"++"	;
+MINUS		=	-	;
+MINUSMINUS	=	--	;
+DIV		=	/	;
+MUL		=	\*	;
+MOD		=	%	;
+XOR		=	^	;
+ORB		=	\|	;
+ANDB		=	&	;
+ORL		=	"||"	;
+ANDL		=	&&	;
+TILDE		=	~	;
+ASSIGN		=	=	;
 
-#PLUSE		=	\+=	;
-#MINUSE		=	-=	;
-#DIVE		=	/=	;
-#MULE		=	\*=	;
-#MODE		=	%=	;
-#XORE		=	^=	;
-#ORBE		=	\|=	;
-#ANDBE		=	&=	;
-#ORLE		=	"||="	;
-#ANDLE		=	&&=	;
-#TILDEE		=	~=	;
+PLUSE		=	\+=	;
+MINUSE		=	-=	;
+DIVE		=	/=	;
+MULE		=	\*=	;
+MODE		=	%=	;
+XORE		=	^=	;
+ORBE		=	\|=	;
+ANDBE		=	&=	;
+ORLE		=	"||="	;
+ANDLE		=	&&=	;
+TILDEE		=	~=	;
 
-#EQ		=	==	;
-#NEQ		=	!=	;
-#LESS		=	<	;
-#GREAT		=	>	;
-#LESSE		=	<=	;
-#GREATE		=	>=	;
+EQ		=	==	;
+NEQ		=	!=	;
+LESS		=	<	;
+GREAT		=	>	;
+LESSE		=	<=	;
+GREATE		=	>=	;
 
-#COLON		=	:	;
-#DASH		=	#	;
+COLON		=	:	;
+DASH		=	#	;
 
 ## C Comment
 
-#COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
+COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
 
 ## C Number
 

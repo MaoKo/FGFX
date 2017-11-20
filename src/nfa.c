@@ -155,6 +155,10 @@ int NFAgen(token_spec_t* spec) {
 			entry->phase = FRAGMENT;
 			add_set(&master, entry->frag);
 		}
+		else if (!entry->used) {
+			fprintf(stderr, "Warring token %s not used.\n",
+				entry->name);
+		}
 	}
 	spec->master = merge_nfa_fragment(master);
 	return (0);

@@ -52,7 +52,7 @@ static vector_t* gen_state_table(long master, vector_t** states) {
 	push_back_vector(*states, EMPTY_SET);
 	push_back_vector(*states, closure(&start));
 
-	print_set(start);
+	//print_set(start);
 	
 	push_back_vector(hash_state, (void*)hash_set(NULL));
 	push_back_vector(hash_state, (void*)hash_set(start));
@@ -71,7 +71,7 @@ static vector_t* gen_state_table(long master, vector_t** states) {
 			}
 			long l = 1;
 			size_t hash_next = hash_set(next);
-			print_set(next);
+			//print_set(next);
 			for (; l <= p; ++l) {
 				if (hash_next == (size_t)at_vector(hash_state, l)
 					&& equal_set(next, at_vector(*states, l)))
@@ -136,9 +136,9 @@ redirect_trans(vector_t* trans, long s1, long s2) {
 	for (size_t i = 1; i < size_vector(trans); ++i) {
 		vector_t* row = (vector_t*)at_vector(trans, i);
 		for (size_t j = 0; j < size_vector(row); ++j) {
-			if ((long)at_vector(row, j) == s1)
-				{ set_vector(row, j, (void*)s2); }
-			else if ((long)at_vector(row, j) > s1) {
+			if ((long)at_vector(row, j) == s2)
+				{ set_vector(row, j, (void*)s1); }
+			else if ((long)at_vector(row, j) > s2) {
 				long old = (long)at_vector(row, j) - 1;
 				set_vector(row, j, (void*)old);
 			}
@@ -163,36 +163,38 @@ redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
 
 static void 
 equivalent_state(vector_t* trans, vector_t* finalt) {
-	for (size_t i = size_vector(trans) - 1; i > 1; --i) {
-		vector_t* s1 = (vector_t*)at_vector(trans, i);
-		for (size_t j = i - 1; j > 1; --j) {
-			vector_t* s2 = (vector_t*)at_vector(trans, j);
-			bool equiv = true;
-			for (int k = MIN_ASCII; k < MAX_ASCII; ++k) {
-				if (at_vector(s1, k) != at_vector(s2, k)) {
-					equiv = false;
-					break;
+	bool change = true;
+	while (change) {
+		change = false;
+		for (size_t i = 1; i < size_vector(trans); ++i) {
+			vector_t* s1 = (vector_t*)at_vector(trans, i);
+			for (size_t j = i + 1; j < size_vector(trans); ++j) {
+				vector_t* s2 = (vector_t*)at_vector(trans, j);
+				bool equiv = true;
+				for (int k = MIN_ASCII; k < MAX_ASCII; ++k) {
+					if (at_vector(s1, k) != at_vector(s2, k)) {
+						equiv = false;
+						break;
+					}
 				}
-			}
 		
-			if (!equiv)
-				{ continue; }
+				if (!equiv)
+					{ continue; }
 			
-			//printf("I, J = %zu, %zu\n", i, j);
+				int fs1 = get_index_vector(finalt, (void*)i);
+				int fs2 = get_index_vector(finalt, (void*)j);
 
-			int fs1 = get_index_vector(finalt, (void*)i);
-			int fs2 = get_index_vector(finalt, (void*)j);
-
-			bool final = (fs1 >= 0 && fs2 >= 0) &&
-				(at_vector(finalt, fs1 + 1)
-				== at_vector(finalt, fs2 + 1));
+				bool final = (fs1 >= 0 && fs2 >= 0) &&
+					(at_vector(finalt, fs1 + 1)
+					== at_vector(finalt, fs2 + 1));
 			
-			bool nonfinal = (fs1 == -1 && fs2 == -1);
+				bool nonfinal = (fs1 == -1 && fs2 == -1);
 		
-			if (final || nonfinal) {
-				redirect_trans(trans, i, j);
-				redirect_final(finalt, final, fs2, j);
-				--i;
+				if (final || nonfinal) {
+					change = true;
+					redirect_trans(trans, i, j);
+					redirect_final(finalt, final, fs2, j);
+				}
 			}
 		}
 	}
@@ -209,20 +211,17 @@ void DFAgen(token_spec_t* spec, char const* base) {
 #ifdef OPTIMIZE
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
-
+	
 	char const* header_filename = strjoin(base, ".h");
-	char const* body_filename = strjoin(base, ".c");
-
-	out_header(header_filename, spec->entry_lst);
-	out_body(body_filename, header_filename, trans, final);
-
+	out_header(header_filename, trans, final, spec->entry_lst);
 	FREE(header_filename);
-	FREE(body_filename);
 
 	for (size_t i = 0; i < size_vector(trans); ++i)
 		{ del_vector(at_vector(trans, i)); }
 	del_vector(trans);
 	del_vector(final);
+
+	del_token_spec(spec);
 	del_record();
 }
 

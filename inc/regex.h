@@ -1,7 +1,7 @@
 #ifndef REGEX_H
 #define REGEX_H
 
-#include "fgfl.h"
+#include "tokendef.h"
 
 #define REG_ESCAPE		'\\'
 #define REG_UNION		'|'

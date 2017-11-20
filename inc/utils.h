@@ -35,6 +35,7 @@
 
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
+bool file_exist(char const*);
 int write_str(char const*);
 int write_str_err(char const*);
 int write_str_fd(int, char const*);
