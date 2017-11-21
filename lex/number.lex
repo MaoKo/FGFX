@@ -1,3 +1,2 @@
-@A	=	a;
-@B	=	b;
-C	=	{B};
+A	=	[a-z];
+%igcase A;

@@ -58,16 +58,30 @@ static nfa_fragment_t* nfa_fragment(edge_t* tail, int head) {
 }
 
 static nfa_fragment_t* dfs_ast(node_ast_t*);
+static bool crt_igcase = false;
 
-static nfa_fragment_t* ast_symbol(node_ast_t* root) {
+static inline nfa_fragment_t*
+ast_symbol(node_ast_t* root) {
 	int final_s = state(NEW_STATE);
+	long symbol;
+	if (root->alone && crt_igcase && isalpha(root->symbol)) {
+		symbol = root->symbol;
+		root->cclass = set((void*)symbol);
+		root->alone = false;
+	}
 	if (root->alone)
 		{ return (nfa_fragment(edge(root->symbol, final_s), final_s)); }
 
 	int relay_s  = state(NEW_STATE);
 	set_t* it = root->cclass;
 	while (it) {
-		MAKE_TRANS(relay_s, (long)it->item, final_s);
+		symbol = (long)it->item;
+		if (crt_igcase && isalpha(symbol)) {
+			MAKE_TRANS(relay_s, tolower(symbol), final_s);
+			MAKE_TRANS(relay_s, toupper(symbol), final_s);
+		}
+		else
+			{ MAKE_TRANS(relay_s, symbol, final_s); }
 		it = it->next;
 	}
 	return (nfa_fragment(edge(EPSILON, relay_s), final_s));
@@ -121,9 +135,10 @@ static nfa_fragment_t* dfs_ast(node_ast_t* root) {
 	return (NULL);
 }
 
-nfa_fragment_t* ast2nfa(node_ast_t* root, int tok) {
+nfa_fragment_t* ast2nfa(node_ast_t* root, int priority, bool igcase) {
+	crt_igcase = igcase;
 	nfa_fragment_t* frag = dfs_ast(root);
-	MARK_STATE_FINAL(frag->head, tok);
+	MARK_STATE_FINAL(frag->head, priority);
 	return (frag);
 }
 
@@ -149,7 +164,7 @@ int NFAgen(token_spec_t* spec) {
 					at_vector(spec->entry_lst, i);
 		if (!entry->local) {
 			node_ast_t* ast = entry->reg;
-			entry->frag = ast2nfa(ast, i + 1);
+			entry->frag = ast2nfa(ast, i + 1, entry->igcase);
 			del_node_ast(ast);
 
 			entry->phase = FRAGMENT;

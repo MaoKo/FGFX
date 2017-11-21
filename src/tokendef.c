@@ -55,14 +55,21 @@ get_next_token(token_spec_t* spec) {
 }
 
 static int
-strip_token(token_spec_t* spec) {
+advance_token(token_spec_t* spec) {
 	reset_buffer(spec->last_lexeme);
 	while (1) {
-		int token = get_next_token(spec);
-		if (token != TSPACE && token != TCOM)
-			{ return (token); }
+		spec->last_token = get_next_token(spec);
+		if (spec->last_token != TSPACE && spec->last_token != TCOM)
+			{ return (spec->last_token); }
 		reset_buffer(spec->last_lexeme);
 	}
+}
+
+static int
+peek_token(token_spec_t* spec) {
+	if (spec->last_token == -1)
+		{ spec->last_token = advance_token(spec); }
+	return (spec->last_token);
 }
 
 static void
@@ -99,7 +106,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 	}
 	int offset = (token == TL_IDENT);
 	entry->name = strdup(body_buffer(spec->last_lexeme) + offset);
-	puts(entry->name);
+	entry->igcase = false;
 	if (!entry->name)
 		{ return (-1); }
 	entry->phase = AST;
@@ -113,36 +120,77 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 	return (0);
 }
 
+static int
+parse_assignement(token_spec_t* spec, int type) {
+	if (type != TG_IDENT && type != TL_IDENT) {
+		fprintf(stderr, "Error (%d): Expected ident (Local or not).\n",
+			spec->lineno);
+		return (-1);
+	}
+	int err_entry = add_entry_lexeme(spec, type);
+	if (err_entry == -1 || err_entry == -2) {
+		if (err_entry == -2) {
+			fprintf(stderr,"Error (%d): Redefining some ident.\n",
+			spec->lineno);	
+		}
+		return (-1);
+	}
+	if (advance_token(spec) != TEQUAL) {
+		fprintf(stderr, "Error (%d): No equal sign after an ident.\n",
+			spec->lineno);
+		return (-1);
+	}
+	token_entry_t* last_entry = (token_entry_t*)back_vector(spec->entry_lst);
+	last_entry->reg = regex2ast(spec);
+	return (0);
+}
+
+static int
+enable_igcase(token_spec_t* spec) {
+	for (size_t i = 0; i < size_vector(spec->entry_lst); ++i) {
+		token_entry_t* entry = (token_entry_t*)at_vector(spec->entry_lst, i);
+		if (!strcmp(entry->name, body_buffer(spec->last_lexeme))) {
+			entry->igcase = true;
+			return (0);
+		}
+	}
+	fprintf(stderr, "Identifier %s not found.\n",
+		body_buffer(spec->last_lexeme));
+	return (-1);
+}
+
+static int
+parse_directive(token_spec_t* spec) {
+	if (advance_token(spec) != TG_IDENT) {
+		fprintf(stderr, "Error (%d): Expected id after igcase directive.\n",
+			spec->lineno);
+		return (-1);
+	}
+	if (enable_igcase(spec) == -1)
+		{ return (-1); }
+	while (peek_token(spec) == TCOMMA) {
+		if (advance_token(spec) != TG_IDENT) {
+			fprintf(stderr,
+				"Error (%d): Expected id after the comma.\n",
+				spec->lineno);
+			return (-1);
+		}
+		if (enable_igcase(spec) == -1)
+			{ return (-1); }
+	}
+	return (0);
+}
+
 int
 parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
 	int token;
-	while ((token = strip_token(spec)) != TEOF) {
-		if (token != TG_IDENT && token != TL_IDENT) {
-			fprintf(stderr,
-				"Error (%d): Expected ident (Local or not).\n",
-				spec->lineno);
-			return (-1);
-		}
-		int err_entry = add_entry_lexeme(spec, token);
-		if (err_entry == -1 || err_entry == -2) {
-			if (err_entry == -2) {
-				fprintf(stderr,
-				"Error (%d): Redefining some ident.\n",
-				spec->lineno);	
-			}
-			return (-1);
-		}
-		if (strip_token(spec) != TEQUAL) {
-			fprintf(stderr,
-				"Error (%d): No equal sign after an ident.\n",
-				spec->lineno);
-			return (-1);
-		}
-		token_entry_t* last_entry = (token_entry_t*)
-						back_vector(spec->entry_lst);
-		last_entry->reg = regex2ast(spec);
-		if (strip_token(spec) != TSEMI) {
+	while ((token = advance_token(spec)) != TEOF) {
+		if (token != TIGCASE)
+			{ parse_assignement(spec, token); }
+		else
+			{ parse_directive(spec); }
+		if (advance_token(spec) != TSEMI) {
 			fprintf(stderr,
 				"Error (%d): No semicolon after the regex.\n",
 				spec->lineno);
@@ -165,7 +213,7 @@ Reggen(char const* pathname, token_spec_t** spec) {
 		{ return (-1); }
 	(*spec)->last_char = -1; (*spec)->last_lexeme = NULL;
 	(*spec)->master = 0; (*spec)->lineno = 1;
-	(*spec)->entry_lst = vector();
+	(*spec)->entry_lst = vector(); (*spec)->last_token = -1;
 	if (parse_token_entry(*spec))
 		{ return (-1); }
 	return (0);

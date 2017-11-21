@@ -80,20 +80,20 @@ COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
 
 ## Int
 
-#@DEC		=	([1-9][0-9]*)
-#@OCT		=	(0[0-7]*)
-#@HEX		=	(0[xX][0-9a-fA-F]+)
-#@U_S		=	[uU]
-#@L_S		=	[lL]
-#@LL_S		=	(ll|LL)
-#@INT_S		=	(({U_S}{L_S}?)|({U_S}{LL_S})|({L_S}{U_S}?)|({LL_S}{U_S}?))
-#INTEGER		=	({DEC}|{OCT}|{HEX}){INT_S}?
+@DEC		=	([1-9][0-9]*) ;
+@OCT		=	(0[0-7]*) ;
+@HEX		=	(0[xX][0-9a-fA-F]+) ;
+@U_S		=	[uU] ;
+@L_S		=	[lL] ;
+@LL_S		=	(ll|LL) ;
+@INT_S		=	(({U_S}{L_S}?)|({U_S}{LL_S})|\
+						({L_S}{U_S}?)|({LL_S}{U_S}?)) ;
+INTEGER		=	({DEC}|{OCT}|{HEX}){INT_S}? ;
 
 ## Float
 
-#@SIGN		=	[-+]
-
-#@F_S		=	[flFL]
+@SIGN		=	[-+] ;
+@F_S		=	[flFL] ;
 
 #@SCF_EXP	=	[eE]{SIGN}?{DIGIT}+
 #@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+

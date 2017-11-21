@@ -18,7 +18,7 @@ state_t* state_at(size_t);
 int state(int);
 edge_t* edge(int, int);
 
-nfa_fragment_t* ast2nfa(node_ast_t*, int);
+nfa_fragment_t* ast2nfa(node_ast_t*, int, bool);
 int merge_nfa_fragment(set_t*);
 int NFAgen(token_spec_t*);
 

@@ -100,11 +100,10 @@ read_c(void) {
 }
 
 static int
-skip_until(int(*predF)(int)) {
+skip_until(int(*predF)(int), int last) {
 	int c = 0;
-	if ((local_spec->last_char != -1)
-			&& !((*predF)(local_spec->last_char)))
-		{ return (local_spec->last_char);  }
+	if ((last != -1) && !((*predF)(last)))
+		{ return (last);  }
 	do {
 		if ((c = get_c()) == EOF)
 			{ return (EOF); }
@@ -113,8 +112,8 @@ skip_until(int(*predF)(int)) {
 }
 
 static inline void
-skip_front_whitespace(void) {
-	local_spec->last_char = skip_until(&isspace);
+skip_front_whitespace(int last) {
+	local_spec->last_char = skip_until(&isspace, last);
 }
 
 static inline int
@@ -126,6 +125,7 @@ static int
 get_c(void) {
 	int input_c = read_c();
 	escaped = false;
+
 	if (input_c == EOF)
 		{ return (EOF); }
 	else if (input_c == '\\') {
@@ -147,7 +147,7 @@ get_c(void) {
 			case 'v': input_c = '\v'; break;
 			case '\n':
 				++local_spec->lineno;
-				input_c = skip_until(&is_tab_or_space);
+				input_c = skip_until(&is_tab_or_space, -1);
 				break;
 			case EOF: /* ERROR */ ; break;
 			default: break;
@@ -389,7 +389,7 @@ regex2ast(token_spec_t* spec) {
 	if (!spec)
 		{ return (NULL); }
 	local_spec = spec;
-	skip_front_whitespace();
+	skip_front_whitespace(local_spec->last_char);
 	return (reg_expr());
 }
 
@@ -456,6 +456,7 @@ reg_fact(void) {
 
 static node_ast_t*
 reg_atom(void) {
+	//printf("Peek = %c\n", peek());
 	if (!is_metachar(peek()))
 		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
 	else if (match(REG_LPAREN)) { 

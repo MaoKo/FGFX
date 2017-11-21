@@ -40,6 +40,7 @@ typedef struct {
 typedef struct {
 	bool local;
 	bool used;
+	bool igcase;
 	char* name;
 	enum { AST, FRAGMENT, } phase;
 	union {
@@ -51,6 +52,7 @@ typedef struct {
 typedef struct {
 	int filde;
 	int last_char;
+	int last_token;
 	buffer_t* last_lexeme;
 	int lineno;
 	vector_t* entry_lst;
