@@ -20,6 +20,10 @@
 #define REALLOC(ptr, size)	_prealloc(ptr, size)
 #define FREE(ptr)		free((void*)ptr)
 
+//Misc
+#define MIN(x, y)	((x < y) ? x : y)
+#define MAX(x, y)	((x > y) ? x : y)
+
 #define BUFF_SIZE		16
 #define VECT_SIZE		8
 

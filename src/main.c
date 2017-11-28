@@ -1,5 +1,6 @@
 #include "tokendef.h"
 #include "dfa.h"
+#include "bitset.h"
 
 static char const*
 get_filename(char const* path) {

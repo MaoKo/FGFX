@@ -4,7 +4,7 @@ CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc -O0
 CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
 OBJ		:=	set.o vector.o main.o tokendef.o regex.o\
-			nfa.o dfa.o utils.o out_gen.o buffer.o
+			nfa.o dfa.o utils.o out_gen.o buffer.o bitset.o
 
 OBJ		:=	$(addprefix src/,$(OBJ))
 TARGET		:=	fgfl
