@@ -1,181 +1,207 @@
+#include "bitset.h"
 #include "nfa.h"
 
-vector_t* record_state = NULL;
+static state_t* record_state[MAX_STATE] = {};
+static size_t current_index = 0;
 
-void new_record(void) {
-	if ((record_state = vector()))
-		{ push_back_vector(record_state, NULL); }
-}
-
-void del_record(void) {
-	for (size_t i = 0; i < size_vector(record_state); ++i) {
-		state_t* crt_state = (state_t*)at_vector(record_state, i);
-		if (crt_state) {
-			del_set(crt_state->edges);
-			FREE(crt_state);
+void
+del_record(void) {
+	for (size_t i = 0; i < current_index; ++i) {
+		state_t* state = record_state[i];
+		if (state->trans) {
+			edge_t* it = state->trans;
+			while (it) {
+				edge_t* next = it;
+				it = it->next;
+				FREE(next);	
+			}
 		}
+		if (state->class)
+			{ del_bitset(state->class); }
+		FREE(state);
+		record_state[i] = NULL;
 	}
-	record_state = NULL;
 }
 
-state_t* state_at(size_t index) {
-	return ((state_t*)at_vector(record_state, index));
+state_t*
+state_at(size_t index) {
+	if (index >= current_index)
+		{ return (NULL); }
+	return (record_state[index]);
 } 
 
-edge_t* edge(int symbol, int state) {
-	edge_t* edg = NEW(edge_t, 1);
-	if (!edg)
+state_t*
+new_state(void) {
+	state_t* state = NEW(state_t, 1);
+	if (!state)
 		{ return (NULL); }
-	edg->symbol = symbol; edg->out_state = state;
-	return (edg);
+	memset(state, 0, sizeof(state_t));
+	state->index_state = current_index;
+	record_state[current_index++] = state;
+	return (state);
 }
 
-int state(int force_index) {
-	state_t* st = NEW(state_t, 1);
-	if (!st)
-		{ return (-1); }
-	st->edges = EMPTY_SET; st->final = 0;
-	if (!record_state)
-		{ new_record(); }
-	int index;
-	if (force_index == -1) {
-		index = size_vector(record_state);
-		push_back_vector(record_state, st);
-	}
-	else {
-		index = force_index;
-		set_vector(record_state, force_index, st);
-	}
-	return (index);
-}
-
-static nfa_fragment_t* nfa_fragment(edge_t* tail, int head) {
-	nfa_fragment_t* frag = NEW(nfa_fragment_t, 1);
+static nfa_frag_t* 
+new_nfa_frag(int tail_label, state_t* tail_start, state_t* head) {
+	nfa_frag_t* frag = NEW(nfa_frag_t, 1);
 	if (!frag)
 		{ return (NULL); }
-	frag->tail = tail; frag->head = head;
+	frag->tail = NEW(edge_t, 1);
+	if (!frag->tail)
+		{ return (NULL); }
+	memset(frag->tail, 0, sizeof(edge_t));
+	INIT_EDGE(frag->tail, tail_label, tail_start);
+	frag->head = head;
 	return (frag);
 }
 
-static nfa_fragment_t* dfs_ast(node_ast_t*);
+static int
+attach_tail(state_t* state, ...) {
+	va_list args;
+	va_start(args, state);
+	nfa_frag_t* frag = NULL;
+	while ((frag = va_arg(args, nfa_frag_t*))) {
+		edge_t* new_edge = NEW(edge_t, 1);
+		if (!new_edge)
+			{ return (-1);  }
+		CPY_EDGE(new_edge, frag->tail);
+		PUSH_EDGE(state, new_edge);
+	}
+	va_end(args);
+	return (0);
+}
+
+static int
+make_transition(state_t* start, int label, state_t* final) {
+	edge_t* new_edge = NEW(edge_t, 1);
+	if (!new_edge)
+		{ return (-1); }
+	INIT_EDGE(new_edge, label, final);
+	PUSH_EDGE(start, new_edge);
+	return (0);
+}
+
+static nfa_frag_t* dfs_ast(node_ast_t*);
 static bool crt_igcase = false;
 
-static inline nfa_fragment_t*
+static inline nfa_frag_t*
 ast_symbol(node_ast_t* root) {
-	int final_s = state(NEW_STATE);
-	long symbol;
+	state_t* final_s = new_state();
+//	static bitset_t* all_letter = NULL;
+//	static int first_time = 1;
+#if 0
+	if (first_time) {
+		all_letter = new_bitset();	
+		for (int i = 'A'; i <= 'Z'; ++i)
+			{ ADD_BITSET(all_letter, i); }
+		for (int i = 'a'; i <= 'z'; ++i)
+			{ ADD_BITSET(all_letter, i); }
+		first_time = 0;
+	}
+
 	if (root->alone && crt_igcase && isalpha(root->symbol)) {
-		symbol = root->symbol;
-		root->cclass = set((void*)symbol);
+		int symbol = root->symbol;
+		root->cclass = bitset();
+		add_bitset(root->cclass, symbol);
 		root->alone = false;
 	}
+#endif
 	if (root->alone)
-		{ return (nfa_fragment(edge(root->symbol, final_s), final_s)); }
+		{ return (new_nfa_frag(root->symbol, final_s, final_s)); }
 
-	int relay_s  = state(NEW_STATE);
-	set_t* it = root->cclass;
-	while (it) {
-		symbol = (long)it->item;
-		if (crt_igcase && isalpha(symbol)) {
-			MAKE_TRANS(relay_s, tolower(symbol), final_s);
-			MAKE_TRANS(relay_s, toupper(symbol), final_s);
-		}
-		else
-			{ MAKE_TRANS(relay_s, symbol, final_s); }
-		it = it->next;
-	}
-	return (nfa_fragment(edge(EPSILON, relay_s), final_s));
+	state_t* relay_s  = new_state();
+	relay_s->class = dup_bitset(root->cclass);
+	relay_s->out_class = final_s;
+
+//	UNION_BITSET(relay_s->class, all_letter);
+	return (new_nfa_frag(EPSILON, relay_s, final_s));
 }
 
-static nfa_fragment_t* ast_union(node_ast_t* root) {
-	int start = state(NEW_STATE);
-
-	nfa_fragment_t* left = dfs_ast(root->left);
-	nfa_fragment_t* right = dfs_ast(root->right);
-	
-	ADD_EDGE2STATE(start, left->tail);
-	ADD_EDGE2STATE(start, right->tail);
-
-	int final = state(NEW_STATE);
-	MAKE_TRANS(left->head, EPSILON, final);
-	MAKE_TRANS(right->head, EPSILON, final);
-
-	return (nfa_fragment(edge(EPSILON, start), final));
+static nfa_frag_t*
+ast_union(node_ast_t* root) {
+	state_t* start = new_state();
+	nfa_frag_t* left = dfs_ast(root->left);
+	nfa_frag_t* right = dfs_ast(root->right);	
+	if (attach_tail(start, left, right, NULL))
+		{ /* TODO ERROR */ }
+	state_t* final = new_state();
+	if (make_transition(left->head, EPSILON, final)
+			|| make_transition(right->head, EPSILON, final))
+		{ /* TODO ERROR */ }
+	FREE_FRAG(left); FREE_FRAG(right);
+	return (new_nfa_frag(EPSILON, start, final));
 }
 
-static nfa_fragment_t* ast_concat(node_ast_t* root) {
-	nfa_fragment_t* left = dfs_ast(root->left);
-	nfa_fragment_t* right = dfs_ast(root->right);
-	ADD_EDGE2STATE(left->head, right->tail);
-	return (nfa_fragment(left->tail, right->head));
+static nfa_frag_t*
+ast_concat(node_ast_t* root) {
+	nfa_frag_t* left = dfs_ast(root->left);
+	nfa_frag_t* right = dfs_ast(root->right);
+	if (attach_tail(left->head, right, NULL))
+		{ /* TODO ERROR */ }
+	left->head = right->head;
+	FREE_FRAG(right);
+	return (left);
 }
 
-static nfa_fragment_t* ast_closure(node_ast_t* root) {
-	nfa_fragment_t* child = dfs_ast(root->left);
-	int front_state = state(NEW_STATE);
-	ADD_EDGE2STATE(front_state, child->tail);
-	MAKE_TRANS(child->head, EPSILON, front_state);
-	return (nfa_fragment(edge(EPSILON, front_state), front_state));
+static nfa_frag_t*
+ast_closure(node_ast_t* root) {
+	nfa_frag_t* child = dfs_ast(root->left);
+	state_t* front_state = new_state();
+	if (attach_tail(front_state, child, NULL))
+		{ /* TODO ERROR */ }
+	make_transition(child->head, EPSILON, front_state);
+	FREE_FRAG(child);
+	return (new_nfa_frag(EPSILON, front_state, front_state));
 }
 
 /* Depth First Search over the ast for constructing a sub-NFA */
-static nfa_fragment_t* dfs_ast(node_ast_t* root) {
+static nfa_frag_t* 
+dfs_ast(node_ast_t* root) {
 	if (root) {
 		switch (root->kind_ast) {
-			case AST_UNION:
-				return (ast_union(root)); break;
-			case AST_CONCAT:
-				return (ast_concat(root)); break;
-			case AST_CLOSURE:
-				return (ast_closure(root)); break;
-			case AST_SYMBOL:
-				return (ast_symbol(root)); break;
+			case AST_UNION:		return (ast_union(root));
+						break;
+			case AST_CONCAT:	return (ast_concat(root));
+						break;
+			case AST_CLOSURE:	return (ast_closure(root));
+						break;
+			case AST_SYMBOL:	return (ast_symbol(root));
+						break;
 		}	
 	}
 	return (NULL);
 }
 
-nfa_fragment_t* ast2nfa(node_ast_t* root, int priority, bool igcase) {
+nfa_frag_t*
+ast2nfa(node_ast_t* root, int priority, bool igcase) {
 	crt_igcase = igcase;
-	nfa_fragment_t* frag = dfs_ast(root);
-	MARK_STATE_FINAL(frag->head, priority);
+	nfa_frag_t* frag = dfs_ast(root);
+	STATE_FINAL(frag->head, priority);
 	return (frag);
 }
 
-int merge_nfa_fragment(set_t* nfa_set) {
-	int master = state(0);
-	if (master == -1)
-		{ return (-1); }
-	set_t* it = nfa_set;
-	while (it) {
-		ADD_EDGE2STATE(master, ((nfa_fragment_t*)it->item)->tail);
-		it = it->next;
-	}
-	del_set(nfa_set);
-	return (master);
-}
-
-int NFAgen(token_spec_t* spec) {
+int
+NFAgen(token_spec_t* spec) {
 	if (!spec)
 		{ return (-1); }
-	set_t* master = EMPTY_SET;
-	for (size_t i = 0; i < size_vector(spec->entry_lst); ++i) {
+	spec->master = new_state();
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)
-					at_vector(spec->entry_lst, i);
+					AT_VECTOR(spec->entry_lst, i);
 		if (!entry->local) {
 			node_ast_t* ast = entry->reg;
 			entry->frag = ast2nfa(ast, i + 1, entry->igcase);
 			del_node_ast(ast);
 
 			entry->phase = FRAGMENT;
-			add_set(&master, entry->frag);
+			if (attach_tail(spec->master, entry->frag, NULL))
+				{ return (-1); }
 		}
 		else if (!entry->used) {
 			fprintf(stderr, "Warring token %s not used.\n",
 				entry->name);
 		}
 	}
-	spec->master = merge_nfa_fragment(master);
 	return (0);
 }
 

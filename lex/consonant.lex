@@ -1,2 +1,2 @@
 ## The {-} mean set difference
-CONSONANT	=	[a-z]{-}[aeiou]
+CONSONANT	=	[a-z]{-}[aeiou] ;

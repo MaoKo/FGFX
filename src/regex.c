@@ -37,7 +37,7 @@ node_ast(int kind, ...) {
 		if (node->alone)
 			{ node->symbol = va_arg(args, int); }
 		else
-			{ node->cclass = va_arg(args, set_t*); }
+			{ node->cclass = va_arg(args, bitset_t*); }
 	}
 	node->kind_ast = kind;
 	va_end(args);
@@ -52,7 +52,7 @@ del_node_ast(node_ast_t* node) {
 			del_node_ast(node->right);
 		}
 		else if (!node->alone)
-			{ del_set(node->cclass); }
+			{ del_bitset(node->cclass); }
 		FREE(node);
 	}
 }
@@ -71,7 +71,7 @@ cpy_node_ast(node_ast_t* root) {
 						ALONE_S, root->symbol)); }
 			else {
 				return (node_ast(AST_SYMBOL, MULTI_S,
-						cpy_set(root->cclass)));
+						dup_bitset(root->cclass)));
 			}
 		}
 	}
@@ -288,11 +288,7 @@ diff_range(node_ast_t* root) {
 	node_ast_t* diff = reg_range();
 	if (diff->alone != MULTI_S)
 		{ /* ERROR */ }
-	set_t* it = diff->cclass;
-	while (it) {
-		del_item_set(&root->cclass, it->item);
-		it = it->next;
-	}
+	DIFF_BITSET(root->cclass, diff->cclass);
 	return (root);
 }
 
@@ -309,9 +305,9 @@ bound_name(node_ast_t* root) {
 	node_ast_t* rep_node = NULL;
 	buffer_t* bound = read_ident();
 	
-	for (size_t i = 0; i < size_vector(local_spec->entry_lst); ++i) {
+	for (size_t i = 0; i < SIZE_VECTOR(local_spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)
-					at_vector(local_spec->entry_lst, i);
+					AT_VECTOR(local_spec->entry_lst, i);
 		if (!strcmp(body_buffer(bound), entry->name)) {
 			rep_node = cpy_node_ast(entry->reg);
 			USED_ENTRY(entry);
@@ -366,6 +362,7 @@ curly_regex(node_ast_t* root) {
 	return (rep_node);
 }
 
+/*
 static set_t*
 complement_negate_range(set_t* base) {
 	set_t* compl = EMPTY_SET;
@@ -376,12 +373,13 @@ complement_negate_range(set_t* base) {
 	del_set(base);
 	return (compl);
 }
+*/
 
 static inline node_ast_t*
 dot_regex(void) {
-	set_t* nl = EMPTY_SET;
-	add_set(&nl, (void*)'\n');
-	return (node_ast(AST_SYMBOL, MULTI_S, complement_negate_range(nl)));
+	bitset_t* newl = new_bitset();
+	ADD_BITSET(newl, '\n');
+	return (node_ast(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }
 
 node_ast_t*
@@ -431,7 +429,7 @@ static node_ast_t*
 reg_fact(void) {
 	node_ast_t* root = reg_atom();
 	while (is_in_follow(REG_KLEENE, REG_PKLEENE,
-						REG_OKLEENE, REG_LBRACE, -1)) {
+					REG_OKLEENE, REG_LBRACE, -1)) {
 		int closure_kind = advance();
 		switch (closure_kind) {
 			case REG_PKLEENE:
@@ -490,7 +488,7 @@ reg_quote(void) {
 static node_ast_t*
 reg_range(void) {
 	bool negate = false;
-	set_t* range = EMPTY_SET;
+	bitset_t* range = new_bitset();
 	if (match(REG_CARET))
 		{ negate = true; }
 	int last = 0;
@@ -501,20 +499,22 @@ reg_range(void) {
 				(peek() != REG_RBRACK && !is_end())) {
 			crt_c = advance();
 			for (long i = last + 1; i <= crt_c; ++i)
-				{ add_set(&range, (void*)i); }
+				{ ADD_BITSET(range, i); }
 			in_range = true;
 		}
 		else {
-			add_set(&range, (void*)crt_c);
+			ADD_BITSET(range, crt_c);
 			in_range = false;
 		}
 		last = crt_c;
 	}
-	if (range == EMPTY_SET)
-		{ add_set(&range, (void*)EPSILON); }
+	if (is_empty_bitset(range))
+		{ ADD_BITSET(range, EPSILON); }
 
 	if (negate)
-		{ range = complement_negate_range(range); }
+		{ COMPL_BITSET(range); }
+	//if (negate)
+	//	{ range = complement_negate_range(range); }
 	expected(REG_RBRACK);
 	return (node_ast(AST_SYMBOL, MULTI_S, range));
 }

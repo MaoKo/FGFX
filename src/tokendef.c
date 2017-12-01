@@ -87,11 +87,11 @@ del_token_entry(token_entry_t* entry) {
 void
 del_token_spec(token_spec_t* spec) {
 	if (spec) {
-		for (size_t i = 0; i < size_vector(spec->entry_lst); ++i)
-			{ del_token_entry(at_vector(spec->entry_lst, i)); }
+		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i)
+			{ del_token_entry(AT_VECTOR(spec->entry_lst, i)); }
 		del_vector(spec->entry_lst);
-		FREE(spec);
 	}
+	FREE(spec);
 }
 
 int
@@ -110,9 +110,9 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 	if (!entry->name)
 		{ return (-1); }
 	entry->phase = AST;
-	for (size_t i = 0; i < size_vector(spec->entry_lst); ++i) {
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* current_e = (token_entry_t*)
-						at_vector(spec->entry_lst, i);
+						AT_VECTOR(spec->entry_lst, i);
 		if (!strcmp(current_e->name, entry->name))
 			{ return (-2); }
 	}
@@ -140,15 +140,15 @@ parse_assignement(token_spec_t* spec, int type) {
 			spec->lineno);
 		return (-1);
 	}
-	token_entry_t* last_entry = (token_entry_t*)back_vector(spec->entry_lst);
+	token_entry_t* last_entry = (token_entry_t*)BACK_VECTOR(spec->entry_lst);
 	last_entry->reg = regex2ast(spec);
 	return (0);
 }
 
 static int
 enable_igcase(token_spec_t* spec) {
-	for (size_t i = 0; i < size_vector(spec->entry_lst); ++i) {
-		token_entry_t* entry = (token_entry_t*)at_vector(spec->entry_lst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (!strcmp(entry->name, body_buffer(spec->last_lexeme))) {
 			entry->igcase = true;
 			return (0);
@@ -213,7 +213,7 @@ Reggen(char const* pathname, token_spec_t** spec) {
 		{ return (-1); }
 	(*spec)->last_char = -1; (*spec)->last_lexeme = NULL;
 	(*spec)->master = 0; (*spec)->lineno = 1;
-	(*spec)->entry_lst = vector(); (*spec)->last_token = -1;
+	(*spec)->entry_lst = new_vector(); (*spec)->last_token = -1;
 	if (parse_token_entry(*spec))
 		{ return (-1); }
 	return (0);

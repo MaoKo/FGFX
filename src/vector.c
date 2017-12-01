@@ -4,74 +4,40 @@ static vector_t* make_len_vector(size_t len) {
 	vector_t* vect = NEW(vector_t, 1);
 	if (!vect)
 		{ return (NULL); }
+	memset(vect, 0, sizeof(vector_t));
 	vect->body = NEW(void*, len);
-	if (!vect->body)
-		{ return (NULL); }
+	if (!vect->body) {
+		FREE(vect);
+		return (NULL);
+	}
 	vect->alloc = len;
-	vect->index = 0;
 	return (vect);
 }
 
-vector_t* vector(void) {
+vector_t* new_vector(void) {
 	return (make_len_vector(VECT_SIZE));
 }
 
-vector_t* cpy_vector(vector_t const* vect) {
+vector_t* dup_vector(vector_t const* vect) {
 	if (!vect)
 		{ return (NULL); }
 	vector_t* new_vect = make_len_vector(vect->alloc);
 	if (!new_vect)
 		{ return (NULL); }
-	return (memcpy(new_vect->body, vect->body, sizeof(void*) * vect->alloc));
+	memcpy(new_vect->body, vect->body, sizeof(void*) * vect->alloc);
+	return (new_vect);
 }
 
 void del_vector(vector_t* vect) {
-	if (vect) {
-		FREE(vect->body);
-		FREE(vect);
-	}
-}
-
-void* at_vector(vector_t const* vect, size_t index) {
-	if (!vect || vect->index <= index)
-		{ return (NULL); }
-	return (vect->body[index]);
-}
-
-void set_vector(vector_t* vect, size_t index, void* obj) {
-	if (!vect || vect->index <= index)
-		{ return; }
-	vect->body[index] = obj;
-}
-
-void* front_vector(vector_t const* vect) {
-	if (!vect || !vect->index)
-		{ return (NULL); }
-	return (*vect->body);
-}
-
-void* back_vector(vector_t const* vect) {
-	if (!vect || !vect->index)
-		{ return (NULL); }
-	return (vect->body[vect->index - 1]);
-}
-
-bool empty_vector(vector_t const* vect) {
-	if (!vect)
-		{ return (true); }
-	return (!vect->index);
-}
-
-size_t size_vector(vector_t const* vect) {
-	if (!vect)
-		{ return (0); }
-	return (vect->index);
+	if (vect)
+		{ FREE(vect->body); }
+	FREE(vect);
 }
 
 void clear_vector(vector_t* vect) {
 	if (!vect)
 		{ return; }
-	bzero(vect->body, sizeof(void*) * vect->index);
+	bzero(vect->body, sizeof(void*) * vect->alloc);
 	vect->index = 0;
 }
 
@@ -136,8 +102,10 @@ void reverse_vector(vector_t* vect) {
 }
 
 int get_index_vector(vector_t* vect, void* obj) {
-	for (size_t i = 0; i < size_vector(vect); ++i) {
-		if (obj == at_vector(vect, i))
+	if (!vect)
+		{ return (-1); }
+	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i) {
+		if (obj == AT_VECTOR(vect, i))
 			{ return (i); }
 	}
 	return (-1);

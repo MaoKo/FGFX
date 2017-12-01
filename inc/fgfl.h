@@ -2,7 +2,7 @@
 #define FGFL_H
 
 #include "vector.h"
-#include "set.h"
+#include "bitset.h"
 #include "buffer.h"
 
 typedef struct node_ast_t {
@@ -15,27 +15,33 @@ typedef struct node_ast_t {
 		struct {
 			bool alone;
 			union {
-				set_t* cclass;
+				bitset_t* cclass;
 				int symbol;
 			};
 		};
 	};
 } node_ast_t;
 
-typedef struct {
+typedef struct edge_t edge_t;
+
+typedef struct state_t {
 	int final;
-	set_t* edges;
+	unsigned int index_state;
+	edge_t* trans;
+	bitset_t* class;
+	struct state_t* out_class;
 } state_t;
 
-typedef struct {
-	int symbol;
-	long out_state;
-} edge_t;
+struct edge_t {
+	int label;
+	state_t* out_state;
+	edge_t* next;
+};
 
 typedef struct {
 	edge_t* tail;
-	int head;
-} nfa_fragment_t;
+	state_t* head;
+} nfa_frag_t;
 
 typedef struct {
 	bool local;
@@ -45,7 +51,7 @@ typedef struct {
 	enum { AST, FRAGMENT, } phase;
 	union {
 		node_ast_t* reg;
-		nfa_fragment_t* frag;
+		nfa_frag_t* frag;
 	};
 } token_entry_t;
 
@@ -56,7 +62,13 @@ typedef struct {
 	buffer_t* last_lexeme;
 	int lineno;
 	vector_t* entry_lst;
-	long master;
+	state_t* master;
 } token_spec_t;
+
+typedef struct trans_list_t {
+	unsigned int input;
+	unsigned int state;
+	struct trans_list_t* next;
+} trans_list_t;
 
 #endif /* FGFL_H */

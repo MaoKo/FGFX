@@ -1,2 +1,1 @@
-A	=	[a-z];
-%igcase A;
+DIGIT	=	[0-9]+	;
