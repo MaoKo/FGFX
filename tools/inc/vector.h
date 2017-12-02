@@ -13,6 +13,8 @@
 #define PUSH_FRONT_VECTOR(vect, x)	(insert_vector(vect, 0, x))
 #define PUSH_BACK_VECTOR(vect, x)	(insert_vector(vect, (vect)->index, x))
 
+#define POP_BACK_VECTOR(vect, x)	(erase_vector(vect, (vect)->index - 1),\
+					(vect)->body[(vect)->index])
 #define POP_FRONT_VECTOR(vect, x)	(erase_vector(vect, 0))
 
 #define _VECT_SIZE			8
@@ -29,7 +31,6 @@ void del_vector(vector_t*);
 void clear_vector(vector_t*);
 void insert_vector(vector_t*, size_t, void*);
 void erase_vector(vector_t*, size_t);
-void* pop_back_vector(vector_t*);
 void reverse_vector(vector_t*);
 int get_index_vector(vector_t*, void*);
 

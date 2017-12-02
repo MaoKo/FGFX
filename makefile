@@ -1,13 +1,16 @@
 .PHONY: all clean mrproper re
 
 CC		:=	cc
-CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc -g
+CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc  -Itools/inc -g
 CC_MACRO	:=	#-DOPTIMIZE
 LD_FLAGS	:=
-OBJ		:=	vector.o main.o tokendef.o regex.o nfa.o\
-			dfa.o utils.o buffer.o bitset.o
-
+TOOLS_OBJ	:=	bitset.o vector.o
+OBJ		:=	main.o tokendef.o regex.o nfa.o dfa.o utils.o buffer.o
+## Add Prefix ##
 OBJ		:=	$(addprefix src/,$(OBJ))
+TOOLS_OBJ	:=	$(addprefix tools/src/,$(TOOLS_OBJ))
+## Merge All ##
+OBJ		+=	$(TOOLS_OBJ)
 TARGET		:=	fgfl
 
 all: $(TARGET);

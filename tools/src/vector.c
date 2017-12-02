@@ -76,20 +76,13 @@ insert_vector(vector_t* vect, size_t offset, void* obj) {
 
 void
 erase_vector(vector_t* vect, size_t offset) {
-	if (!vect || vect->index <= offset)
+	if (!vect || offset >= vect->index)
 		{ return; }
 	if (offset + 1 != vect->index) {
 		memmove(vect->body + offset, vect->body + offset + 1,
 				sizeof(void*) * (vect->index - offset - 1));
 	}
 	--vect->index;
-}
-
-void*
-pop_back_vector(vector_t* vect) {
-	if (!vect || !vect->index)
-		{ return (NULL); }
-	return (vect->body[--vect->index]);
 }
 
 void reverse_vector(vector_t* vect) {
