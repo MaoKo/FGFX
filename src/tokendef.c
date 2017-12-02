@@ -116,7 +116,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 		if (!strcmp(current_e->name, entry->name))
 			{ return (-2); }
 	}
-	push_back_vector(spec->entry_lst, entry);
+	PUSH_BACK_VECTOR(spec->entry_lst, entry);
 	return (0);
 }
 

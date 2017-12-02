@@ -41,6 +41,8 @@ enum {
 #define DIFF_BITSET(x, y)	(_op_bitset(_DIFF, x, y))
 #define COMPL_BITSET(x)		(_op_bitset(_COMPL, x, NULL))
 
+#define NULL_BITSET		NULL
+
 typedef struct {
 	unsigned char nwords;
 	unsigned int nbits;

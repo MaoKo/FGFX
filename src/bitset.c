@@ -73,7 +73,7 @@ is_empty_bitset(bitset_t const* bs) {
 	if (!bs)
 		{ return (true); }
 	for (size_t i = 0; i < bs->nwords; ++i) {
-		if (bs->map[i] != 0)
+		if (bs->map[i])
 			{ return (false); }
 	}
 	return (true);

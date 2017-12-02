@@ -3,12 +3,19 @@
 
 #include "utils.h"
 
-#define AT_VECTOR(vect, i)	((vect)->body[i])
-#define SET_VECTOR(vect, i, x)	((vect)->body[i] = x)
-#define FRONT_VECTOR(vect)	((*vect)->body)
-#define BACK_VECTOR(vect)	((vect)->body[vect->index - 1])
-#define EMPTY_VECTOR(vect)	(!(vect)->index)
-#define SIZE_VECTOR(vect)	((vect)->index)
+#define AT_VECTOR(vect, i)		((vect)->body[i])
+#define SET_VECTOR(vect, i, x)		((vect)->body[i] = x)
+#define FRONT_VECTOR(vect)		((*vect)->body)
+#define BACK_VECTOR(vect)		((vect)->body[(vect)->index - 1])
+#define EMPTY_VECTOR(vect)		(!(vect)->index)
+#define SIZE_VECTOR(vect)		((vect)->index)
+
+#define PUSH_FRONT_VECTOR(vect, x)	(insert_vector(vect, 0, x))
+#define PUSH_BACK_VECTOR(vect, x)	(insert_vector(vect, (vect)->index, x))
+
+#define POP_FRONT_VECTOR(vect, x)	(erase_vector(vect, 0))
+
+#define _VECT_SIZE			8
 
 typedef struct {
 	void** body;
@@ -22,7 +29,6 @@ void del_vector(vector_t*);
 void clear_vector(vector_t*);
 void insert_vector(vector_t*, size_t, void*);
 void erase_vector(vector_t*, size_t);
-void push_back_vector(vector_t*, void*);
 void* pop_back_vector(vector_t*);
 void reverse_vector(vector_t*);
 int get_index_vector(vector_t*, void*);

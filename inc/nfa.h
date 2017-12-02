@@ -11,6 +11,9 @@
 #define PUSH_EDGE(st, ed)	((ed->next = st->trans) , (st->trans = ed))
 #define INIT_EDGE(ed, l, o)	((ed->label = l) , (ed->out_state = o))
 #define	MAX_STATE		712
+#define STATE_AT(index)		(record_state[index])
+
+extern state_t* record_state[MAX_STATE];
 
 void del_record(void);
 state_t* state_at(size_t);

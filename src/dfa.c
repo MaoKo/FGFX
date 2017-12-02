@@ -18,13 +18,13 @@ bitset_t*
 closure(bitset_t* set_state) {
 	if (!set_state)
 		{ return (NULL); }
-	bitset_t* last = NULL;
+	bitset_t* last = NULL_BITSET;
 	do {
 		del_bitset(last);
 		last = dup_bitset(set_state);
 		int i;
 		while ((i = IT_NEXT(last)) != -1)
-			{ edges(state_at(i), EPSILON, set_state); }
+			{ edges(STATE_AT(i), EPSILON, set_state); }
 	} while (!eq_bitset(set_state, last));
 	del_bitset(last);
 	return (set_state);
@@ -35,55 +35,62 @@ DFAedge(bitset_t* states, int symbol) {
 	bitset_t* target = new_bitset();
 	int i;
 	while ((i = IT_NEXT(states)) != -1)
-		{ edges(state_at(i), symbol, target); }
+		{ edges(STATE_AT(i), symbol, target); }
 	IT_RESET(states);
+	if (is_empty_bitset(target)) {
+		del_bitset(target);
+		return (NULL_BITSET);
+	}
 	return (closure(target));
 }
 
-static vector_t* gen_state_table(state_t* master, vector_t** states) {
-	(*states) = new_vector();
+static vector_t* gen_state_table(state_t* master, vector_t** rstates) {
+	vector_t* states = (*rstates) = new_vector();
 	
 	bitset_t* start = new_bitset();
 	ADD_BITSET(start, master->index_state);
 	
-	push_back_vector(*states, NULL);
-	push_back_vector(*states, closure(start));
+	PUSH_BACK_VECTOR(states, NULL_BITSET);
+	PUSH_BACK_VECTOR(states, closure(start));
 	
-	vector_t* trans = new_vector();
-	long j = 0, p = 1;
+	//vector_t* trans = new_vector();
+	//PUSH_BACK_VECTOR(trans, NULL);	//Dead State
+
+	long j = 1, p = 1;
 
 	while (j <= p) {
-		//printf("J = %ld\n", p);
-		push_back_vector(trans, NULL);
+		//printf("J = %ld\n", j);
+		//PUSH_BACK_VECTOR(trans, NULL);
 		for (register int i = MIN_ASCII; i < MAX_ASCII; ++i) {
-			bitset_t* next = DFAedge(AT_VECTOR(*states, j), i);
-			if (is_empty_bitset(next))
+			bitset_t* next = DFAedge(AT_VECTOR(states, j), i);
+			if (next == NULL_BITSET)
 				{ continue; }
 
-			trans_list_t* list = AT_VECTOR(trans, j);
-			trans_list_t* new_list = NEW(trans_list_t, 1);
-			new_list->input = i;
+			//trans_list_t* new_list = NEW(trans_list_t, 1);
+			//new_list->input = i;
 
 			long l = 1;
 			for (; l <= p; ++l) {
-				if (eq_bitset(next, AT_VECTOR(*states, l)))
+				if (eq_bitset(next, (bitset_t*)AT_VECTOR(states, l)))
 					{ break; }
 			}
 			if (l <= p) {
-				new_list->state = l;
+				//new_list->state = l;
 				del_bitset(next);
 			}
 			else {
-				new_list->state = ++p;
-				push_back_vector(*states, next);
+				++p;
+				//new_list->state = ++p;
+				PUSH_BACK_VECTOR(states, next);
 			}
-			new_list->next = list;
-			SET_VECTOR(trans, j, new_list);
+			//new_list->next = AT_VECTOR(trans, j);
+			//SET_VECTOR(trans, j, new_list);
 		}
 		++j;
 	}
 	exit(1);
-	return (trans);
+	return (NULL);
+	//return (trans);
 }
 
 static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
@@ -93,7 +100,7 @@ static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
 		int min_tok = 0;
 		int it;
 		while ((it = IT_NEXT(set_state)) != -1) {
-			state_t* crt_state = state_at(it);
+			state_t* crt_state = STATE_AT(it);
 			if (crt_state->final) {
 				if (!min_tok || min_tok > crt_state->final)
 					{ min_tok = crt_state->final; }
@@ -102,8 +109,8 @@ static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
 		if (min_tok) {
 			char* name = ((token_entry_t*)
 					AT_VECTOR(elst, min_tok - 1))->name;
-			push_back_vector(final, (void*)i);
-			push_back_vector(final, name);
+			PUSH_BACK_VECTOR(final, (void*)i);
+			PUSH_BACK_VECTOR(final, name);
 		}
 	}
 	return (final);

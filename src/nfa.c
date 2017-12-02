@@ -1,7 +1,7 @@
 #include "bitset.h"
 #include "nfa.h"
 
-static state_t* record_state[MAX_STATE] = {};
+state_t* record_state[MAX_STATE] = {};
 static size_t current_index = 0;
 
 void
@@ -22,13 +22,6 @@ del_record(void) {
 		record_state[i] = NULL;
 	}
 }
-
-state_t*
-state_at(size_t index) {
-	if (index >= current_index)
-		{ return (NULL); }
-	return (record_state[index]);
-} 
 
 state_t*
 new_state(void) {

@@ -1,6 +1,7 @@
 #include "vector.h"
 
-static vector_t* make_len_vector(size_t len) {
+static vector_t*
+make_len_vector(size_t len) {
 	vector_t* vect = NEW(vector_t, 1);
 	if (!vect)
 		{ return (NULL); }
@@ -14,11 +15,13 @@ static vector_t* make_len_vector(size_t len) {
 	return (vect);
 }
 
-vector_t* new_vector(void) {
-	return (make_len_vector(VECT_SIZE));
+vector_t*
+new_vector(void) {
+	return (make_len_vector(_VECT_SIZE));
 }
 
-vector_t* dup_vector(vector_t const* vect) {
+vector_t*
+dup_vector(vector_t const* vect) {
 	if (!vect)
 		{ return (NULL); }
 	vector_t* new_vect = make_len_vector(vect->alloc);
@@ -28,23 +31,26 @@ vector_t* dup_vector(vector_t const* vect) {
 	return (new_vect);
 }
 
-void del_vector(vector_t* vect) {
+void
+del_vector(vector_t* vect) {
 	if (vect)
 		{ FREE(vect->body); }
 	FREE(vect);
 }
 
-void clear_vector(vector_t* vect) {
+void
+clear_vector(vector_t* vect) {
 	if (!vect)
 		{ return; }
 	bzero(vect->body, sizeof(void*) * vect->alloc);
 	vect->index = 0;
 }
 
-static void extend_vector(vector_t* vect) {
+static void
+extend_vector(vector_t* vect) {
 	size_t new_sz;
-	if (vect->index + 1 >= vect->alloc) {
-		new_sz = round_up(vect->index + 1);
+	if (vect->index >= vect->alloc) {
+		new_sz = round_up(vect->index);
 		void** new_body = REALLOC(vect->body, sizeof(void*) * new_sz);
 		if (new_body) {
 			vect->body = new_body;
@@ -53,7 +59,8 @@ static void extend_vector(vector_t* vect) {
 	}
 }
 
-void insert_vector(vector_t* vect, size_t offset, void* obj) {
+void
+insert_vector(vector_t* vect, size_t offset, void* obj) {
 	if (!vect)
 		{ return; }
 	extend_vector(vect);
@@ -67,7 +74,8 @@ void insert_vector(vector_t* vect, size_t offset, void* obj) {
 	++vect->index;
 }
 
-void erase_vector(vector_t* vect, size_t offset) {
+void
+erase_vector(vector_t* vect, size_t offset) {
 	if (!vect || vect->index <= offset)
 		{ return; }
 	if (offset + 1 != vect->index) {
@@ -77,14 +85,8 @@ void erase_vector(vector_t* vect, size_t offset) {
 	--vect->index;
 }
 
-void push_back_vector(vector_t* vect, void* item) {
-	if (!vect)
-		{ return; }
-	extend_vector(vect);
-	vect->body[vect->index++] = item;
-}
-
-void* pop_back_vector(vector_t* vect) {
+void*
+pop_back_vector(vector_t* vect) {
 	if (!vect || !vect->index)
 		{ return (NULL); }
 	return (vect->body[--vect->index]);

@@ -25,10 +25,8 @@
 #define MAX(x, y)	((x > y) ? x : y)
 
 #define BUFF_SIZE		16
-#define VECT_SIZE		8
 
 #define EOS			'\0'
-#define EMPTY_SET		NULL
 
 #define MIN_ASCII		0
 #define MAX_ASCII		(UCHAR_MAX + 1)
