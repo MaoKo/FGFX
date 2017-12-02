@@ -1,4 +1,7 @@
+#include <string.h>
+
 #include "buffer.h"
+#include "utils.h"
 
 static void make_null_body(buffer_t* buf) {
 	for (size_t i = 0; i < buf->alloc; ++i)

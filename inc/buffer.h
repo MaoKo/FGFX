@@ -1,7 +1,9 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "utils.h"
+#include <stddef.h>
+
+#define BUFF_SIZE		16
 
 typedef struct {
 	char* body;

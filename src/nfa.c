@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
+#include "utils.h"
 #include "bitset.h"
 #include "nfa.h"
 

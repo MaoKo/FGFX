@@ -1,5 +1,14 @@
-#include "tokendef.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "fgfl.lex.h"
+#include "tokendef.h"
+#include "utils.h"
+#include "regex.h"
+#include "nfa.h"
+#include "buffer.h"
 
 int
 is_final_state(int state) {

@@ -1,6 +1,8 @@
 #ifndef FGFL_H
 #define FGFL_H
 
+#include <stdbool.h>
+
 #include "vector.h"
 #include "bitset.h"
 #include "buffer.h"

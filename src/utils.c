@@ -1,10 +1,17 @@
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <assert.h>
+
 #include "utils.h"
 
 size_t
 round_up(size_t size) {
 	size_t close2 = 1;
 	while (close2 <= size)
-		{ close2 *= 2; }
+		{ close2 <<= 1; }
 	return (close2);
 }
 
@@ -21,21 +28,29 @@ strjoin(char const* str1, char const* str2) {
 	return (frame);
 }
 
+void
+del_trans_list(trans_list_t* list) {
+	while (list) {
+		trans_list_t* next = list->next;
+		FREE(list);
+		list = next;
+	}
+}
+
+bool
+cmp_trans_list(trans_list_t const* t1, trans_list_t const* t2) {
+	while (t1 && t2) {
+		if ((t1->input != t2->input) || (t1->state != t2->state))
+			{ return (false); }
+		t1 = t1->next;
+		t2 = t2->next;
+	}
+	return (!t1 && !t2);
+}
+
 bool
 file_exist(char const* filename) {
 	return (open(filename, O_WRONLY | O_EXCL) != -1);
-}
-
-int write_str_fd(int filde, char const* str) {
-	return (write(filde, str, strlen(str)));
-}
-
-int write_str(char const* str) {
-	return (write(fileno(stdout), str, strlen(str)));
-}
-
-int write_str_err(char const* str) {
-	return (write(fileno(stderr), str, strlen(str)));
 }
 
 void*
@@ -47,7 +62,7 @@ _pmalloc(size_t size) {
 	assert(chunk);
 #else
 	if (!chunk) {
-		write_str_err("No enough memory for this process.\n");
+		fprintf(stderr, "No enough memory for this process.\n");
 		errno = ENOMEM;
 	}
 #endif
@@ -65,7 +80,7 @@ _prealloc(void* ptr, size_t size) {
 	assert(new_chunk);
 #else
 	if (!chunck) {
-		write_str_err("The reallocation has failed.\n");
+		fprintf(stderr, "The reallocation has failed.\n");
 		errno = ENOMEM;
 	}
 #endif

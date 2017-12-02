@@ -1,5 +1,8 @@
-#include "utils.h"
+#include <string.h>
+#include <stdio.h>
+
 #include "bitset.h"
+#include "utils.h"
 
 static int
 adjust_bitset(bitset_t* bs, unsigned char new_size) {

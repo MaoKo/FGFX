@@ -1,4 +1,14 @@
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "regex.h"
+#include "tokendef.h"
+#include "utils.h"
+#include "nfa.h"
+#include "vector.h"
 
 static token_spec_t* local_spec = NULL;
 static bool escaped = false;

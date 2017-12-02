@@ -1,4 +1,7 @@
+#include <string.h>
+
 #include "vector.h"
+#include "utils.h"
 
 static vector_t*
 make_len_vector(size_t len) {

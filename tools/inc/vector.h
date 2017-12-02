@@ -1,7 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "utils.h"
+#include <stddef.h>
 
 #define AT_VECTOR(vect, i)		((vect)->body[i])
 #define SET_VECTOR(vect, i, x)		((vect)->body[i] = x)

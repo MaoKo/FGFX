@@ -3,10 +3,6 @@
 
 #include "fgfl.h"
 
-#include "regex.h"
-#include "nfa.h"
-#include "buffer.h"
-
 #define READ			1
 #define NO_READ			0
 

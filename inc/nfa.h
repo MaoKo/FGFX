@@ -1,8 +1,10 @@
 #ifndef NFA_H
 #define NFA_H
 
+#include <stddef.h>
+#include <limits.h>
+
 #include "fgfl.h"
-#include "vector.h"
 #include "regex.h"
 
 #define STATE_FINAL(state, tok)	(state->final = tok)
@@ -12,6 +14,11 @@
 #define INIT_EDGE(ed, l, o)	((ed->label = l) , (ed->out_state = o))
 #define	MAX_STATE		712
 #define STATE_AT(index)		(record_state[index])
+
+#define MIN_ASCII		0
+#define MAX_ASCII		(UCHAR_MAX + 1)
+
+#define EPSILON			(MAX_ASCII + 1)
 
 extern state_t* record_state[MAX_STATE];
 
