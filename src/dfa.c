@@ -129,7 +129,6 @@ static void gen_table(state_t* master, vector_t** trans,
 }
 
 #ifdef OPTIMIZE
-#include <stdio.h>
 static void
 redirect_trans(vector_t* trans, long s1, long s2) {
 	del_trans_list(AT_VECTOR(trans, s2));

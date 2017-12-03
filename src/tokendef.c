@@ -25,7 +25,7 @@ get_next_token(token_spec_t* spec) {
 	int c = 0;
 
 	if (!spec->last_lexeme)
-		{ spec->last_lexeme = buffer(); }
+		{ spec->last_lexeme = new_buffer(); }
 	if (spec->last_char != -1) {
 		state = state_table[state][spec->last_char];
 		last_match = is_final_state(state);
@@ -53,7 +53,7 @@ get_next_token(token_spec_t* spec) {
 	
 	if (last_match == TNONE) {
 		fprintf(stderr, "Lexical Error <%d:%s>.\n",
-			spec->lineno, body_buffer(spec->last_lexeme));
+			spec->lineno, BODY_BUFFER(spec->last_lexeme));
 		spec->last_char = -1;
 	}
 	else {
@@ -114,7 +114,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 		entry->used = false;
 	}
 	int offset = (token == TL_IDENT);
-	entry->name = strdup(body_buffer(spec->last_lexeme) + offset);
+	entry->name = strdup(BODY_BUFFER(spec->last_lexeme) + offset);
 	entry->igcase = false;
 	if (!entry->name)
 		{ return (-1); }
@@ -158,13 +158,13 @@ static int
 enable_igcase(token_spec_t* spec) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
-		if (!strcmp(entry->name, body_buffer(spec->last_lexeme))) {
+		if (!strcmp(entry->name, BODY_BUFFER(spec->last_lexeme))) {
 			entry->igcase = true;
 			return (0);
 		}
 	}
 	fprintf(stderr, "Identifier %s not found.\n",
-		body_buffer(spec->last_lexeme));
+		BODY_BUFFER(spec->last_lexeme));
 	return (-1);
 }
 

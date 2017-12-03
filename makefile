@@ -4,9 +4,8 @@ CC		:=	cc
 CC_FLAGS	:=	-Wall -Wextra -Werror -Iinc  -Itools/inc -g
 CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
-TOOLS_OBJ	:=	bitset.o vector.o
-OBJ		:=	main.o dfa.o tokendef.o nfa.o regex.o utils.o\
-			buffer.o dfagen.o
+TOOLS_OBJ	:=	bitset.o vector.o buffer.o
+OBJ		:=	main.o dfa.o tokendef.o nfa.o regex.o utils.o dfagen.o
 ## Add Prefix ##
 OBJ		:=	$(addprefix src/,$(OBJ))
 TOOLS_OBJ	:=	$(addprefix tools/src/,$(TOOLS_OBJ))

@@ -304,7 +304,7 @@ diff_range(node_ast_t* root) {
 
 static buffer_t*
 read_ident(void) {
-	buffer_t* buf = buffer();
+	buffer_t* buf = new_buffer();
 	while (is_letter(peek()) || isdigit(peek()))
 		{ write_char_buffer(buf, advance()); }
 	return (buf);
@@ -318,7 +318,7 @@ bound_name(node_ast_t* root) {
 	for (size_t i = 0; i < SIZE_VECTOR(local_spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)
 					AT_VECTOR(local_spec->entry_lst, i);
-		if (!strcmp(body_buffer(bound), entry->name)) {
+		if (CMP_BUFF_STR(bound, entry->name)) {
 			rep_node = cpy_node_ast(entry->reg);
 			USED_ENTRY(entry);
 			break;
@@ -328,7 +328,7 @@ bound_name(node_ast_t* root) {
 		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
 	else {
 		fprintf(stderr, "Error (%d): Undefined name %s.\n",
-			local_spec->lineno, body_buffer(bound));
+			local_spec->lineno, BODY_BUFFER(bound));
 	}
 
 	del_buffer(bound);

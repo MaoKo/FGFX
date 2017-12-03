@@ -11,4 +11,6 @@ COM	=	#.* ;
 SPACE	=	[ \t\n]+ ;
 SEMI	=	\; ;
 IGCASE	=	%igcase ;
+## TODO %skip
+#SKIP	=	%skip ;
 COMMA	=	, ;
