@@ -88,8 +88,10 @@ void
 unget_c_buffer(buffer_t* buf, size_t sz) {
 	if (!buf)
 		{ return; }
-	while (buf->index-- && sz--)
-		{ buf->body[buf->index] = '\0'; }
+	if (sz > buf->index)
+		{ sz = buf->index; }
+	while (--sz)
+		{ buf->body[--buf->index] = '\0'; }
 }
 
 void
