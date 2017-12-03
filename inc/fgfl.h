@@ -57,6 +57,7 @@ typedef struct {
 	bool local;
 	bool used;
 	bool igcase;
+	bool skip;
 	char* name;
 	enum { AST, FRAGMENT, } phase;
 	union {

@@ -18,8 +18,12 @@ min_size_type(size_t size) {
 }
 
 static inline void
-gen_require_header(int filde) {
-	dprintf(filde, INCLUDE_SYS(stdint.h)"\n\n");
+gen_require_header(int filde, vector_t const* trans, vector_t const* final) {
+	dprintf(filde, INCLUDE_SYS(stdint.h)"\n");
+	dprintf(filde, TYPEDEF""TAB"uint%zu_t"TAB"dfa_state_t;\n",
+			min_size_type(SIZE_VECTOR(trans)));
+	dprintf(filde, TYPEDEF""TAB"uint%zu_t"TAB"final_state_t;\n\n",
+			min_size_type(SIZE_VECTOR(final)));
 }
 
 static void
@@ -49,7 +53,7 @@ static void print_verbatim_header(int filde, char const* header) {
 static void
 gen_state_table(int filde, vector_t const* trans, char const* header) {
 	dprintf(filde, "//Size of state table = %zu\n", SIZE_VECTOR(trans));
-	dprintf(filde, STATIC" uint%zu_t ", min_size_type(SIZE_VECTOR(trans)));
+	dprintf(filde, STATIC" dfa_state_t ");
 	print_verbatim_header(filde, header);
 	dprintf(filde, "_state_table[][%d] = {\n", MAX_ASCII);
 
@@ -78,7 +82,7 @@ gen_state_table(int filde, vector_t const* trans, char const* header) {
 
 static void
 gen_final_table(int filde, vector_t const* final, char const* header) {
-	dprintf(filde, STATIC" uint%zu_t ", min_size_type(SIZE_VECTOR(final)));
+	dprintf(filde, STATIC" final_state_t ");
 	print_verbatim_header(filde, header);
 	dprintf(filde, "_final_table[][2] = {\n");
 
@@ -89,6 +93,19 @@ gen_final_table(int filde, vector_t const* final, char const* header) {
 				(char const*)AT_VECTOR(final, i*2+1));
 	}
 	dprintf(filde, "};\n\n#define SIZE_FINAL_TAB"TAB"%zu\n\n", count_final);
+}
+
+static void
+gen_skip_table(int filde, vector_t const* elst, char const* header) {
+	dprintf(filde, STATIC" "INT" ");
+	print_verbatim_header(filde, header);
+	dprintf(filde, "_skip_table[] = {\n");
+	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
+		if (entry->skip && !entry->local)
+			{ dprintf(filde, TAB"T%s,\n", entry->name); }
+	}
+	dprintf(filde, TAB"-1,\n};\n\n");
 }
 
 static inline void
@@ -137,12 +154,13 @@ gen_header(char const* header, vector_t const* trans,
 	if (filde == -1)
 		{ return (ERROR); }
 	gen_require_macro(filde, header);
-	gen_require_header(filde);
+	gen_require_header(filde, trans, final);
 	gen_enum(filde, elst);
 	dprintf(filde, "#ifndef ONLY_TOKEN\n\n");
 	gen_useful_macro(filde);
 	gen_state_table(filde, trans, header);
 	gen_final_table(filde, final, header);
+	gen_skip_table(filde, elst, header);
 	dprintf(filde, "#endif /* ONLY_TOKEN */\n");
 	gen_endif(filde, header);
 	if (close(filde) == -1)

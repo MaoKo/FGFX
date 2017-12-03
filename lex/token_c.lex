@@ -75,6 +75,12 @@ DASH		=	#	;
 ## C Comment
 
 COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
+%skip COMMENT;
+
+## C Space
+
+SPACE		=	[ \t\n]+ ;
+%skip SPACE;
 
 ## C Number
 

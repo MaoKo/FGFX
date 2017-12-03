@@ -21,6 +21,7 @@
 #define INCLUDE_SYS(x)	"#include <"#x">"
 #define INCLUDE(x)	"#include \""#x"\""
 #define DEFINE(x,y)	"#define "#x""TAB""#y
+#define TYPEDEF		"typedef"
 
 int gen_header(char const*, vector_t const*, vector_t const*, vector_t const*);
 

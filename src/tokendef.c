@@ -14,8 +14,6 @@
 #include "fgfl.lex.h"
 #undef ONLY_TOKEN
 
-#define STRIP_SPACE(lex)	(advance_token(lex, TSPACE, TCOM, -1))
-
 static void
 del_token_entry(token_entry_t* entry) {
 	if (entry) {
@@ -66,8 +64,9 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 }
 
 static int
-parse_assignement(token_spec_t* spec, int type) {
-	if (type != TG_IDENT && type != TL_IDENT) {
+parse_assignement(token_spec_t* spec) {
+	int type = advance_token(spec->lex);
+	if ((type != TG_IDENT) && (type != TL_IDENT)) {
 		fprintf(stderr, "Error (%d): Expected ident (Local or not).\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -80,7 +79,7 @@ parse_assignement(token_spec_t* spec, int type) {
 		}
 		return (-1);
 	}
-	if (STRIP_SPACE(spec->lex) != TEQUAL) {
+	if (advance_token(spec->lex) != TEQUAL) {
 		fprintf(stderr, "Error (%d): No equal sign after an ident.\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -91,36 +90,50 @@ parse_assignement(token_spec_t* spec, int type) {
 }
 
 static int
-enable_igcase(token_spec_t* spec) {
+enable_property(token_spec_t* spec, int token) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (!strcmp(entry->name, BODY_BUFFER(LAST_LEXEME(spec->lex)))) {
-			entry->igcase = true;
+			if (token == TIGCASE)
+				{ entry->igcase = true; }
+			else {
+				entry->skip = true;
+				if (entry->local) {
+					fprintf(stderr,
+					"Useless to skip a local symbol: %s.\n",
+					entry->name);
+				 }
+			}
 			return (0);
 		}
 	}
 	fprintf(stderr, "Identifier %s not found.\n",
-		BODY_BUFFER(LAST_LEXEME(spec->lex)));
+			BODY_BUFFER(LAST_LEXEME(spec->lex)));
 	return (-1);
 }
 
 static int
 parse_directive(token_spec_t* spec) {
-	if (STRIP_SPACE(spec->lex) != TG_IDENT) {
-		fprintf(stderr, "Error (%d): Expected id after igcase directive.\n",
-			CURRENT_LINE(spec->lex));
+	if (!in_first(spec->lex, TIGCASE, TSKIP))
+		{ /* ERROR */ return (-1); }
+	int kind_directive = advance_token(spec->lex);
+	if (advance_token(spec->lex) != TG_IDENT) {
+		fprintf(stderr, "Error (%d): Expected id after %s directive.\n",
+			CURRENT_LINE(spec->lex), ((kind_directive == TIGCASE) ?
+						"igcase" : "skip"));
 		return (-1);
 	}
-	if (enable_igcase(spec) == -1)
-		{ return (-1); }
+	if (enable_property(spec, kind_directive) == -1)
+		{ return (-1); }		
 	while (peek_token(spec->lex) == TCOMMA) {
-		if (STRIP_SPACE(spec->lex) != TG_IDENT) {
-			fprintf(stderr, "Error (%d): Expected id after the comma.\n",
+		advance_token(spec->lex);
+		if (advance_token(spec->lex) != TG_IDENT) {
+			fprintf(stderr, "Error (%d): Expected id after a comma.\n",
 				CURRENT_LINE(spec->lex));
 			return (-1);
 		}
-		if (enable_igcase(spec) == -1)
-			{ return (-1); }
+		if (enable_property(spec, kind_directive) == -1)
+			{ return (-1); }		
 	}
 	return (0);
 }
@@ -128,13 +141,13 @@ parse_directive(token_spec_t* spec) {
 int
 parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
-	int token;
-	while ((token = STRIP_SPACE(spec->lex)) != TEOF) {
-		if (token != TIGCASE)
-			{ parse_assignement(spec, token); }
+	int token = TNONE;
+	while ((token = peek_token(spec->lex)) != TEOF) {
+		if ((token != TIGCASE) && (token != TSKIP))
+			{ parse_assignement(spec); }
 		else
 			{ parse_directive(spec); }
-		if (STRIP_SPACE(spec->lex) != TSEMI) {
+		if (advance_token(spec->lex) != TSEMI) {
 			fprintf(stderr,
 				"Error (%d): No semicolon after the regex.\n",
 				CURRENT_LINE(spec->lex));

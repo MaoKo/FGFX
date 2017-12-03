@@ -2,7 +2,8 @@
 # Lexical Specification of FGFL #
 #################################
 
-@DIGIT	=	[0-9] ; @LETTER	=	[A-Za-z_] ;
+@DIGIT	=	[0-9] ;
+@LETTER	=	[A-Za-z_] ;
 
 G_IDENT	=	{LETTER}({LETTER}|{DIGIT})* ;
 L_IDENT	=	@{G_IDENT} ;
@@ -11,6 +12,7 @@ COM	=	#.* ;
 SPACE	=	[ \t\n]+ ;
 SEMI	=	\; ;
 IGCASE	=	%igcase ;
-## TODO %skip
-#SKIP	=	%skip ;
+SKIP	=	%skip ;
 COMMA	=	, ;
+
+%skip COM, SPACE;

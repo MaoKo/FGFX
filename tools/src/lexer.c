@@ -15,7 +15,7 @@ new_lexer(int filde) {
 		{ return (NULL); }
 	memset(lex, 0, sizeof(lexer_t));
 	lex->filde = filde;
-	lex->last_char = -1;
+	lex->last_token = lex->last_char = -1;
 	return (lex);
 }
 
@@ -71,37 +71,32 @@ get_next_token(lexer_t* lex) {
 }
 
 static int
-is_present_va(int value, va_list args) {
-	int i;
-	while ((i = va_arg(args, int)) != -1) {
-		if (value == i)
+allow_skip(int token) {
+	for (size_t i = 0; fgfl_skip_table[i] != -1; ++i) {
+		if (token == fgfl_skip_table[i])
 			{ return (true); }
 	}
 	return (false);
 }
 
 int
-advance_token(lexer_t* lex, ...) {
+advance_token(lexer_t* lex) {
 	if (!lex)
 		{ return (-1); }
-	va_list args, cpy;
-	va_start(args, lex);
-
-	reset_buffer(lex->last_lexeme);
-	while (1) {
-		lex->last_token = get_next_token(lex);
-		bool is_p = false;
-		va_copy(cpy, args);
-		if (is_present_va(lex->last_token, cpy)) {
+	int found_token;
+	if (lex->last_token != -1)
+		{ found_token = lex->last_token; }
+	else {
+		reset_buffer(lex->last_lexeme);
+		while (1) {
+			found_token = get_next_token(lex);
+			if (!allow_skip(found_token))
+				{ break; }
 			reset_buffer(lex->last_lexeme);
-			is_p = true;
 		}
-		va_end(cpy);
-		if (!is_p)
-			{ break; }
 	}
-	va_end(args);
-	return (lex->last_token);
+	lex->last_token = -1;
+	return (found_token);
 }
 
 int
@@ -111,6 +106,19 @@ peek_token(lexer_t* lex) {
 	if (lex->last_token == -1)
 		{ lex->last_token = advance_token(lex); }
 	return (lex->last_token);
+}
+
+bool
+in_first(lexer_t* lex, ...) {
+	va_list args;
+	va_start(args, lex);
+	int token;
+	while ((token = va_arg(args, int)) != -1) {
+		if (token == peek_token(lex))
+			{ return (true); }
+	}
+	va_end(args);
+	return (false);
 }
 
 int

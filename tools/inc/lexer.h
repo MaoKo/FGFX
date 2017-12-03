@@ -1,6 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <stdbool.h>
 #include "fgfl.h"
 
 #define FILDE_LEX(lex)		((lex)->filde)
@@ -10,8 +11,9 @@
 
 lexer_t* new_lexer(int);
 void del_lexer(lexer_t*);
-int advance_token(lexer_t*, ...);
+int advance_token(lexer_t*);
 int peek_token(lexer_t*);
+bool in_first(lexer_t*, ...);
 int is_final_state(int);
 
 #endif /* LEXER_H */
