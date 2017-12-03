@@ -172,8 +172,8 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 				if (!cmp_trans_list(t1, t2))
 					{ continue; }
 			
-				int fs1 = get_index_vector(finalt, (void*)i);
-				int fs2 = get_index_vector(finalt, (void*)j);
+				int fs1 = get_index_vector(finalt, (void*)i, NULL);
+				int fs2 = get_index_vector(finalt, (void*)j, NULL);
 
 				bool final = (fs1 >= 0 && fs2 >= 0) &&
 					(AT_VECTOR(finalt, fs1 + 1)

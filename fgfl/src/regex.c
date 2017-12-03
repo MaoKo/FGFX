@@ -311,19 +311,23 @@ read_ident(void) {
 	return (buf);
 }
 
+static int
+cmp_entry_str(token_entry_t* entry, char const* str) {
+	return (strcmp(entry->name, str));
+}
+
 static node_ast_t*
 bound_name(node_ast_t* root) {
 	node_ast_t* rep_node = NULL;
 	buffer_t* bound = read_ident();
 	
-	for (size_t i = 0; i < SIZE_VECTOR(local_spec->entry_lst); ++i) {
+	int index = get_index_vector(local_spec->entry_lst,
+		BODY_BUFFER(bound), &cmp_entry_str);
+	if (index != -1) {
 		token_entry_t* entry = (token_entry_t*)
-					AT_VECTOR(local_spec->entry_lst, i);
-		if (CMP_BUFF_STR(bound, entry->name)) {
-			rep_node = cpy_node_ast(entry->reg);
-			USED_ENTRY(entry);
-			break;
-		}
+				AT_VECTOR(local_spec->entry_lst, index);
+		rep_node = cpy_node_ast(entry->reg);
+		USED_ENTRY(entry);
 	}
 	if (rep_node)
 		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }

@@ -32,6 +32,6 @@ void clear_vector(vector_t*);
 void insert_vector(vector_t*, size_t, void*);
 void erase_vector(vector_t*, size_t);
 void reverse_vector(vector_t*);
-int get_index_vector(vector_t*, void*);
+int get_index_vector(vector_t*, void*, int(*)());
 
 #endif /* VECTOR_H */

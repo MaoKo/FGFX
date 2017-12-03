@@ -99,11 +99,13 @@ void reverse_vector(vector_t* vect) {
 	}
 }
 
-int get_index_vector(vector_t* vect, void* obj) {
+int get_index_vector(vector_t* vect, void* obj, int (*pred)()) {
 	if (!vect)
 		{ return (-1); }
 	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i) {
-		if (obj == AT_VECTOR(vect, i))
+		if (pred && !(*pred)(AT_VECTOR(vect, i), obj))
+			{ return (i); }
+		if (!pred && (obj == AT_VECTOR(vect, i)))
 			{ return (i); }
 	}
 	return (-1);
