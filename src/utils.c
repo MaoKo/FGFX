@@ -48,6 +48,17 @@ cmp_trans_list(trans_list_t const* t1, trans_list_t const* t2) {
 	return (!t1 && !t2);
 }
 
+trans_list_t const*
+contiguous_range(trans_list_t const* t) {
+	while (t && t->next) {
+		if (((t->input - 1) != (t->next->input))
+				|| (t->state != t->next->state))
+			{ break;  }
+		t = t->next;
+	}
+	return (t);	
+}
+
 bool
 file_exist(char const* filename) {
 	return (open(filename, O_WRONLY | O_EXCL) != -1);
