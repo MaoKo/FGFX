@@ -6,6 +6,7 @@
 
 #include "regex.h"
 #include "tokendef.h"
+#include "lexer.h"
 #include "utils.h"
 #include "nfa.h"
 #include "vector.h"
@@ -103,7 +104,7 @@ cpy_concat_node_ast(node_ast_t* root, size_t size) {
 static int
 read_c(void) {
 	char input_c = '\0';
-	int eof = read(local_spec->filde, &input_c, 1);
+	int eof = read(FILDE_LEX(local_spec->lex), &input_c, 1);
 	if (!eof)
 		{ return (EOF); }
 	return (input_c);
@@ -123,7 +124,7 @@ skip_until(int(*predF)(int), int last) {
 
 static inline void
 skip_front_whitespace(int last) {
-	local_spec->last_char = skip_until(&isspace, last);
+	local_spec->lex->last_char = skip_until(&isspace, last);
 }
 
 static inline int
@@ -156,7 +157,7 @@ get_c(void) {
 			case 't': input_c = '\t'; break;
 			case 'v': input_c = '\v'; break;
 			case '\n':
-				++local_spec->lineno;
+				++CURRENT_LINE(local_spec->lex);
 				input_c = skip_until(&is_tab_or_space, -1);
 				break;
 			case EOF: /* ERROR */ ; break;
@@ -168,15 +169,15 @@ get_c(void) {
 
 static int
 peek(void) {
-	if (local_spec->last_char == -1)
-		{ local_spec->last_char = get_c(); }
-	return (local_spec->last_char);
+	if (local_spec->lex->last_char == -1)
+		{ local_spec->lex->last_char = get_c(); }
+	return (local_spec->lex->last_char);
 }
 
 static inline int
 advance(void) {
 	int old_peek = peek();
-	local_spec->last_char = get_c();
+	local_spec->lex->last_char = get_c();
 	return (old_peek);
 }
 
@@ -328,7 +329,7 @@ bound_name(node_ast_t* root) {
 		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
 	else {
 		fprintf(stderr, "Error (%d): Undefined name %s.\n",
-			local_spec->lineno, BODY_BUFFER(bound));
+			CURRENT_LINE(local_spec->lex), BODY_BUFFER(bound));
 	}
 
 	del_buffer(bound);
@@ -397,7 +398,7 @@ regex2ast(token_spec_t* spec) {
 	if (!spec)
 		{ return (NULL); }
 	local_spec = spec;
-	skip_front_whitespace(local_spec->last_char);
+	skip_front_whitespace(local_spec->lex->last_char);
 	return (reg_expr());
 }
 

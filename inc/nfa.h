@@ -9,7 +9,7 @@
 
 #define STATE_FINAL(state, tok)	(state->final = tok)
 #define FREE_FRAG(f)		((FREE(f->tail)) , (FREE(f)))
-#define CPY_EDGE(x, y)		((x->label = y->label) , x->out_state = y->out_state)
+#define CPY_EDGE(x, y)		((x->label = y->label),(x->out_state = y->out_state))
 #define PUSH_EDGE(st, ed)	((ed->next = st->trans) , (st->trans = ed))
 #define INIT_EDGE(ed, l, o)	((ed->label = l) , (ed->out_state = o))
 #define	MAX_STATE		712

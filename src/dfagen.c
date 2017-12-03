@@ -47,10 +47,12 @@ gen_state_table(int filde, vector_t const* trans) {
 
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i) {
 		trans_list_t const* t = (trans_list_t*)AT_VECTOR(trans, i);
-		dprintf(filde, "/* %zu */", i);
+		dprintf(filde, "/* %zu */"TAB, i);
 		dprintf(filde, TAB BEG_BLOCK);
 		while (t) {
-			dprintf(filde, "[%u]=%u, ", t->input, t->state);
+			dprintf(filde, "[%u]=%u", t->input, t->state);
+			if (t->next)
+				{ dprintf(filde, ", "); }
 			t = t->next;
 		}
 		dprintf(filde, END_BLOCK",\n");
@@ -119,9 +121,11 @@ gen_header(char const* header, vector_t const* trans,
 	gen_require_macro(filde, header);
 	gen_require_header(filde);
 	gen_enum(filde, elst);
+	dprintf(filde, "#ifndef ONLY_TOKEN\n\n");
 	gen_useful_macro(filde);
 	gen_state_table(filde, trans);
 	gen_final_table(filde, final);
+	dprintf(filde, "#endif /* ONLY_TOKEN */\n");
 	gen_endif(filde, header);
 	if (close(filde) == -1)
 		{ return (ERROR); }

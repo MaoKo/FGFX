@@ -46,6 +46,14 @@ typedef struct {
 } nfa_frag_t;
 
 typedef struct {
+	int filde;
+	int last_char;
+	int last_token;
+	buffer_t* last_lexeme;
+	int lineno;
+} lexer_t;
+
+typedef struct {
 	bool local;
 	bool used;
 	bool igcase;
@@ -58,11 +66,7 @@ typedef struct {
 } token_entry_t;
 
 typedef struct {
-	int filde;
-	int last_char;
-	int last_token;
-	buffer_t* last_lexeme;
-	int lineno;
+	lexer_t* lex;
 	vector_t* entry_lst;
 	state_t* master;
 } token_spec_t;
