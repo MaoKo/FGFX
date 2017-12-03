@@ -10,7 +10,7 @@
 
 lexer_t* new_lexer(int);
 void del_lexer(lexer_t*);
-int advance_token(lexer_t*);
+int advance_token(lexer_t*, ...);
 int peek_token(lexer_t*);
 int is_final_state(int);
 

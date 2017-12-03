@@ -39,11 +39,19 @@ gen_enum(int filde, vector_t const* elst) {
 	dprintf(filde, "#define TOTAL_TOKEN"TAB"%zu\n\n", count + 2);
 }
 
+static void print_verbatim_header(int filde, char const* header) {
+	if (isdigit(*header))
+		{ dprintf(filde, "_"); }
+	while (*header && (isalnum(*header) || (*header == '_')))
+		{ dprintf(filde, "%c", *(header++)); }
+}
+
 static void
-gen_state_table(int filde, vector_t const* trans) {
+gen_state_table(int filde, vector_t const* trans, char const* header) {
 	dprintf(filde, "//Size of state table = %zu\n", SIZE_VECTOR(trans));
-	dprintf(filde, STATIC" uint%zu_t state_table[][%d] = {\n",
-			min_size_type(SIZE_VECTOR(trans)), MAX_ASCII);
+	dprintf(filde, STATIC" uint%zu_t ", min_size_type(SIZE_VECTOR(trans)));
+	print_verbatim_header(filde, header);
+	dprintf(filde, "_state_table[][%d] = {\n", MAX_ASCII);
 
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i) {
 		trans_list_t const* t = (trans_list_t*)AT_VECTOR(trans, i);
@@ -69,9 +77,11 @@ gen_state_table(int filde, vector_t const* trans) {
 }
 
 static void
-gen_final_table(int filde, vector_t const* final) {
-	dprintf(filde, STATIC" uint%zu_t final_table[][2] = {\n",
-			min_size_type(SIZE_VECTOR(final)));
+gen_final_table(int filde, vector_t const* final, char const* header) {
+	dprintf(filde, STATIC" uint%zu_t ", min_size_type(SIZE_VECTOR(final)));
+	print_verbatim_header(filde, header);
+	dprintf(filde, "_final_table[][2] = {\n");
+
 	size_t count_final = SIZE_VECTOR(final) / 2;
 	for (size_t i = 0; i < count_final; ++i) {
 		dprintf(filde, TAB"{ %ld, "TAB"T%s },\n",
@@ -131,8 +141,8 @@ gen_header(char const* header, vector_t const* trans,
 	gen_enum(filde, elst);
 	dprintf(filde, "#ifndef ONLY_TOKEN\n\n");
 	gen_useful_macro(filde);
-	gen_state_table(filde, trans);
-	gen_final_table(filde, final);
+	gen_state_table(filde, trans, header);
+	gen_final_table(filde, final, header);
 	dprintf(filde, "#endif /* ONLY_TOKEN */\n");
 	gen_endif(filde, header);
 	if (close(filde) == -1)

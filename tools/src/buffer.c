@@ -90,7 +90,7 @@ unget_c_buffer(buffer_t* buf, size_t sz) {
 		{ return; }
 	if (sz > buf->index)
 		{ sz = buf->index; }
-	while (--sz)
+	while (sz--)
 		{ buf->body[--buf->index] = '\0'; }
 }
 

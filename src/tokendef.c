@@ -14,6 +14,8 @@
 #include "fgfl.lex.h"
 #undef ONLY_TOKEN
 
+#define STRIP_SPACE(lex)	(advance_token(lex, TSPACE, TCOM, -1))
+
 static void
 del_token_entry(token_entry_t* entry) {
 	if (entry) {
@@ -78,7 +80,7 @@ parse_assignement(token_spec_t* spec, int type) {
 		}
 		return (-1);
 	}
-	if (advance_token(spec->lex) != TEQUAL) {
+	if (STRIP_SPACE(spec->lex) != TEQUAL) {
 		fprintf(stderr, "Error (%d): No equal sign after an ident.\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -104,7 +106,7 @@ enable_igcase(token_spec_t* spec) {
 
 static int
 parse_directive(token_spec_t* spec) {
-	if (advance_token(spec->lex) != TG_IDENT) {
+	if (STRIP_SPACE(spec->lex) != TG_IDENT) {
 		fprintf(stderr, "Error (%d): Expected id after igcase directive.\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -112,7 +114,7 @@ parse_directive(token_spec_t* spec) {
 	if (enable_igcase(spec) == -1)
 		{ return (-1); }
 	while (peek_token(spec->lex) == TCOMMA) {
-		if (advance_token(spec->lex) != TG_IDENT) {
+		if (STRIP_SPACE(spec->lex) != TG_IDENT) {
 			fprintf(stderr, "Error (%d): Expected id after the comma.\n",
 				CURRENT_LINE(spec->lex));
 			return (-1);
@@ -127,12 +129,12 @@ int
 parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
 	int token;
-	while ((token = advance_token(spec->lex)) != TEOF) {
+	while ((token = STRIP_SPACE(spec->lex)) != TEOF) {
 		if (token != TIGCASE)
 			{ parse_assignement(spec, token); }
 		else
 			{ parse_directive(spec); }
-		if (advance_token(spec->lex) != TSEMI) {
+		if (STRIP_SPACE(spec->lex) != TSEMI) {
 			fprintf(stderr,
 				"Error (%d): No semicolon after the regex.\n",
 				CURRENT_LINE(spec->lex));

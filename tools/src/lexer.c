@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "lexer.h"
 #include "fgfl.lex.h"
@@ -33,7 +34,7 @@ get_next_token(lexer_t* lex) {
 	if (!lex->last_lexeme)
 		{ lex->last_lexeme = new_buffer(); }
 	if (lex->last_char != -1) {
-		state = state_table[state][lex->last_char];
+		state = fgfl_state_table[state][lex->last_char];
 		last_match = is_final_state(state);
 		write_char_buffer(lex->last_lexeme, lex->last_char);
 		if (lex->last_char == '\n')
@@ -48,7 +49,7 @@ get_next_token(lexer_t* lex) {
 				{ return (TEOF); }
 			break;
 		}
-		state = state_table[state][c];
+		state = fgfl_state_table[state][c];
 		if (is_final_state(state))
 			{ last_match = is_final_state(state); }
 		write_char_buffer(lex->last_lexeme, c);
@@ -69,17 +70,38 @@ get_next_token(lexer_t* lex) {
 	return (last_match);
 }
 
+static int
+is_present_va(int value, va_list args) {
+	int i;
+	while ((i = va_arg(args, int)) != -1) {
+		if (value == i)
+			{ return (true); }
+	}
+	return (false);
+}
+
 int
-advance_token(lexer_t* lex) {
+advance_token(lexer_t* lex, ...) {
 	if (!lex)
 		{ return (-1); }
+	va_list args, cpy;
+	va_start(args, lex);
+
 	reset_buffer(lex->last_lexeme);
 	while (1) {
 		lex->last_token = get_next_token(lex);
-		if ((lex->last_token != TSPACE) && (lex->last_token != TCOM))
-			{ return (lex->last_token); }
-		reset_buffer(lex->last_lexeme);
+		bool is_p = false;
+		va_copy(cpy, args);
+		if (is_present_va(lex->last_token, cpy)) {
+			reset_buffer(lex->last_lexeme);
+			is_p = true;
+		}
+		va_end(cpy);
+		if (!is_p)
+			{ break; }
 	}
+	va_end(args);
+	return (lex->last_token);
 }
 
 int
@@ -94,8 +116,8 @@ peek_token(lexer_t* lex) {
 int
 is_final_state(int state) {
 	for (size_t i = 0; i < SIZE_FINAL_TAB; ++i) {
-		if (final_table[i][0] == state)
-			{ return (final_table[i][1]); }
+		if (fgfl_final_table[i][0] == state)
+			{ return (fgfl_final_table[i][1]); }
 	}
 	return (TNONE);
 }

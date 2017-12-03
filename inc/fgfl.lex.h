@@ -24,7 +24,7 @@ enum {
 #define DEAD_STATE	0
 
 //Size of state table = 17
-static uint8_t state_table[][256] = {
+static uint8_t fgfl_state_table[][256] = {
 /*   0 */	{},
 /*   1 */	{[97 ... 122]=9, [95]=9, [65 ... 90]=9, [64]=8, [61]=7, [59]=6, [44]=5, [37]=4, [35]=3, [32]=2, [9 ... 10]=2},
 /*   2 */	{[32]=2, [9 ... 10]=2},
@@ -44,7 +44,7 @@ static uint8_t state_table[][256] = {
 /*  16 */	{},
 };
 
-static uint8_t final_table[][2] = {
+static uint8_t fgfl_final_table[][2] = {
 	{ 2, 	TSPACE },
 	{ 3, 	TCOM },
 	{ 5, 	TCOMMA },
