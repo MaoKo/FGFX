@@ -118,6 +118,8 @@ gen_skip_table(int filde, vector_t const* elst, char const* header) {
 		}
 		dprintf(filde, TAB"-1,\n};\n\n");
 	}
+	else
+		{ dprintf(filde, DEFINE(SKIP_TABLE_NOT_DEFINE,)"\n\n"); }
 	del_vector(skip_table);
 }
 

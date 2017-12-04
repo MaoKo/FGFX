@@ -11,7 +11,7 @@
 #include "buffer.h"
 
 #define ONLY_TOKEN
-#include "fgfl.lex.h"
+#include "fgfx.lex.h"
 #undef ONLY_TOKEN
 
 static void

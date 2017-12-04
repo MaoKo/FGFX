@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #include "lexer.h"
-#include "fgfl.lex.h"
+#include "fgfx.lex.h"
 #include "utils.h"
 #include "buffer.h"
 
@@ -34,7 +34,7 @@ get_next_token(lexer_t* lex) {
 	if (!lex->last_lexeme)
 		{ lex->last_lexeme = new_buffer(); }
 	if (lex->last_char != -1) {
-		state = fgfl_state_table[state][lex->last_char];
+		state = fgfx_state_table[state][lex->last_char];
 		last_match = is_final_state(state);
 		write_char_buffer(lex->last_lexeme, lex->last_char);
 		if (lex->last_char == '\n')
@@ -49,7 +49,7 @@ get_next_token(lexer_t* lex) {
 				{ return (TEOF); }
 			break;
 		}
-		state = fgfl_state_table[state][c];
+		state = fgfx_state_table[state][c];
 		if (is_final_state(state))
 			{ last_match = is_final_state(state); }
 		write_char_buffer(lex->last_lexeme, c);
@@ -72,8 +72,8 @@ get_next_token(lexer_t* lex) {
 
 static int
 allow_skip(int token) {
-	for (size_t i = 0; fgfl_skip_table[i] != -1; ++i) {
-		if (token == fgfl_skip_table[i])
+	for (size_t i = 0; fgfx_skip_table[i] != -1; ++i) {
+		if (token == fgfx_skip_table[i])
 			{ return (true); }
 	}
 	return (false);
@@ -124,8 +124,8 @@ in_first(lexer_t* lex, ...) {
 int
 is_final_state(int state) {
 	for (size_t i = 0; i < SIZE_FINAL_TAB; ++i) {
-		if (fgfl_final_table[i][0] == state)
-			{ return (fgfl_final_table[i][1]); }
+		if (fgfx_final_table[i][0] == state)
+			{ return (fgfx_final_table[i][1]); }
 	}
 	return (TNONE);
 }

@@ -1,7 +1,7 @@
 .PHONY: all clean mrproper re
 
 CC		:=	cc
-INCLUDE		:=	fgfl/inc tools/inc
+INCLUDE		:=	fgfl/inc tools/inc bootstrap/
 CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) -g
 CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
