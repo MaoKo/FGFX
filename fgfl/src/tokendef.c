@@ -43,11 +43,11 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 	if (!entry)
 		{ return (-1); }
 	entry->used = true;
-	if (token == TL_IDENT) {
+	if (token == TLOCAL_TOK) {
 		entry->local = true;
 		entry->used = false;
 	}
-	int offset = (token == TL_IDENT);
+	int offset = (token == TLOCAL_TOK);
 	entry->name = strdup(BODY_BUFFER(LAST_LEXEME(spec->lex)) + offset);
 	entry->igcase = false;
 	if (!entry->name)
@@ -66,7 +66,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 static int
 parse_assignement(token_spec_t* spec) {
 	int type = advance_token(spec->lex);
-	if ((type != TG_IDENT) && (type != TL_IDENT)) {
+	if ((type != TTOKEN) && (type != TLOCAL_TOK)) {
 		fprintf(stderr, "Error (%d): Expected ident (Local or not).\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -117,7 +117,7 @@ parse_directive(token_spec_t* spec) {
 	if (!in_first(spec->lex, TIGCASE, TSKIP))
 		{ /* ERROR */ return (-1); }
 	int kind_directive = advance_token(spec->lex);
-	if (advance_token(spec->lex) != TG_IDENT) {
+	if (advance_token(spec->lex) != TTOKEN) {
 		fprintf(stderr, "Error (%d): Expected id after %s directive.\n",
 			CURRENT_LINE(spec->lex), ((kind_directive == TIGCASE) ?
 						"igcase" : "skip"));
@@ -127,7 +127,7 @@ parse_directive(token_spec_t* spec) {
 		{ return (-1); }		
 	while (peek_token(spec->lex) == TCOMMA) {
 		advance_token(spec->lex);
-		if (advance_token(spec->lex) != TG_IDENT) {
+		if (advance_token(spec->lex) != TTOKEN) {
 			fprintf(stderr, "Error (%d): Expected id after a comma.\n",
 				CURRENT_LINE(spec->lex));
 			return (-1);

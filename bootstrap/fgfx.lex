@@ -7,27 +7,26 @@
 @IDENT		=	{LETTER}({LETTER}|{DIGIT})* ;
 
 ## FGFL ##
-G_IDENT	=	 {IDENT} ;
-L_IDENT	=	@{IDENT} ;
-EQUAL	=	= ;
-IGCASE	=	%igcase ;
-SKIP	=	%skip ;
+LOCAL_TOK	=	@{IDENT} ;
+EQUAL		=	= ;
+IGCASE		=	%igcase ;
+SKIP		=	%skip ;
 
 ## FGFP ##
-TER		=	{IDENT} ;
-NON_TER		=	{IDENT}'* ;
-ENON_TER	=	<{NON_TER}> ;
+NON_TER		=	<{IDENT}'*> ;
 ARROW		=	-> ;
 UNION		=	\| ;
+
 ## TODO START symbol
 #START		=	%start ;
 
 ## Both ##
+TOKEN		=	{IDENT} ;
 SEMI		=	\; ;
 COMMA		=	, ;
 
 SPACE		=	[ \t\n]+ ;
-COM		=	(#.*)|(/\*(\*[^\\]|[^*])*\*/) ;
+COM		=	(#.*)|(/\*(\*[^/]|[^*])*\*/) ;
 
 %skip		SPACE, COM ;
 

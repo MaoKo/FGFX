@@ -14,7 +14,8 @@ edges(state_t* state, int symbol, bitset_t* result) {
 			it = it->next;
 		}
 	}
-	if (state->class && IS_PRESENT(state->class, (unsigned)symbol))
+	if (state->class && (symbol != EPSILON &&
+				IS_PRESENT(state->class, (unsigned)symbol)))
 		{ ADD_BITSET(result, state->out_class->index_state); }
 }
 

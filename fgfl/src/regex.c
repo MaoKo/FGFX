@@ -202,7 +202,7 @@ is_end_input(void) {
 
 static inline bool
 is_end_regex(void) {
-	return (isspace(peek()) || peek() == ';');
+	return ((isspace(peek()) || peek() == ';') && !escaped);
 }
 
 static inline bool
@@ -494,6 +494,7 @@ reg_quote(void) {
 		else
 			{ root_concat = node_ast(AST_CONCAT, root_concat, symbol); }
 	}
+	advance();
 	if (!root_concat)
 		{ root_concat = node_ast(AST_SYMBOL, ALONE_S, EPSILON); }
 	expected(REG_DQUOTE);
@@ -523,13 +524,14 @@ reg_range(void) {
 		}
 		last = crt_c;
 	}
-	if (is_empty_bitset(range))
-		{ ADD_BITSET(range, EPSILON); }
+	advance();
+	if (is_empty_bitset(range) && !negate) {
+		del_bitset(range);
+		return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
+	}
 
 	if (negate)
 		{ COMPL_BITSET(range); }
-	//if (negate)
-	//	{ range = complement_negate_range(range); }
 	expected(REG_RBRACK);
 	return (node_ast(AST_SYMBOL, MULTI_S, range));
 }

@@ -34,12 +34,12 @@ del_cfg(cfg_t* cfg) {
 void
 add_symbol_cfg(cfg_t* cfg, int kind) {
 	size_t offset = 0;
-	if (kind == TENON_TER)
+	if (kind == TNON_TER)
 		{ offset = 1; }
 	char* name = strdup(BODY_BUFFER(LAST_LEXEME(lex)) + offset);
-	if (kind == TENON_TER)
+	if (kind == TNON_TER)
 		{ *strchr(name, '>') = EOS; }
-	vector_t** dst = (kind == TENON_TER) ? cfg->non_terminal : cfg->terminal;
+	vector_t** dst = (kind == TNON_TER) ? cfg->non_terminal : cfg->terminal;
 	size_t hs = hash_str(name) % HASH_SIZE;
 	int index = get_index_vector(dst[hs], name, &strcmp);
 	if (index == -1) {
@@ -72,22 +72,42 @@ parse_cfg(int filde) {
 	return (cfg);
 }
 
+static int cfg_prod(cfg_t*);
 static int cfg_atom(cfg_t*);
 
 int
 cfg_syntax(cfg_t* cfg) {
-	if (cfg_atom(cfg) == ERROR)
+	if (cfg_prod(cfg) == ERROR)
 		{ return (ERROR); }
 	while (peek_token(lex) != TEOF) {
-		if (cfg_atom(cfg) == ERROR)
+		if (cfg_prod(cfg) == ERROR)
 			{ return (ERROR); }
+	}
+	return (DONE);
+}
+
+int cfg_prod(cfg_t* cfg) {
+	if (advance_token(lex) != TNON_TER) {
+		/* ERROR */
+		return (ERROR);
+	}
+	add_symbol_cfg(cfg, TNON_TER);
+	if (advance_token(lex) != TARROW) {
+		/* ERROR */
+		return (ERROR);
+	}
+	if (cfg_atom(cfg) == ERROR)
+		{ return (ERROR); }
+	if (advance_token(lex) != TSEMI) {
+		/* ERROR */
+		return (ERROR);
 	}
 	return (DONE);
 }
 
 int
 cfg_atom(cfg_t* cfg) {
-	if (in_first(lex, TENON_TER, TG_IDENT, -1))
+	if (in_first(lex, TNON_TER, TTOKEN, -1))
 		{ add_symbol_cfg(cfg, advance_token(lex));  }
 	else {
 		/* ERROR */
