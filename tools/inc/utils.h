@@ -17,12 +17,14 @@
 
 #define EOS			'\0'
 #define ERROR			-1
+#define DONE			0
 
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
 void del_trans_list(trans_list_t*);
 bool cmp_trans_list(trans_list_t const*, trans_list_t const*);
 trans_list_t const* contiguous_range(trans_list_t const*);
+size_t hash_str(char const*);
 bool file_exist(char const*);
 void* _pmalloc(size_t);
 void* _prealloc(void*, size_t);

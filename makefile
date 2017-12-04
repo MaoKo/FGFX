@@ -1,7 +1,7 @@
 .PHONY: all clean mrproper re
 
 CC		:=	cc
-INCLUDE		:=	fgfl/inc tools/inc bootstrap/
+INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
 CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) -g
 CC_MACRO	:=	-DOPTIMIZE
 LD_FLAGS	:=
@@ -12,11 +12,18 @@ TOOLS_OBJ	:=	$(addprefix tools/,$(TOOLS_OBJ))
 include fgfl/makefile
 FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
 
-TARGET		:=	efgfl
+include fgfp/makefile
+FGFP_OBJ	:=	$(addprefix fgfp/,$(FGFP_OBJ))
 
-all: $(TARGET);
+EFGFL		:=	efgfl
+EFGFP		:=	efgfp
 
-$(TARGET): $(TOOLS_OBJ) $(FGFL_OBJ)
+all: $(EFGFL) $(EFGFP);
+
+$(EFGFL): $(TOOLS_OBJ) $(FGFL_OBJ)
+	$(CC) $^ -o $@ $(LD_FLAGS)
+
+$(EFGFP): $(TOOLS_OBJ) $(FGFP_OBJ)
 	$(CC) $^ -o $@ $(LD_FLAGS)
 
 %.o: %.c
@@ -25,8 +32,10 @@ $(TARGET): $(TOOLS_OBJ) $(FGFL_OBJ)
 clean:
 	@rm -rf $(TOOLS_OBJ)
 	@rm -rf $(FGFL_OBJ)
+	@rm -rf $(FGFP_OBJ)
 
 mrproper: clean
-	@rm -rf $(TARGET)
+	@rm -rf $(EFGFL)
+	@rm -rf $(EFGFP)
 
 re: mrproper all;

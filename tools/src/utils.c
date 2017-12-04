@@ -59,6 +59,14 @@ contiguous_range(trans_list_t const* t) {
 	return (t);	
 }
 
+size_t
+hash_str(char const* str) {
+	size_t posc = EOS;
+	while (*str)
+		{ posc += *(str++); }
+	return (posc);
+}
+
 bool
 file_exist(char const* filename) {
 	return (open(filename, O_WRONLY | O_EXCL) != -1);
