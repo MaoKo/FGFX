@@ -6,6 +6,7 @@
 #include "vector.h"
 #include "bitset.h"
 #include "buffer.h"
+#include "lexer.h"
 
 typedef struct node_ast_t {
 	enum { AST_UNION, AST_CONCAT, AST_CLOSURE, AST_SYMBOL, } kind_ast;
@@ -44,14 +45,6 @@ typedef struct {
 	edge_t* tail;
 	state_t* head;
 } nfa_frag_t;
-
-typedef struct {
-	int filde;
-	int last_char;
-	int last_token;
-	buffer_t* last_lexeme;
-	int lineno;
-} lexer_t;
 
 typedef struct {
 	bool local;

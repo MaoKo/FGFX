@@ -97,15 +97,28 @@ gen_final_table(int filde, vector_t const* final, char const* header) {
 
 static void
 gen_skip_table(int filde, vector_t const* elst, char const* header) {
-	dprintf(filde, STATIC" "INT" ");
-	print_verbatim_header(filde, header);
-	dprintf(filde, "_skip_table[] = {\n");
+	vector_t* skip_table = new_vector();
+	if (!skip_table)
+		{ return; }
+
 	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
 		if (entry->skip && !entry->local)
-			{ dprintf(filde, TAB"T%s,\n", entry->name); }
+			{ PUSH_BACK_VECTOR(skip_table, entry); }
 	}
-	dprintf(filde, TAB"-1,\n};\n\n");
+	
+	if (SIZE_VECTOR(skip_table)) {
+		dprintf(filde, STATIC" "INT" ");
+		print_verbatim_header(filde, header);
+		dprintf(filde, "_skip_table[] = {\n");
+		for (size_t i = 0; i < SIZE_VECTOR(skip_table); ++i) {
+			token_entry_t* entry = (token_entry_t*)
+					AT_VECTOR(skip_table, i);
+			dprintf(filde, TAB"T%s,\n", entry->name);
+		}
+		dprintf(filde, TAB"-1,\n};\n\n");
+	}
+	del_vector(skip_table);
 }
 
 static inline void
