@@ -1,2 +1,4 @@
+/* Hello */
+
 @B	=	;
 %skip B;

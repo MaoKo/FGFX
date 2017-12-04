@@ -1,15 +1,15 @@
-#############################
-## C Token Definition (C11) #
-#############################
+//////////////////////////////
+// C Token Definition (C11) //
+//////////////////////////////
 
-## C Identifier token
+/* C Identifier token */
 
 @ESC_UN		=	(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}) ;
 @LETTER		=	[A-Za-z_] ;
 @DIGIT		=	[0-9] ;
 IDENT		= 	({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})* ;
 
-## C Char token
+/* C Char token */
 
 @ESC_OCT	=	(\\[0-7]{1,3}) ;
 @ESC_HEX	=	(\\x[0-9a-fA-F]+) ;
@@ -17,11 +17,11 @@ IDENT		= 	({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})* ;
 @REG_ESCAPE	=	({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN}) ;
 CHAR		=	[LuU]?'([^\n'\\]|{REG_ESCAPE})+' ;
 
-## C String token
+/* C String token */
 
 STR		=	(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\" ;
 
-## C Punctuation
+/* C Punctuation */
 
 COMMA		=	,	;
 SEMICOLON	=	\;	;
@@ -72,19 +72,19 @@ GREATE		=	>=	;
 COLON		=	:	;
 DASH		=	#	;
 
-## C Comment
+/* C Comment */
 
-COMMENT		=	(//.*)|(/\*(\*[^/]|[^*])*\*/) ;
+COMMENT		=	(//.*)|(/\*(\*+[^*/]|[^*])*\*+/) ;
 %skip COMMENT;
 
-## C Space
+/* C Space */
 
 SPACE		=	[ \t\n]+ ;
 %skip SPACE;
 
-## C Number
+/* C Number */
 
-## Int
+/* C Int */
 
 @DEC		=	([1-9][0-9]*) ;
 @OCT		=	(0[0-7]*) ;
@@ -96,16 +96,17 @@ SPACE		=	[ \t\n]+ ;
 						({L_S}{U_S}?)|({LL_S}{U_S}?)) ;
 INTEGER		=	({DEC}|{OCT}|{HEX}){INT_S}? ;
 
-## Float
+/* C Float */
 
+/*
 @SIGN		=	[-+] ;
 @F_S		=	[flFL] ;
 
 #@SCF_EXP	=	[eE]{SIGN}?{DIGIT}+
-#@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+
+@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+
 
 #@D_FRACT	=	({DIGIT}+\.)
 
 #@DECF		=	({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?)
 #FLOAT		=	{DECF}
-
+*/

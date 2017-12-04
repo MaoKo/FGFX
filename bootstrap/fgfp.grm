@@ -1,6 +1,6 @@
 <FGFP>		->	<FGFP> <Prod> | <Prod> ;
 <Prod>		->	NON_TER ARROW <Lhs> SEMI ;
-<Lhs>		->	<Lhs> UNION <OptList> | <OptList> ;
+<Rhs>		->	<Rhs> UNION <OptList> | <OptList> ;
 <OptList>	->	<List> | /* epsilon */ ;
 <List>		->	<List> <Atom> | <Atom> ;
 <Atom>		->	NON_TER | TOKEN ;
@@ -12,10 +12,10 @@
 <Syntax>	->	<Prod> <Syntax'> ;
 <Syntax'>	->	<Prod> <Syntax'> | ;
 
-<Prod>		->	NON_TER ARROW <Lhs> SEMI ;
+<Prod>		->	NON_TER ARROW <Rhs> SEMI ;
 
-<Lhs>		->	<OptList> <Lhs'> ;
-<Lhs'>		->	UNION <OptList> <Lhs'> | ;
+<Rhs>		->	<OptList> <Rhs'> ;
+<Rhs'>		->	UNION <OptList> <Rhs'> | ;
 
 <OptList>	->	<List> | ;
 <List>		->	<Atom> <List'> ;
@@ -29,14 +29,14 @@
 // FIRST(List) = { NON_TER, TOKEN }
 // FIRST(List') = { Epsilon, NON_TER, TOKEN }
 // FIRST(OptList) = { NON_TER, TOKEN, Epsilon }
-// FIRST(Lhs') = { UNION, Epsilon }
-// FIRST(Lhs) = { NON_TER, TOKEN, Epsilon }
+// FIRST(Rhs') = { UNION, Epsilon }
+// FIRST(Rhs) = { NON_TER, TOKEN, Epsilon }
 // FIRST(Prod) = { NON_TER }
 // FIRST(Syntax') = { NON_TER, Epsilon }
 // FIRST(Syntax) = { NON_TER }
 
-// FOLLOW(<Lhs>) = { SEMI }
-// FOLLOW(<Lhs'>) = { SEMI }
+// FOLLOW(<Rhs>) = { SEMI }
+// FOLLOW(<Rhs'>) = { SEMI }
 // FOLLOW(<OptList>) = { UNION, SEMI }
 // FOLLOW(<List>) = { UNION, SEMI }
 // FOLLOW(<List'>) = { UNION, SEMI }

@@ -73,6 +73,9 @@ parse_cfg(int filde) {
 }
 
 static int cfg_prod(cfg_t*);
+static int cfg_rhs(cfg_t*);
+static int cfg_opt_list(cfg_t*);
+static int cfg_list(cfg_t*);
 static int cfg_atom(cfg_t*);
 
 int
@@ -96,12 +99,44 @@ int cfg_prod(cfg_t* cfg) {
 		/* ERROR */
 		return (ERROR);
 	}
-	if (cfg_atom(cfg) == ERROR)
+	if (cfg_rhs(cfg) == ERROR)
 		{ return (ERROR); }
 	if (advance_token(lex) != TSEMI) {
 		/* ERROR */
 		return (ERROR);
 	}
+	return (DONE);
+}
+
+int
+cfg_rhs(cfg_t* cfg) {
+	if (cfg_opt_list(cfg) == ERROR)
+		{ return (ERROR); }
+	while (peek_token(lex) == TUNION) {
+		advance_token(lex);
+		if (cfg_opt_list(cfg) == ERROR)
+			{ return (ERROR); }
+	}
+	return (DONE);
+}
+
+int
+cfg_opt_list(cfg_t* cfg) {
+	if (in_first(lex, TNON_TER, TTOKEN, -1))
+		{ cfg_list(cfg); }
+	else if (!in_first(lex, TUNION, TSEMI, -1)) {
+		/* ERROR */
+		return (ERROR);
+	}
+	return (DONE);
+}
+
+int
+cfg_list(cfg_t* cfg) {
+	if (in_first(lex, TNON_TER, TTOKEN, -1))
+		{ cfg_atom(cfg); }
+	while (in_first(lex, TNON_TER, TTOKEN, -1))
+		{ cfg_atom(cfg); }
 	return (DONE);
 }
 
