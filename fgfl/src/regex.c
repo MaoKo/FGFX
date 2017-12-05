@@ -311,11 +311,6 @@ read_ident(void) {
 	return (buf);
 }
 
-static int
-cmp_entry_str(token_entry_t* entry, char const* str) {
-	return (strcmp(entry->name, str));
-}
-
 static node_ast_t*
 bound_name(node_ast_t* root) {
 	node_ast_t* rep_node = NULL;

@@ -25,6 +25,7 @@ void del_trans_list(trans_list_t*);
 bool cmp_trans_list(trans_list_t const*, trans_list_t const*);
 trans_list_t const* contiguous_range(trans_list_t const*);
 size_t hash_str(char const*);
+int cmp_entry_str(token_entry_t const*, char const*);
 bool file_exist(char const*);
 void* _pmalloc(size_t);
 void* _prealloc(void*, size_t);
