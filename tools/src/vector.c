@@ -99,7 +99,7 @@ void reverse_vector(vector_t* vect) {
 	}
 }
 
-int get_index_vector(vector_t* vect, void* obj, int (*pred)()) {
+int get_index_vector(vector_t* vect, void const* obj, int (*pred)()) {
 	if (!vect)
 		{ return (-1); }
 	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i) {

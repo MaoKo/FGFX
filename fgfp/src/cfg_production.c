@@ -3,6 +3,10 @@
 #include "cfg_production.h"
 #include "utils.h"
 
+#define ONLY_TOKEN
+#include "fgfx.lex.h"
+#undef ONLY_TOKEN
+
 production_t*
 new_production(symbol_t* lhs) {
 	production_t* prod = NEW(production_t, 1);
@@ -42,4 +46,39 @@ add_symbol_rhs(production_t* prod, symbol_t const* symbol) {
 	return (DONE);
 }
 
+bool
+production_is_nullable(production_t const* prod) {
+	if (!prod)
+		{ return (false); }
+	if (!prod->rhs_element)
+		{ return (true); }
+	list_rhs const* list = prod->rhs_element;
+	while (list) {
+		if (list->symbol_rhs->kind == TTOKEN)
+			{ return (false); }
+		else if (!list->symbol_rhs->nullable)
+			{ return (false); }
+		list = list->next;
+	}
+	return (true);
+}
+
+bitset_t*
+first_production(cfg_t const* cfg, production_t const* prod) {
+	if (!prod || !(prod->rhs_element))
+		{ return (NULL); }
+	bitset_t* bset = new_bitset();
+	list_rhs* list = prod->rhs_element;
+	while (list) {
+		if (list->symbol_rhs->kind == TTOKEN) {
+			ADD_BITSET(bset, (size_t)get_index_vector(cfg->terminal,
+					list->symbol_rhs, NULL));
+			break;
+		}
+		else
+			{ UNION_BITSET(bset, list->symbol_rhs->first); }
+		list = list->next;
+	}
+	return (bset);
+}
 

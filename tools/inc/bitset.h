@@ -10,9 +10,9 @@ typedef uint64_t		_SETTYPE;
 #define _BYTE_SETTYPE(x)	(x * sizeof(_SETTYPE))
 #define _DIV_WSIZE(x)		(x >> 6)
 #define _MOD_WSIZE(x)		(x & 0x3F)
-#define _DEFWORDS		16
+#define _DEFWORDS		8
 #define _DEFBITS		(_DEFWORDS * _BITS_IN_WORD)
-#define _ROUND(bit)		((_DIV_WSIZE(bit) << 3) << 1)
+#define _ROUND(bit)		((_DIV_WSIZE(bit) >> 3) << 4)
 
 //Iterator Bitset
 #define IT_NEXT(bs)		(_next_bitset(bs))
@@ -62,5 +62,6 @@ void truncate_bitset(bitset_t*);
 int _next_bitset(bitset_t*);
 _SETTYPE hash_bitset(bitset_t const*);
 void print_bitset(bitset_t*);
+bool is_subset_bitset(bitset_t const*, bitset_t const*);
 
 #endif /* BITSET_H */

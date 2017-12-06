@@ -6,7 +6,7 @@
 
 static int
 adjust_bitset(bitset_t* bs, unsigned char new_size) {
-	if (!bs || bs->nwords <= new_size)
+	if (!bs || new_size <= bs->nwords)
 		{ return (0); }
 	int tail	= new_size - bs->nwords;
 	bs->nwords	= new_size;
@@ -68,7 +68,7 @@ _add_bitset(bitset_t* bs, size_t n) {
 		{ return (0); }
 	if (adjust_bitset(bs, _ROUND(n)))
 		{ return (-1); }
-	return (ADD_BITSET(bs, n));	
+	return (ADD_BITSET(bs, n));
 }
 
 bool
@@ -92,8 +92,7 @@ eq_bitset(bitset_t const* b1, bitset_t const* b2) {
 	}
 	if (b1->nwords != b2->nwords) {
 		bitset_t const* max_bset = ((b1->nwords > b2->nwords) ? b1 : b2);
-		int leading = ((b1->nwords > b2->nwords) ? b1->nwords - b2->nwords
-							: b2->nwords - b1->nwords);
+		int leading = MAX(b1->nwords, b2->nwords);
 		for (size_t i = leading; i < max_bset->nwords; ++i) {
 			if (max_bset->map[i] != 0)
 				{ return (false); }
@@ -104,7 +103,7 @@ eq_bitset(bitset_t const* b1, bitset_t const* b2) {
 
 bitset_t*
 _op_bitset(int kind, bitset_t* rbs, bitset_t* lbs) {
-	if (!rbs)
+	if (!rbs || (kind != _COMPL && !lbs))
 		{ return (NULL); }
 	if (kind != _COMPL && (adjust_bitset(rbs, lbs->nwords)
 			|| adjust_bitset(lbs, rbs->nwords)))
@@ -164,14 +163,33 @@ hash_bitset(bitset_t const* bs) {
 
 void
 print_bitset(bitset_t* bs) {
-	if (!bs)
-		{ return; }
 	printf("{");
-	unsigned int iter_back = bs->siter;
-	int i;
-	while ((i = IT_NEXT(bs)) != -1)
-		{ printf("%d,", i); }
+	if (bs) {
+		unsigned int iter_back = bs->siter;
+		int i;
+		while ((i = IT_NEXT(bs)) != -1)
+			{ printf("%d,", i); }
+		bs->siter = iter_back;
+	}
 	printf("}\n");
-	bs->siter = iter_back;
+}
+
+bool
+is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
+	if (!bset1 || !bset2)
+		{ return (!bset2); }
+	//The Empty set is the subset of every all set even the empty set
+	unsigned char max = MAX(bset1->nwords, bset2->nwords);
+	for (size_t i = 0; i < max; ++i) {
+		if ((~bset1->map[i]) & bset2->map[i])
+			{ return (false); }
+	}
+	if (bset2->nwords > bset1->nwords) {
+		for (size_t i = bset1->nwords; i < bset2->nwords; ++i) {
+			if (bset2->map[i])
+				{ return (false); }
+		}
+	}
+	return (true);
 }
 

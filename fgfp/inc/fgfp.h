@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "vector.h"
+#include "bitset.h"
 
 //#define HASH_SIZE	10
 
@@ -19,6 +20,7 @@ typedef struct {
 		struct {
 			bool is_defined;
 			bool nullable;
+			bitset_t* first;
 		};
 	};
 } symbol_t;

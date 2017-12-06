@@ -206,24 +206,54 @@ int
 detect_bad_symbol(cfg_t* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
+	size_t count_error = 0;
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		symbol_t* symbol = (symbol_t*)AT_VECTOR(cfg->non_terminal, i);
 		if (!symbol->is_defined) {
 			fprintf(stderr, "Non_Terminal %s used but no defined.\n",
 				symbol->name);
+			++count_error;
 		}
 	}
-	return (DONE);
+	return (count_error);
 }
 
 void
 detect_nullable(cfg_t* cfg) {
 	if (!cfg)
 		{ return; }
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
-		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
-		if (!prod->rhs_element)
-			{ prod->symbol_lhs->nullable = true; }
-	}
+	bool change;
+	do {
+		change = false;
+		for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+			production_t* prod = (production_t*)
+						AT_VECTOR(cfg->productions, i);
+			if (!(prod->symbol_lhs->nullable)
+					&& production_is_nullable(prod))
+				{ change = prod->symbol_lhs->nullable = true; }
+		}
+	} while (change);
+}
+
+void
+compute_first(cfg_t* cfg) {
+	if (!cfg)
+		{ return; }
+	bool change;
+	do {
+		change = false;
+		for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+			production_t* prod = (production_t*)
+						AT_VECTOR(cfg->productions, i);
+			bitset_t* first = first_production(cfg, prod);
+			if (!is_subset_bitset(prod->symbol_lhs->first, first)) {
+				if (!prod->symbol_lhs->first)
+					{ prod->symbol_lhs->first = new_bitset(); }
+				UNION_BITSET(prod->symbol_lhs->first, first);
+				change = true;
+			}
+			del_bitset(first);
+		}
+	} while (change);
 }
 
