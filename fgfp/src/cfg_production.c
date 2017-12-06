@@ -3,10 +3,7 @@
 #include "cfg_production.h"
 #include "cfg.h"
 #include "utils.h"
-
-#define ONLY_TOKEN
-#include "fgfx.lex.h"
-#undef ONLY_TOKEN
+#include "vector.h"
 
 production_t*
 new_production(symbol_t* lhs) {
@@ -95,5 +92,53 @@ match_symbol_production(list_rhs const* list, symbol_t const* symbol) {
 		list = list->next;
 	}
 	return (NULL);
+}
+
+static void
+stack_production_lhs(cfg_t const* cfg, symbol_t const* nter, vector_t* stack) {
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		if (nter == prod->symbol_lhs)
+			{ PUSH_BACK_VECTOR(stack, prod); }
+	}
+}
+
+int
+unreachable_production(cfg_t const* cfg) {
+	if (!cfg)
+		{ return (ERROR); }
+	bitset_t* nter_seen = new_bitset();
+	vector_t* stack_prod = new_vector();
+
+	symbol_t const* crt_symbol = AT_VECTOR(cfg->non_terminal, cfg->goal);
+	ADD_BITSET(nter_seen, crt_symbol->index);
+
+	stack_production_lhs(cfg, crt_symbol, stack_prod);
+
+	while (!EMPTY_VECTOR(stack_prod)) {
+		production_t* crt_prod = BACK_VECTOR(stack_prod);
+		POP_BACK_VECTOR(stack_prod);
+		list_rhs* list = crt_prod->rhs_element;
+		while (list) {
+			crt_symbol = list->symbol_rhs;
+			if (IS_NON_TERMINAL(crt_symbol) && !IS_PRESENT(nter_seen,
+							crt_symbol->index)) {
+				ADD_BITSET(nter_seen, crt_symbol->index);
+				stack_production_lhs(cfg, crt_symbol, stack_prod);
+			}
+			list = list->next;
+		}
+	}
+	COMPL_BITSET(nter_seen);
+	int unreach = DONE;
+	int i;
+	while (((i = IT_NEXT(nter_seen)) != -1)
+			&& (i < (int)SIZE_VECTOR(cfg->non_terminal))) {
+		unreach = ERROR;
+		break;
+	}
+	del_bitset(nter_seen);
+	del_vector(stack_prod);
+	return (unreach);
 }
 

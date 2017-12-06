@@ -1,0 +1,13 @@
+<E>	->	<E> PLUS <T>
+	 |	<E> MINUS <T>
+	 |	<T>
+	 ;
+
+<T>	->	<T> MUL <F>
+	 |	<T> DIV <F>
+	 |	<F>
+	 ;
+
+<F>	->	LPAREN <E> RPAREN
+ 	 |	NUM
+	 ; 

@@ -1,1 +1,5 @@
-<Start> -> dummy ;
+%start <S> ;
+
+<S> -> <E> SEMI | <E>;
+<E> -> PLUS <T> ;
+<T> -> NUM ;

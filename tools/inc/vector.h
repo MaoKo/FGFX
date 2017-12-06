@@ -13,9 +13,8 @@
 #define PUSH_FRONT_VECTOR(vect, x)	(insert_vector(vect, 0, x))
 #define PUSH_BACK_VECTOR(vect, x)	(insert_vector(vect, (vect)->index, x))
 
-#define POP_BACK_VECTOR(vect, x)	(erase_vector(vect, (vect)->index - 1),\
-					(vect)->body[(vect)->index])
-#define POP_FRONT_VECTOR(vect, x)	(erase_vector(vect, 0))
+#define POP_BACK_VECTOR(vect)		(erase_vector(vect, (vect)->index - 1))
+#define POP_FRONT_VECTOR(vect)		(erase_vector(vect, 0))
 
 #define _VECT_SIZE			8
 

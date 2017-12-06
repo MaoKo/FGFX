@@ -5,6 +5,7 @@
 #include "cfg.h"
 #include "bitset.h"
 #include "cfg_production.h"
+#include "cfg_set_op.h"
 
 int main(int argc, char const* argv[]) {
 	if (argc <= 1)
@@ -19,11 +20,18 @@ int main(int argc, char const* argv[]) {
 		exit(1);
 	}
 
+	printf("Start symbol = %s\n", ((symbol_t*)
+					AT_VECTOR(cfg->non_terminal, cfg->goal)
+					)->name);
+
+	printf("%d\n", unreachable_production(cfg));
+
 	augment_grammar(cfg);
 	detect_nullable(cfg);
 	compute_first(cfg);
 	compute_follow(cfg);
 
+#if 0
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -89,7 +97,7 @@ int main(int argc, char const* argv[]) {
 		puts("}");
 	}
 	
-
+#endif
 	del_cfg(cfg);
 	return (0);
 }

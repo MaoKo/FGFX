@@ -16,9 +16,7 @@ SKIP		=	%skip ;
 NON_TER		=	<{IDENT}'*> ;
 ARROW		=	-> ;
 UNION		=	\| ;
-
-/* TODO: start symbol */
-// START	=	%start ;
+START		=	%start ;
 
 /* Both */
 TOKEN		=	{IDENT} ;
