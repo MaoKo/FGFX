@@ -111,3 +111,11 @@ int get_index_vector(vector_t* vect, void* obj, int (*pred)()) {
 	return (-1);
 }
 
+void
+foreach_vector(vector_t* vect, void (*foncteur)()) {
+	if (!vect)
+		{ return; }
+	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i)
+		{ (*foncteur)(AT_VECTOR(vect, i)); }
+}
+

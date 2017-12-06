@@ -19,7 +19,7 @@ make_len_buf(size_t len) {
 
 buffer_t*
 new_buffer(void) {
-	return (make_len_buf(BUFF_SIZE));
+	return (make_len_buf(_BUFF_SIZE));
 }
 
 buffer_t*

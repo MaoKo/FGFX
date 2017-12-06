@@ -12,6 +12,9 @@ int main(int argc, char const* argv[]) {
 	if (!cfg)
 		{ exit(1); }
 
+	detect_bad_symbol(cfg);
+	detect_nullable(cfg);
+
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -28,7 +31,7 @@ int main(int argc, char const* argv[]) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = AT_VECTOR(cfg->productions, i);
 		printf("%s -> ", prod->symbol_lhs->name);
-		struct list_rhs* list = prod->rhs;
+		list_rhs* list = prod->rhs_element;
 		while (list) {
 			printf("%s", list->symbol_rhs->name);
 			if (list->next)

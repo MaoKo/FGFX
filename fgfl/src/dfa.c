@@ -49,7 +49,8 @@ DFAedge(bitset_t* states, int symbol) {
 	return (closure(target));
 }
 
-static vector_t* gen_state_table(state_t* master, vector_t** rstates) {
+static vector_t*
+gen_state_table(state_t* master, vector_t** rstates) {
 	vector_t* states = (*rstates) = new_vector();
 	
 	bitset_t* start = new_bitset();
@@ -95,7 +96,8 @@ static vector_t* gen_state_table(state_t* master, vector_t** rstates) {
 	return (trans);
 }
 
-static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
+static vector_t*
+gen_final_table(vector_t* states, vector_t* elst) {
 	vector_t* final = new_vector();
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
 		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
@@ -118,8 +120,8 @@ static vector_t* gen_final_table(vector_t* states, vector_t* elst) {
 	return (final);
 }
 
-static void gen_table(state_t* master, vector_t** trans,
-					vector_t** final, vector_t* elst) {
+static void
+gen_table(state_t* master, vector_t** trans, vector_t** final, vector_t* elst) {
 	vector_t* states = NULL;
 	*trans = gen_state_table(master, &states);
 	*final = gen_final_table(states, elst);
@@ -193,7 +195,8 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 }
 #endif /* OPTIMIZE */
 
-void DFAgen(token_spec_t* spec, char const* base) {
+void
+DFAgen(token_spec_t* spec, char const* base) {
 	if (!spec)
 		{ return; }
 	vector_t* trans = NULL;

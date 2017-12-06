@@ -6,7 +6,7 @@
 
 #include "vector.h"
 
-#define HASH_SIZE	10
+//#define HASH_SIZE	10
 
 typedef struct {
 	int kind;
@@ -16,17 +16,21 @@ typedef struct {
 		struct {
 			/* TODO: prec, left, right, ... */
 		};
-		struct
-			{ bool is_defined; };
+		struct {
+			bool is_defined;
+			bool nullable;
+		};
 	};
 } symbol_t;
 
+typedef struct list_rhs {
+	symbol_t const* symbol_rhs;
+	struct list_rhs* next;
+} list_rhs;
+
 typedef struct {
 	symbol_t* symbol_lhs;
-	struct list_rhs {
-		symbol_t* symbol_rhs;
-		struct list_rhs* next;
-	} *rhs;
+	list_rhs* rhs_element;
 } production_t;
 
 typedef struct {

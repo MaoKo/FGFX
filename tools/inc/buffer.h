@@ -9,7 +9,7 @@
 #define CMP_BUFF_STR(buf, str)	(!strcmp((buf)->body, str))
 #define CMP_BUFFER(b1, b2)	(CMP_BUFF_STR(b1, (b2)->body))
 
-#define BUFF_SIZE		16
+#define _BUFF_SIZE		16
 
 typedef struct {
 	char* body;

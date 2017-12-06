@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "cfg.h"
+#include "cfg_production.h"
 #include "lexer.h"
 #include "utils.h"
 
@@ -33,13 +35,13 @@ void
 del_cfg(cfg_t* cfg) {
 	if (cfg) {
 		//for (size_t i = 0; i < HASH_SIZE; ++i) {
-		for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i)
-			{ free_symbol(AT_VECTOR(cfg->non_terminal, i)); }
+		foreach_vector(cfg->non_terminal, &free_symbol);	
 		del_vector(cfg->non_terminal);
-		for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i)
-			{ free_symbol(AT_VECTOR(cfg->terminal, i)); }
+		
+		foreach_vector(cfg->terminal, &free_symbol);
 		del_vector(cfg->terminal);
 		//}
+		foreach_vector(cfg->productions, &del_production);
 		del_vector(cfg->productions);
 	}
 	FREE(cfg);
@@ -106,43 +108,6 @@ parse_cfg(int filde) {
 	return (cfg);
 }
 
-static production_t*
-new_production(symbol_t* lhs) {
-	production_t* prod = NEW(production_t, 1);
-	if (!prod)
-		{ return (NULL); }
-	memset(prod, 0, sizeof(production_t));
-	prod->symbol_lhs = lhs;
-	return (prod);
-}
-
-static void
-del_production(production_t* prod) {
-	struct list_rhs* list = prod->rhs;
-	while (list) {
-		struct list_rhs* next = list->next;
-		FREE(list);
-		list = next;
-	}
-}
-
-static void
-add_symbol_rhs(production_t* prod, symbol_t* symbol) {
-	struct list_rhs* list = NEW(struct list_rhs, 1);
-	if (!list)
-		{ /* ERROR */ }
-	list->symbol_rhs = symbol;
-	list->next = NULL;
-	if (!prod->rhs)
-		{ prod->rhs = list; }
-	else {
-		struct list_rhs* crt_rhs = prod->rhs;
-		while (crt_rhs->next)
-			{ crt_rhs = crt_rhs->next; }
-		crt_rhs->next = list;
-	}
-}
-
 static int cfg_prod(cfg_t*);
 static int cfg_rhs(cfg_t*, symbol_t* lhs);
 static int cfg_opt_list(cfg_t*, production_t*);
@@ -166,6 +131,7 @@ int cfg_prod(cfg_t* cfg) {
 		return (ERROR);
 	}
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg, TNON_TER);
+	symbol_lhs->is_defined = true;
 	if ((advance_token(lex) != TARROW) || (cfg_rhs(cfg, symbol_lhs) == ERROR)
 			|| (advance_token(lex) != TSEMI)) {
 		free_symbol(symbol_lhs);
@@ -235,3 +201,29 @@ cfg_atom(cfg_t* cfg, production_t* prod) {
 	}
 	return (DONE);
 }
+
+int
+detect_bad_symbol(cfg_t* cfg) {
+	if (!cfg)
+		{ return (ERROR); }
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* symbol = (symbol_t*)AT_VECTOR(cfg->non_terminal, i);
+		if (!symbol->is_defined) {
+			fprintf(stderr, "Non_Terminal %s used but no defined.\n",
+				symbol->name);
+		}
+	}
+	return (DONE);
+}
+
+void
+detect_nullable(cfg_t* cfg) {
+	if (!cfg)
+		{ return; }
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		if (!prod->rhs_element)
+			{ prod->symbol_lhs->nullable = true; }
+	}
+}
+
