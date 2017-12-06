@@ -19,8 +19,10 @@ int main(int argc, char const* argv[]) {
 		exit(1);
 	}
 
+	augment_grammar(cfg);
 	detect_nullable(cfg);
 	compute_first(cfg);
+	compute_follow(cfg);
 
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
@@ -58,10 +60,26 @@ int main(int argc, char const* argv[]) {
 	puts("=== FIRST SET ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
-		printf("First(%s) = {", non_terminal->name);
+		printf("FIRST(%s) = {", non_terminal->name);
 		bool first = true;
 		int j;
 		while ((j = IT_NEXT(non_terminal->first)) != -1) {
+			if (!first)
+				{ printf(", "); }
+			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
+			printf("%s", terminal->name);
+			first = false;
+		}
+		puts("}");
+	}
+
+	puts("=== FOLLOW SET ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
+		printf("FOLLOW(%s) = {", non_terminal->name);
+		bool first = true;
+		int j;
+		while ((j = IT_NEXT(non_terminal->follow)) != -1) {
 			if (!first)
 				{ printf(", "); }
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);

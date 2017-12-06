@@ -12,6 +12,7 @@
 typedef struct {
 	int kind;
 	char const* name;
+	size_t index;
 	union {
 		// if TERMINAL
 		struct {
@@ -21,6 +22,7 @@ typedef struct {
 			bool is_defined;
 			bool nullable;
 			bitset_t* first;
+			bitset_t* follow;
 		};
 	};
 } symbol_t;

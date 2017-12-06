@@ -1,9 +1,3 @@
-<A>	->	<B>c
-	 ;
-
-<B>	->	<C>
-	 ;
-
-<C>	->	/* epsilon */
-	 |	d
-	 ;
+<S> -> <E> SEMI | <E>;
+<E> -> PLUS <T> ;
+<T> -> NUM ;

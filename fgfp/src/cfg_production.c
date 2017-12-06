@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "cfg_production.h"
+#include "cfg.h"
 #include "utils.h"
 
 #define ONLY_TOKEN
@@ -64,21 +65,35 @@ production_is_nullable(production_t const* prod) {
 }
 
 bitset_t*
-first_production(cfg_t const* cfg, production_t const* prod) {
+first_production(production_t const* prod) {
 	if (!prod || !(prod->rhs_element))
-		{ return (NULL); }
+		{ return (NULL_BITSET); }
 	bitset_t* bset = new_bitset();
 	list_rhs* list = prod->rhs_element;
 	while (list) {
-		if (list->symbol_rhs->kind == TTOKEN) {
-			ADD_BITSET(bset, (size_t)get_index_vector(cfg->terminal,
-					list->symbol_rhs, NULL));
+		if (IS_TERMINAL(list->symbol_rhs)) {
+			ADD_BITSET(bset, list->symbol_rhs->index);
 			break;
 		}
-		else
-			{ UNION_BITSET(bset, list->symbol_rhs->first); }
+		else {
+			UNION_BITSET(bset, list->symbol_rhs->first);
+			if (!list->symbol_rhs->nullable)
+				{ break; }
+		}
 		list = list->next;
 	}
 	return (bset);
+}
+
+list_rhs const*
+match_symbol_production(list_rhs const* list, symbol_t const* symbol) {
+	if (!list)
+		{ return (NULL); }
+	while (list) {
+		if (list->symbol_rhs == symbol)
+			{ return (list); }
+		list = list->next;
+	}
+	return (NULL);
 }
 
