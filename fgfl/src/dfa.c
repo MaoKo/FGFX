@@ -60,13 +60,13 @@ gen_state_table(state_t* master, vector_t** rstates) {
 	PUSH_BACK_VECTOR(states, closure(start));
 	
 	vector_t* trans = new_vector();
-	PUSH_BACK_VECTOR(trans, NULL);	//Dead State
+	PUSH_BACK_VECTOR(trans, NULL_TRANS_LST); //Dead State
 
 	long j = 1, p = 1;
 
 	while (j <= p) {
 		//printf("J = %ld\n", j);
-		PUSH_BACK_VECTOR(trans, NULL);
+		PUSH_BACK_VECTOR(trans, NULL_TRANS_LST);
 		for (register int i = MIN_ASCII; i < MAX_ASCII; ++i) {
 			bitset_t* next = DFAedge(AT_VECTOR(states, j), i);
 			if (next == NULL_BITSET)

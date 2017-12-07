@@ -1,0 +1,6 @@
+/* An LL(1) grammar that is not an LALR(1). */
+<S> -> LPAREN <X> | <E> RBRACK | <F> RPAREN ;
+<X> -> <E> RPAREN | <F> RBRACK ;
+<E> -> <A> ;
+<F> -> <A> ;
+<A> -> /* epsilon */ ;

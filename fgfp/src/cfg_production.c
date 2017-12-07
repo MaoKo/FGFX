@@ -55,7 +55,7 @@ production_is_nullable(production_t const* prod) {
 		{ return (true); }
 	list_rhs const* list = prod->rhs_element;
 	while (list) {
-		if (list->symbol_rhs->kind == TTOKEN)
+		if (list->symbol_rhs->kind == TERMINAL)
 			{ return (false); }
 		else if (!list->symbol_rhs->nullable)
 			{ return (false); }

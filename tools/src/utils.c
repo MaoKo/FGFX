@@ -28,6 +28,17 @@ strjoin(char const* str1, char const* str2) {
 	return (frame);
 }
 
+trans_list_t*
+new_trans_list(unsigned int input, unsigned int state) {
+	trans_list_t* list = NEW(trans_list_t, 1);
+	if (!list)
+		{ return (NULL); }
+	list->input = input;
+	list->state = state;
+	list->next = NULL;
+	return (list);
+}
+
 void
 del_trans_list(trans_list_t* list) {
 	while (list) {

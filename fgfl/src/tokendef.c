@@ -48,7 +48,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 		entry->used = false;
 	}
 	int offset = (token == TLOCAL_TOK);
-	entry->name = strdup(BODY_BUFFER(LAST_LEXEME(spec->lex)) + offset);
+	entry->name = strdup(C_LEXEME(spec->lex) + offset);
 	entry->igcase = false;
 	if (!entry->name)
 		{ return (-1); }
@@ -93,7 +93,7 @@ static int
 enable_property(token_spec_t* spec, int token) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
-		if (!strcmp(entry->name, BODY_BUFFER(LAST_LEXEME(spec->lex)))) {
+		if (!strcmp(entry->name, C_LEXEME(spec->lex))) {
 			if (token == TIGCASE)
 				{ entry->igcase = true; }
 			else {
@@ -107,8 +107,7 @@ enable_property(token_spec_t* spec, int token) {
 			return (0);
 		}
 	}
-	fprintf(stderr, "Identifier %s not found.\n",
-			BODY_BUFFER(LAST_LEXEME(spec->lex)));
+	fprintf(stderr, "Identifier %s not found.\n", C_LEXEME(spec->lex));
 	return (-1);
 }
 

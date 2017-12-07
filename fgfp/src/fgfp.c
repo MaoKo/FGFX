@@ -7,6 +7,7 @@
 #include "cfg_production.h"
 #include "cfg_set_op.h"
 #include "ll.h"
+#include "utils.h"
 
 int main(int argc, char const* argv[]) {
 	if (argc <= 1)
@@ -38,7 +39,20 @@ int main(int argc, char const* argv[]) {
 		exit(1);
 	}
 
-	gen_ll1_table(cfg);
+	vector_t* vect = gen_ll1_table(cfg);
+	printf("static int ll_table[][%zu] = {\n", SIZE_VECTOR(cfg->terminal));
+	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i) {
+		trans_list_t* lst = AT_VECTOR(vect, i);
+		while (lst) {
+			printf("\t[N%s][T%s]=%d,",
+	((production_t*)AT_VECTOR(cfg->productions, i))->symbol_lhs->name,
+	((symbol_t*)AT_VECTOR(cfg->terminal, lst->input))->name,
+		lst->state);
+			lst = lst->next;
+		}
+		puts("");
+	}
+	printf("}\n");
 
 #if 0
 	puts("=== NON_TERMINAL ===");

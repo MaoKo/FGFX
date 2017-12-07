@@ -7,8 +7,11 @@
 #include "fgfx.lex.h"
 #undef ONLY_TOKEN
 
-#define IS_TERMINAL(symbol)	((symbol)->kind == TTOKEN)
-#define IS_NON_TERMINAL(symbol)	((symbol)->kind == TNON_TER)
+#define TERMINAL		TTOKEN
+#define NON_TERMINAL		TNON_TER
+
+#define IS_TERMINAL(symbol)	((symbol)->kind == TERMINAL)
+#define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)
 #define SET_START(cfg, index)	((cfg)->goal = index)
 
 cfg_t* new_cfg(void);

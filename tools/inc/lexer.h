@@ -7,6 +7,7 @@
 #define FILDE_LEX(lex)		((lex)->filde)
 #define LAST_TOKEN(lex)		((lex)->last_token)
 #define LAST_LEXEME(lex)	((lex)->last_lexeme)
+#define C_LEXEME(lex)		(BODY_BUFFER(LAST_LEXEME(lex)))
 #define CURRENT_LINE(lex)	((lex)->lineno)
 
 typedef struct {
