@@ -65,10 +65,4 @@ typedef struct {
 	state_t* master;
 } token_spec_t;
 
-typedef struct trans_list_t {
-	unsigned int input;
-	unsigned int state;
-	struct trans_list_t* next;
-} trans_list_t;
-
 #endif /* FGFL_H */

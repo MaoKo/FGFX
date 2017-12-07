@@ -17,6 +17,8 @@ NON_TER		=	<{IDENT}'*> ;
 ARROW		=	-> ;
 UNION		=	\| ;
 START		=	%start ;
+// TODO: path from token declaration
+// TOKEN_FILE	=	%token_file
 
 /* Both */
 TOKEN		=	{IDENT} ;

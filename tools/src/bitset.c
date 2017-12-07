@@ -1,7 +1,9 @@
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "bitset.h"
+#include "vector.h"
 #include "utils.h"
 
 static int
@@ -193,3 +195,14 @@ is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	return (true);
 }
 
+bool
+is_disjoint_bitset(bitset_t const* bset1, bitset_t const* bset2) {
+	if (!bset1 || !bset2)
+		{ return (!(!bset1 && !bset2)); }
+	unsigned char max = MAX(bset1->nwords, bset2->nwords);
+	for (size_t i = 0; i < max; ++i) {
+		if (bset1->map[i] & bset2->map[i])
+			{ return (false); }
+	}
+	return (true);
+}

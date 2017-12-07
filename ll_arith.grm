@@ -1,0 +1,10 @@
+<E> -> <T> <E'>;
+<E'> -> PLUS <T> <E'>
+      | ;
+
+<T> -> <F> <T'>;
+<T'> -> MUL <F> <T'>
+      | ;
+
+<F> -> LPAREN <E> RPAREN
+     | ID ;

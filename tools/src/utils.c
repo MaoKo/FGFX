@@ -67,11 +67,6 @@ hash_str(char const* str) {
 	return (posc);
 }
 
-int
-cmp_entry_str(token_entry_t const* entry, char const* str) {
-	return (strcmp(entry->name, str));
-}
-
 bool
 file_exist(char const* filename) {
 	return (open(filename, O_WRONLY | O_EXCL) != -1);

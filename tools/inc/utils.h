@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "fgfl.h"
-
 //Allocation Macro
 #define NEW(type, size)		(type*)_pmalloc(sizeof(type) * size)
 #define REALLOC(ptr, size)	_prealloc(ptr, size)
@@ -19,13 +17,18 @@
 #define ERROR			-1
 #define DONE			0
 
+typedef struct trans_list_t {
+	unsigned int input;
+	unsigned int state;
+	struct trans_list_t* next;
+} trans_list_t;
+
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
 void del_trans_list(trans_list_t*);
 bool cmp_trans_list(trans_list_t const*, trans_list_t const*);
 trans_list_t const* contiguous_range(trans_list_t const*);
 size_t hash_str(char const*);
-int cmp_entry_str(token_entry_t const*, char const*);
 bool file_exist(char const*);
 void* _pmalloc(size_t);
 void* _prealloc(void*, size_t);

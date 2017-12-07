@@ -33,5 +33,7 @@ void erase_vector(vector_t*, size_t);
 void reverse_vector(vector_t*);
 int get_index_vector(vector_t*, void const*, int(*)());
 void foreach_vector(vector_t*, void(*)());
+void append_vector(vector_t*, vector_t const*);
+void move_vector(vector_t*, vector_t*);
 
 #endif /* VECTOR_H */

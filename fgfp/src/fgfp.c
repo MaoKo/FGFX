@@ -6,6 +6,7 @@
 #include "bitset.h"
 #include "cfg_production.h"
 #include "cfg_set_op.h"
+#include "ll.h"
 
 int main(int argc, char const* argv[]) {
 	if (argc <= 1)
@@ -30,6 +31,14 @@ int main(int argc, char const* argv[]) {
 	detect_nullable(cfg);
 	compute_first(cfg);
 	compute_follow(cfg);
+	
+	if (!is_ll1(cfg)) {
+		printf("Is not LL(1) :(\n");
+		del_cfg(cfg);
+		exit(1);
+	}
+
+	gen_ll1_table(cfg);
 
 #if 0
 	puts("=== NON_TERMINAL ===");
@@ -96,8 +105,8 @@ int main(int argc, char const* argv[]) {
 		}
 		puts("}");
 	}
-	
 #endif
+	
 	del_cfg(cfg);
 	return (0);
 }

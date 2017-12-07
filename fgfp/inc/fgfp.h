@@ -35,6 +35,8 @@ typedef struct list_rhs {
 typedef struct {
 	symbol_t* symbol_lhs;
 	list_rhs* rhs_element;
+	bitset_t* select_set;
+	bool can_get_rid;
 } production_t;
 
 typedef struct {

@@ -113,7 +113,7 @@ augment_grammar(cfg_t* cfg) {
 	production_t* prod = new_production(start);
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	add_symbol_rhs(prod, add_symbol_cfg(cfg, TTOKEN, "$"));
-	PUSH_BACK_VECTOR(cfg->productions, prod);
+	PUSH_FRONT_VECTOR(cfg->productions, prod);
 }
 
 static int cfg_inst(cfg_t*);

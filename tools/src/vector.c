@@ -119,3 +119,17 @@ foreach_vector(vector_t* vect, void (*foncteur)()) {
 		{ (*foncteur)(AT_VECTOR(vect, i)); }
 }
 
+void
+append_vector(vector_t* vect, vector_t const* src_vect) {
+	if (!vect || !src_vect)
+		{ return; }
+	for (size_t i = 0; i < SIZE_VECTOR(src_vect); ++i)
+		{ PUSH_BACK_VECTOR(vect, AT_VECTOR(src_vect, i)); }
+}
+
+void
+move_vector(vector_t* vect, vector_t* src_vect) {
+	append_vector(vect, src_vect);
+	del_vector(src_vect);
+}
+
