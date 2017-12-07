@@ -26,6 +26,7 @@ int main(int argc, char const* argv[]) {
 					AT_VECTOR(cfg->non_terminal, cfg->goal)
 					)->name);
 
+	printf("Token file = %s\n", cfg->token_file);
 	printf("%d\n", unreachable_production(cfg));
 
 	augment_grammar(cfg);

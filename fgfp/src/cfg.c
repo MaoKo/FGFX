@@ -39,6 +39,8 @@ del_cfg(cfg_t* cfg) {
 		//}
 		foreach_vector(cfg->productions, &del_production);
 		del_vector(cfg->productions);
+		if (cfg->token_file)
+			{ FREE(cfg->token_file); }
 	}
 	FREE(cfg);
 }
@@ -138,7 +140,7 @@ cfg_syntax(cfg_t* cfg) {
 
 int
 cfg_inst(cfg_t* cfg) {
-	if ((peek_token(lex) == TSTART)) {
+	if (in_first(lex, TSTART, TTOKEN_FILE, -1)) {
 		if (cfg_directive(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -149,11 +151,29 @@ cfg_inst(cfg_t* cfg) {
 
 int
 cfg_directive(cfg_t* cfg) {
-	if (advance_token(lex) != TSTART || advance_token(lex) != NON_TERMINAL) {
+	if (!in_first(lex, TSTART, TTOKEN_FILE, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}
-	cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
+	if (advance_token(lex) == TSTART) {
+		if (advance_token(lex) != NON_TERMINAL) {
+			/* ERROR */
+			return (ERROR);
+		}
+		cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
+	}
+	else {
+		if (advance_token(lex) != TSTR) {
+			/* ERROR */
+			return (ERROR);
+		}
+		if (cfg->token_file) {
+			/* WARNING */
+			FREE(cfg->token_file);
+		}
+		cfg->token_file = strdup(C_LEXEME(lex));
+	}
+
 	if (advance_token(lex) != TSEMI) {
 		/* ERROR */
 		return (ERROR);

@@ -16,7 +16,7 @@
 <Syntax>	->	<Inst> <Syntax'> ;
 <Syntax'>	->	<Inst> <Syntax'> | /* epsilon */ ;
 <Inst>		->	<Prod> | <Directive> ;
-<Directive>	->	START NON_TER SEMI ;
+<Directive>	->	START NON_TER SEMI | TOKEN_FILE STR SEMI ;
 <Prod>		->	NON_TER ARROW <Rhs> SEMI ;
 <Rhs>		->	<OptList> <Rhs'> ;
 <Rhs'>		->	UNION <OptList> <Rhs'> | /* epsilon */ ;

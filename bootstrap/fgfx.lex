@@ -13,12 +13,12 @@ IGCASE		=	%igcase ;
 SKIP		=	%skip ;
 
 /* FGFP */
-NON_TER		=	<{IDENT}'*> ;
+NON_TER		=	<{IDENT}'?> ;
 ARROW		=	-> ;
 UNION		=	\| ;
+STR		=	\"[^\n\"]+\" ;
 START		=	%start ;
-// TODO: path from token declaration
-// TOKEN_FILE	=	%token_file
+TOKEN_FILE	=	%token_file ;
 
 /* Both */
 TOKEN		=	{IDENT} ;
