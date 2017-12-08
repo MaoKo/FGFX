@@ -23,6 +23,7 @@ typedef struct {
 			bool nullable;
 			bitset_t* first;
 			bitset_t* follow;
+			bitset_t* prod_lst;
 		};
 	};
 } symbol_t;

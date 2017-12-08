@@ -22,21 +22,26 @@ new_cfg(void) {
 
 static void
 free_symbol(symbol_t* sym) {
-	if (sym)
-		{ FREE(sym->name); }
+	if (sym) {
+		FREE(sym->name);
+		if (sym->kind == NON_TERMINAL) {
+			del_bitset(sym->first);
+			del_bitset(sym->follow);
+			del_bitset(sym->prod_lst);
+		}
+	}
 	FREE(sym);
 }
 
 void
 del_cfg(cfg_t* cfg) {
 	if (cfg) {
-		//for (size_t i = 0; i < HASH_SIZE; ++i) {
 		foreach_vector(cfg->non_terminal, &free_symbol);	
 		del_vector(cfg->non_terminal);
 		
 		foreach_vector(cfg->terminal, &free_symbol);
 		del_vector(cfg->terminal);
-		//}
+	
 		foreach_vector(cfg->productions, &del_production);
 		del_vector(cfg->productions);
 		if (cfg->token_file)
@@ -52,8 +57,7 @@ cmp_symbol_name(symbol_t const* sym, char const* name) {
 }
 
 static symbol_t*
-add_symbol_cfg(cfg_t* cfg, int kind, char const* name) {
-	char* crt_lexeme = strdup(name);
+add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	vector_t* dest = (kind == NON_TERMINAL) ? cfg->non_terminal : cfg->terminal;
 	int index = get_index_vector(dest, crt_lexeme, &cmp_symbol_name);
 	if (index != -1)
@@ -62,25 +66,23 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* name) {
 	if (!symbol)
 		{ return (NULL); }
 	symbol->kind = kind;	
-/*
-	size_t offset = 0;
-	if (kind == NON_TERMINAL)
-		{ offset = 1; }
-*/
-	symbol->name = strdup(crt_lexeme /* + offset */);
-	if (!symbol->name) {
+	symbol->name = strdup(crt_lexeme);
+	symbol->prod_lst = new_bitset();
+
+	if (!symbol->name || !symbol->prod_lst) {
 		free_symbol(symbol);
 		return (NULL);
 	}
 /*
 	if (kind == NON_TERMINAL)
 		{ *strchr(sym->name, '>') = EOS; }
-*/
+
 	//vector_t** dst = (kind == NON_TERMINAL)
 	//? cfg->non_terminal : cfg->terminal;
 	//size_t hs = hash_str(sym->name) % HASH_SIZE;
 	//else
 	//	{ FREE(sym); }
+*/
 	symbol->index = SIZE_VECTOR(dest);
 	PUSH_BACK_VECTOR(dest, symbol);
 	return (symbol);
@@ -90,16 +92,14 @@ static int cfg_syntax(cfg_t*);
 
 cfg_t*
 parse_cfg(int filde) {
-	if (lex) {
-		del_lexer(lex);
-		lex = NULL;
-	}
 	if (!(lex = new_lexer(filde)))
 		{ return (NULL); }
 	cfg_t* cfg = new_cfg();
 	if (!cfg)
 		{ return (NULL); }
-	if (cfg_syntax(cfg) == ERROR) {
+	int exit_status = cfg_syntax(cfg);
+	del_lexer(lex);
+	if (exit_status == ERROR) {
 		del_cfg(cfg);
 		/* ERROR */
 		return (NULL);
@@ -206,7 +206,10 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		del_production(prod);
 		return (ERROR);
 	}
+
+	ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
+
 	while (peek_token(lex) == TUNION) {
 		advance_token(lex);
 		prod = new_production(lhs);
@@ -216,6 +219,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 			del_production(prod);
 			return (ERROR);
 		}
+
+		ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
 		PUSH_BACK_VECTOR(cfg->productions, prod);
 	}
 	return (DONE);

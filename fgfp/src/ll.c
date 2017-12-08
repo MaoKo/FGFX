@@ -19,29 +19,35 @@ is_ll1(cfg_t const* cfg) {
 	return (disjoint);
 }
 
+#include <stdio.h>
 vector_t*
 gen_ll1_table(cfg_t const* cfg) {
 	vector_t* ll_table = new_vector();
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
-		production_t* prod = AT_VECTOR(cfg->productions, i);
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
+		symbol_t* nter = AT_VECTOR(cfg->non_terminal, i);
 		PUSH_BACK_VECTOR(ll_table, NULL_TRANS_LST);
 		int j;
-		while ((j = IT_NEXT(prod->select_set)) != -1) {
-			trans_list_t* lst = new_trans_list(((symbol_t*)
-				AT_VECTOR(cfg->terminal, j))->index, i);	
-			lst->next = BACK_VECTOR(ll_table);
-			SET_VECTOR(ll_table, i, lst);
-		}
-		IT_RESET(prod->select_set);
-		if (prod->can_get_rid) {
-			while ((j = IT_NEXT(prod->symbol_lhs->follow)) != -1) {
+		while ((j = IT_NEXT(nter->prod_lst)) != -1) {
+			production_t* prod = AT_VECTOR(cfg->productions, j);
+			int k;
+			while ((k = IT_NEXT(prod->select_set)) != -1) {
 				trans_list_t* lst = new_trans_list(((symbol_t*)
-					AT_VECTOR(cfg->terminal, j))->index, i);
+					AT_VECTOR(cfg->terminal, k))->index, j);
 				lst->next = BACK_VECTOR(ll_table);
-				SET_VECTOR(ll_table, i, lst);
+				BACK_VECTOR(ll_table) = lst;
+			}
+			IT_RESET(prod->select_set);
+			if (!prod->can_get_rid)
+				{ continue; }
+			while ((k = IT_NEXT(prod->symbol_lhs->follow)) != -1) {
+				trans_list_t* lst = new_trans_list(((symbol_t*)
+					AT_VECTOR(cfg->terminal, k))->index, j);
+				lst->next = BACK_VECTOR(ll_table);
+				BACK_VECTOR(ll_table) = lst;
 			}
 			IT_RESET(prod->symbol_lhs->follow);
 		}
+		IT_RESET(nter->prod_lst);
 	}
 	return (ll_table);
 }

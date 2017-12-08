@@ -16,17 +16,17 @@ typedef uint64_t		_SETTYPE;
 
 //Iterator Bitset
 #define IT_NEXT(bs)		(_next_bitset(bs))
-#define IT_RESET(bs)		((bs) ? bs->siter = 0 : 0)
+#define IT_RESET(bs)		((bs) ? (bs)->siter = 0 : 0)
 
-#define OP_BITSET(bs, x, op)	(bs->map[_DIV_WSIZE(x)] op (1UL<<_MOD_WSIZE(x)))
-#define IS_PRESENT(bs, x)	((!bs || x >= bs->nbits) ? false\
+#define OP_BITSET(bs, x, op)	((bs)->map[_DIV_WSIZE(x)] op (1UL<<_MOD_WSIZE(x)))
+#define IS_PRESENT(bs, x)	((!bs || x >= (bs)->nbits) ? false\
 					: (OP_BITSET(bs, x, &)))
 
-#define ADD_BITSET(bs, x)	((x >= bs->nbits)  ? _add_bitset(bs, x)\
+#define ADD_BITSET(bs, x)	((x >= (bs)->nbits)  ? _add_bitset(bs, x)\
 					: (OP_BITSET(bs, x, |=)))
 
-#define OFF_BITSET(bs, x)	((x >= bs->nbits) ? 0 : (OP_BISET(bs, x, |= ~)))
-#define CLEAR_BITSET(bs)	(memset(bs->map, 0, _BYTE_SETTYPE(bs->nwords)))
+#define OFF_BITSET(bs, x)	((x >= (bs)->nbits) ? 0 : (OP_BISET(bs, x, |= ~)))
+#define CLEAR_BITSET(bs)	(memset((bs)->map, 0, _BYTE_SETTYPE((bs)->nwords)))
 
 //Common operation available with set
 

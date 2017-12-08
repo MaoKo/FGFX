@@ -46,7 +46,7 @@ int main(int argc, char const* argv[]) {
 		trans_list_t* lst = AT_VECTOR(vect, i);
 		while (lst) {
 			printf("\t[N%s][T%s]=%d,",
-	((production_t*)AT_VECTOR(cfg->productions, i))->symbol_lhs->name,
+	((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name,
 	((symbol_t*)AT_VECTOR(cfg->terminal, lst->input))->name,
 		lst->state);
 			lst = lst->next;
