@@ -65,26 +65,24 @@ production_is_nullable(production_t const* prod) {
 }
 
 bitset_t*
-first_production(production_t* prod) {
+first_production(production_t const* prod) {
 	if (!prod || !(prod->rhs_element))
 		{ return (NULL_BITSET); }
-	if (prod->select_set)
-		{ del_bitset(prod->select_set); }
-	prod->select_set = new_bitset();
+	bitset_t* select_set = new_bitset();
 	list_rhs* list = prod->rhs_element;
 	while (list) {
 		if (IS_TERMINAL(list->symbol_rhs)) {
-			ADD_BITSET(prod->select_set, list->symbol_rhs->index);
+			ADD_BITSET(select_set, list->symbol_rhs->index);
 			break;
 		}
 		else {
-			UNION_BITSET(prod->select_set, list->symbol_rhs->first);
+			UNION_BITSET(select_set, list->symbol_rhs->first);
 			if (!list->symbol_rhs->nullable)
 				{ break; }
 		}
 		list = list->next;
 	}
-	return (prod->select_set);
+	return (select_set);
 }
 
 list_rhs const*

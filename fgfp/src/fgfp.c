@@ -55,7 +55,6 @@ int main(int argc, char const* argv[]) {
 	}
 	printf("}\n");
 
-#if 0
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -120,7 +119,6 @@ int main(int argc, char const* argv[]) {
 		}
 		puts("}");
 	}
-#endif
 	
 	del_cfg(cfg);
 	return (0);

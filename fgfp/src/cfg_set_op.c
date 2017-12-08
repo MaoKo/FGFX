@@ -13,8 +13,7 @@ detect_nullable(cfg_t* cfg) {
 		for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 			production_t* prod = (production_t*)
 						AT_VECTOR(cfg->productions, i);
-			if (!(prod->symbol_lhs->nullable)
-					&& production_is_nullable(prod)) {
+			if (!(prod->can_get_rid) && production_is_nullable(prod)) {
 				change = prod->symbol_lhs->nullable = true;
 				prod->can_get_rid = true;
 			}
@@ -33,12 +32,16 @@ compute_first(cfg_t* cfg) {
 			production_t* prod = (production_t*)
 						AT_VECTOR(cfg->productions, i);
 			bitset_t* first = first_production(prod);
-			if (!is_subset_bitset(prod->symbol_lhs->first, first)) {
+			if (!is_subset_bitset(prod->select_set, first)) {
 				if (!prod->symbol_lhs->first)
 					{ prod->symbol_lhs->first = new_bitset(); }
+				if (!prod->select_set)
+					{ prod->select_set = new_bitset(); }
 				UNION_BITSET(prod->symbol_lhs->first, first);
+				UNION_BITSET(prod->select_set, first);
 				change = true;
 			}
+			del_bitset(first);
 		}
 	} while (change);
 }
