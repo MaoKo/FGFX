@@ -1,10 +1,10 @@
-<E> -> <T> <E'>;
-<E'> -> PLUS <T> <E'>
-      | ;
+%token_file "arith.lex.h" ;
 
-<T> -> <F> <T'>;
-<T'> -> MUL <F> <T'>
-      | ;
+<E>	->	<T> <E'> ;
+<E'>	->	PLUS <T> <E'> | ;
 
-<F> -> LPAREN <E> RPAREN
-     | ID ;
+<T>	->	<F> <T'> ;
+<T'>	->	MUL <F> <T'> | ;
+
+<F>	->	LPAREN <E> RPAREN
+	 |	ID ;

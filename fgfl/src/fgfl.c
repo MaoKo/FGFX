@@ -3,16 +3,7 @@
 #include "token_def.h"
 #include "nfa.h"
 #include "dfa.h"
-
-static char const*
-get_filename(char const* path) {
-	char const* last = path;
-	while (*path) {
-		if (*path++ == '/')
-			{ last = path; }
-	}
-	return (last);
-}
+#include "utils.h"
 
 int
 main(int argc, char const* argv[]) {

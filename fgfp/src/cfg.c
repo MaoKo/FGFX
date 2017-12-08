@@ -114,7 +114,7 @@ augment_grammar(cfg_t* cfg) {
 	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "$start");
 	production_t* prod = new_production(start);
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
-	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "$"));
+	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "EOF"));
 	cfg->goal = SIZE_VECTOR(cfg->productions);
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 }

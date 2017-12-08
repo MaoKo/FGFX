@@ -28,6 +28,16 @@ strjoin(char const* str1, char const* str2) {
 	return (frame);
 }
 
+char const*
+get_filename(char const* path) {
+	char const* last = path;
+	while (*path) {
+		if (*path++ == '/')
+			{ last = path; }
+	}
+	return (last);
+}
+
 trans_list_t*
 new_trans_list(unsigned int input, unsigned int state) {
 	trans_list_t* list = NEW(trans_list_t, 1);

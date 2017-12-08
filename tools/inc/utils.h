@@ -27,6 +27,7 @@ typedef struct trans_list_t {
 
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
+char const* get_filename(char const*);
 trans_list_t* new_trans_list(unsigned int, unsigned int);
 void del_trans_list(trans_list_t*);
 bool cmp_trans_list(trans_list_t const*, trans_list_t const*);

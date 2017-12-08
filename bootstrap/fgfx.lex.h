@@ -1,5 +1,5 @@
-#ifndef FGFX_LEX_H
-#define FGFX_LEX_H
+#ifndef _FGFX_H
+#define _FGFX_H
 
 #include <stdint.h>
 typedef	uint8_t	dfa_state_t;
@@ -32,8 +32,7 @@ enum {
 #define START_STATE	1
 #define DEAD_STATE	0
 
-//Size of state table = 49
-static dfa_state_t fgfx_state_table[][256] = {
+static dfa_state_t fgfx_state_table[49][256] = {
 /*   0 */	{},
 /*   1 */	{[124]=13, [97 ... 122]=12, [95]=12, [65 ... 90]=12, [64]=11, [61]=10, [60]=9, [59]=8, [47]=7, [45]=6, [44]=5, [37]=4, [34]=3, [32]=2, [9 ... 10]=2},
 /*   2 */	{[32]=2, [9 ... 10]=2},
@@ -113,4 +112,4 @@ static int fgfx_skip_table[] = {
 };
 
 #endif /* ONLY_TOKEN */
-#endif /* FGFX_LEX_H */
+#endif /* _FGFX_H */

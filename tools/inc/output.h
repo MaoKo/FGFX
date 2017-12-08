@@ -4,24 +4,31 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Format Character
 #define TAB		"\t"
+// Keywords
 #define STATIC		"static"
 #define VOID		"void"
 #define INT		"int"
-#define BEG_BLOCK	"{"
-#define END_BLOCK	"}"
-#define FUNC(name, ...)	#name"("#__VA_ARGS__")"
+#define ENUM		"enum"
+#define TYPEDEF		"typedef"
+// Keywords Predicate
 #define FOR(i,c,f)	"for ("#i"; "#c"; "#f")"
 #define IF(c)		"if ("#c")"
 #define WHILE(c)	"while ("#c")"
-#define ENUM		"enum"
-#define SEMI		";"
 #define RETURN(x)	"return ("#x")"
+// Punctuations
+#define BEG_BLOCK	"{"
+#define END_BLOCK	"}"
+#define SEMI		";"
 #define COMMA		","
-#define INCLUDE_SYS(x)	"#include <"#x">"
-#define INCLUDE(x)	"#include \""#x"\""
+// Function declaration
+#define FUNC(name, ...)	#name"("#__VA_ARGS__")"
+// Preprocessor directive
+#define INCLUDE(x)	"#include "#x
 #define DEFINE(x,y)	"#define "#x""TAB""#y
-#define TYPEDEF		"typedef"
+#define UNDEF(x)	"#undef"TAB""#x
+#define IFNDEF(x)	"#ifndef"TAB""#x
 
 uint8_t min_size_type(size_t);
 void output_include_macro(int, char const*);

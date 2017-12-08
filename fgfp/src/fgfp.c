@@ -7,6 +7,7 @@
 #include "cfg_production.h"
 #include "cfg_set_op.h"
 #include "ll.h"
+#include "output_ll.h"
 #include "utils.h"
 
 int main(int argc, char const* argv[]) {
@@ -17,17 +18,20 @@ int main(int argc, char const* argv[]) {
 	if (!cfg)
 		{ exit(1); }
 
+	if (!cfg->token_file) {
+		fprintf(stderr, "Location of token not defined.\n");
+		exit(1);
+	}
+
 	if (detect_bad_symbol(cfg)) {
 		del_cfg(cfg);
 		exit(1);
 	}
 
-	printf("Start symbol = %s\n", ((symbol_t*)
-					AT_VECTOR(cfg->non_terminal, cfg->goal)
-					)->name);
-
-	printf("Token file = %s\n", cfg->token_file);
-	printf("%d\n", unreachable_production(cfg));
+	if (unreachable_production(cfg)) {
+		del_cfg(cfg);
+		exit(1);
+	}
 
 	augment_grammar(cfg);
 	detect_nullable(cfg);
@@ -40,21 +44,13 @@ int main(int argc, char const* argv[]) {
 		exit(1);
 	}
 
-	vector_t* vect = gen_ll1_table(cfg);
-	printf("static int ll_table[][%zu] = {\n", SIZE_VECTOR(cfg->terminal));
-	for (size_t i = 0; i < SIZE_VECTOR(vect); ++i) {
-		trans_list_t* lst = AT_VECTOR(vect, i);
-		while (lst) {
-			printf("\t[N%s][T%s]=%d,",
-	((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name,
-	((symbol_t*)AT_VECTOR(cfg->terminal, lst->input))->name,
-		lst->state);
-			lst = lst->next;
-		}
-		puts("");
-	}
-	printf("}\n");
+	output_location_token(1, cfg->token_file);
+	output_non_terminal_enum(1, cfg->non_terminal);	
 
+	vector_t* vect = gen_ll1_table(cfg);
+	output_ll_table(1, cfg, vect);
+
+#if 0
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -119,7 +115,8 @@ int main(int argc, char const* argv[]) {
 		}
 		puts("}");
 	}
-	
+
+#endif	
 	del_cfg(cfg);
 	return (0);
 }

@@ -11,7 +11,7 @@
 
 static inline void
 output_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
-	dprintf(filde, INCLUDE_SYS(stdint.h)"\n");
+	dprintf(filde, INCLUDE(<stdint.h>)"\n");
 	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "dfa_state_t;\n",
 			min_size_type(size_trans));
 	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "final_state_t;\n\n",
@@ -37,10 +37,10 @@ output_token_enum(int filde, vector_t const* elst) {
 
 static void
 output_state_table(int filde, vector_t const* trans, char const* header) {
-	dprintf(filde, "//Size of state table = %zu\n", SIZE_VECTOR(trans));
 	dprintf(filde, STATIC" dfa_state_t ");
 	output_verbatim_file(filde, header);
-	dprintf(filde, "_state_table[][%d] = {\n", MAX_ASCII);
+	dprintf(filde, "_state_table[%zu][%d] = {\n",
+			SIZE_VECTOR(trans), MAX_ASCII);
 
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i) {
 		trans_list_t const* t = (trans_list_t*)AT_VECTOR(trans, i);
