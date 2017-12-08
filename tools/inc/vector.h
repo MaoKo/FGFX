@@ -2,6 +2,7 @@
 #define VECTOR_H
 
 #include <stddef.h>
+#include "bitset.h"
 
 #define AT_VECTOR(vect, i)		((vect)->body[i])
 #define SET_VECTOR(vect, i, x)		((vect)->body[i] = x)
@@ -16,6 +17,7 @@
 #define POP_BACK_VECTOR(vect)		(erase_vector(vect, (vect)->index - 1))
 #define POP_FRONT_VECTOR(vect)		(erase_vector(vect, 0))
 
+#define NULL_VECT			NULL
 #define _VECT_SIZE			8
 
 typedef struct {

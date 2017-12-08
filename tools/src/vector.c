@@ -7,12 +7,12 @@ static vector_t*
 make_len_vector(size_t len) {
 	vector_t* vect = NEW(vector_t, 1);
 	if (!vect)
-		{ return (NULL); }
+		{ return (NULL_VECT); }
 	memset(vect, 0, sizeof(vector_t));
 	vect->body = NEW(void*, len);
 	if (!vect->body) {
 		FREE(vect);
-		return (NULL);
+		return (NULL_VECT);
 	}
 	vect->alloc = len;
 	return (vect);
@@ -26,10 +26,10 @@ new_vector(void) {
 vector_t*
 dup_vector(vector_t const* vect) {
 	if (!vect)
-		{ return (NULL); }
+		{ return (NULL_VECT); }
 	vector_t* new_vect = make_len_vector(vect->alloc);
 	if (!new_vect)
-		{ return (NULL); }
+		{ return (NULL_VECT); }
 	memcpy(new_vect->body, vect->body, sizeof(void*) * vect->alloc);
 	return (new_vect);
 }

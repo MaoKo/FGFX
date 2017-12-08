@@ -29,7 +29,7 @@ typedef struct {
 } symbol_t;
 
 typedef struct list_rhs {
-	symbol_t const* symbol_rhs;
+	symbol_t* symbol_rhs;
 	struct list_rhs* next;
 } list_rhs;
 
