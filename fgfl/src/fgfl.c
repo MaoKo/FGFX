@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "tokendef.h"
+#include "token_def.h"
 #include "nfa.h"
 #include "dfa.h"
 

@@ -1,5 +1,5 @@
-#ifndef TOKENDEF_H
-#define TOKENDEF_H
+#ifndef TOKEN_DEF_H
+#define TOKEN_DEF_H
 
 #include "fgfl.h"
 
@@ -11,4 +11,4 @@
 void del_token_spec(token_spec_t*);
 int Reggen(char const*, token_spec_t**);
 
-#endif /* TOKENDEF_H */
+#endif /* TOKEN_DEF_H */

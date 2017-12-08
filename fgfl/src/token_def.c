@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "tokendef.h"
+#include "token_def.h"
 #include "lexer.h"
 #include "utils.h"
 #include "regex.h"

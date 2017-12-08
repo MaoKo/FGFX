@@ -1,6 +1,6 @@
 #include "dfa.h"
-#include "dfagen.h"
-#include "tokendef.h"
+#include "output_dfa.h"
+#include "token_def.h"
 #include "nfa.h"
 #include "utils.h"
 
@@ -209,7 +209,7 @@ DFAgen(token_spec_t* spec, char const* base) {
 #endif /* OPTIMIZE */
 
 	char const* header_filename = strjoin(base, ".h");
-	gen_header(header_filename, trans, final, spec->entry_lst);
+	output_matrix(header_filename, trans, final, spec->entry_lst);
 	FREE(header_filename);
 	
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)

@@ -1,9 +1,9 @@
-#ifndef OUT_GEN_H
-#define OUT_GEN_H
+#ifndef OUTPUT_H
+#define OUTPUT_H
 
-#include "vector.h"
+#include <stddef.h>
+#include <stdint.h>
 
-//Gen Macro
 #define TAB		"\t"
 #define STATIC		"static"
 #define VOID		"void"
@@ -23,6 +23,10 @@
 #define DEFINE(x,y)	"#define "#x""TAB""#y
 #define TYPEDEF		"typedef"
 
-int gen_header(char const*, vector_t const*, vector_t const*, vector_t const*);
+uint8_t min_size_type(size_t);
+void output_include_macro(int, char const*);
+void output_require_macro(int, char const*);
+void output_endif(int, char const*);
+void output_verbatim_file(int, char const*);
 
-#endif /* OUT_GEN_H */
+#endif /* OUTPUT_H */
