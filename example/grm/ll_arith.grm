@@ -1,4 +1,5 @@
-%token_file "arith.lex.h" ;
+%token "arith.lex.h" ;
+//%alias '+' PLUS, '*' MUL, '(' LPAREN, ')' RPAREN ;
 
 <E>	->	<T> <E'> ;
 <E'>	->	PLUS <T> <E'> | ;

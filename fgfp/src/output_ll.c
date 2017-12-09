@@ -38,7 +38,7 @@ output_non_terminal_enum(int filde, vector_t const* nter) {
 
 void
 output_ll_table(int filde, cfg_t const* cfg, vector_t const* ll_table) {
-	dprintf(filde, STATIC " " INT " ll_table["
+	dprintf(filde, STATIC " " INT "\nll_table["
 			MACRO_NTER "][" MACRO_TOKEN "] = " BEG_BLOCK "\n");
 	for (size_t i = 0; i < SIZE_VECTOR(ll_table); ++i) {
 		trans_list_t* list = AT_VECTOR(ll_table, i);

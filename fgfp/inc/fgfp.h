@@ -18,12 +18,17 @@ typedef struct {
 		struct {
 			/* TODO: prec, left, right, ... */
 		};
+		// if NON_TERMINAL
 		struct {
 			bool is_defined;
 			bool nullable;
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
+		};
+		// if ALIAS
+		struct {
+
 		};
 	};
 } symbol_t;

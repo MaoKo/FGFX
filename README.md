@@ -7,8 +7,18 @@ The goal of FGFP is to create from a grammar description a LALR(1) parsing table
 Also for speed, maybe, I replace the Vector with Hash.
 I also no free memory or only a subset. I try to fix this as soon as possible.
 
+### How to make? ###
+Git clone the repository.
+Then, type:
+	.	make
+
+After you can do:
+	.	./efgfl example/lex/token_c.lex
+Which create a file called token_c.h.lex ready for lexing.
+
 ### TODO ###
 	.	More accurate handle of error in FGFX
-	.	Correct the bitset when the value is too big
-	.	Add the %start directive in FGFP
-	.	Handle of FIRST and FOLLOW set
+	.	Optimizing FOLLOW set
+	.	Handle if file already exist
+	.	Handle %alias in FGFP
+

@@ -17,8 +17,6 @@ void
 output_include_macro(int filde, char const* header) {
 	write(filde, "_", 1);
 	while (*header) {
-		if (*header == '.')
-			{ break; }
 		char c;
 		if (isalnum(*header))
 			{ c = toupper(*header); }

@@ -18,16 +18,16 @@ SKIP		=	%skip ;
 NTER		=	<{IDENT}'?> ;
 ARROW		=	-> ;
 UNION		=	\| ;
-STR		=	\"[^\n\"]+\" ;
-
-/* Both */
-GLOBAL_TOK	=	{IDENT} ;
+@ESCAPE		=	\\["'] ;
+LITERAL		=	'([^\n']|{ESCAPE})' ;
+STR		=	\"([^\n"]|{ESCAPE})+\" ;
 START		=	%start ;
 TOKEN		=	%token ;
 
+/* Both */
+GLOBAL_TOK	=	{IDENT} ;
 SEMI		=	\; ;
 COMMA		=	, ;
-
 SPACE		=	[ \t\n]+ ;
 COM		=	(//.*)|(/\*(\*+[^*/]|[^*])*\*+/) ;
 

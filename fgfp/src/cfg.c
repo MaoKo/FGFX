@@ -171,7 +171,8 @@ cfg_directive(cfg_t* cfg) {
 			/* WARNING */
 			FREE(cfg->token_file);
 		}
-		cfg->token_file = strdup(C_LEXEME(lex));
+		cfg->token_file = strdup(C_LEXEME(lex) + 1);
+		*strrchr(cfg->token_file, '"') = EOS;
 	}
 
 	if (advance_token(lex) != TSEMI) {

@@ -9,6 +9,7 @@
 
 #define TERMINAL		TGLOBAL_TOK
 #define NON_TERMINAL		TNTER
+#define ALIAS			TLITERAL
 
 #define IS_TERMINAL(symbol)	((symbol)->kind == TERMINAL)
 #define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)

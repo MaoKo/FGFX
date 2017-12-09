@@ -11,7 +11,7 @@
 #include "output.h"
 #include "utils.h"
 
-int main(int argc, char const* argv[]) {
+int main(int argc, char* argv[]) {
 	if (argc <= 1)
 		{ exit(1); }
 	int filde = open(argv[1], O_RDONLY);
@@ -44,16 +44,18 @@ int main(int argc, char const* argv[]) {
 		del_cfg(cfg);
 		exit(1);
 	}
-
-	output_require_macro(1, cfg->token_file);
+	
+	argv[1] = (char*)get_filename(argv[1]);
+	output_require_macro(1, argv[1]);
 
 	output_location_token(1, cfg->token_file);
 	output_non_terminal_enum(1, cfg->non_terminal);	
 
 	vector_t* vect = gen_ll1_table(cfg);
+	ERROR_MACRO(1);
 	output_ll_table(1, cfg, vect);
 
-	output_endif(1, cfg->token_file);
+	output_endif(1, argv[1]);
 
 #if 0
 	puts("=== NON_TERMINAL ===");

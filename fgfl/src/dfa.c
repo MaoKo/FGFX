@@ -196,22 +196,18 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 #endif /* OPTIMIZE */
 
 void
-DFAgen(token_spec_t* spec, char const* base) {
+DFAgen(token_spec_t* spec, char const* base_file) {
 	if (!spec)
 		{ return; }
 	vector_t* trans = NULL;
 	vector_t* final = NULL;
 	gen_table(spec->master, &trans, &final, spec->entry_lst);
-	(void)base;
 
 #ifdef OPTIMIZE
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	char const* header_filename = strjoin(base, ".h");
-	output_matrix(header_filename, trans, final, spec->entry_lst);
-	FREE(header_filename);
-	
+	output_matrix(base_file, trans, final, spec->entry_lst);
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
 		{ del_trans_list(AT_VECTOR(trans, i)); }
 

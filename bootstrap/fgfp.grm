@@ -11,17 +11,35 @@
 
 */
 
+%token "fgfx.lex.h" ;
+// %alias ';' SEMI ;
+
 /* Equivalent LL(1) */
 
 <Syntax>	->	<Inst> <Syntax'> ;
 <Syntax'>	->	<Inst> <Syntax'> | /* epsilon */ ;
+
 <Inst>		->	<Prod> | <Directive> ;
-<Directive>	->	START NON_TER SEMI | TOKEN_FILE STR SEMI ;
+
+<Directive>	->	<StartDir> | <TokenDir> | <AliasDir> ;
+
+<StartDir>	->	START NON_TER SEMI ;
+
+<TokenDir>	->	TOKEN STR SEMI ;
+
+<AliasDir>	->	ALIAS <AliasList> SEMI ;
+<AliasList>	->	LITERAL GLOBAL_TOK <AliasList'> ;
+<AliasList'>	->	COMMA LITERAL GLOBAL_TOK <AliasList'> | /* epsilon */ ;
+
 <Prod>		->	NON_TER ARROW <Rhs> SEMI ;
+
 <Rhs>		->	<OptList> <Rhs'> ;
 <Rhs'>		->	UNION <OptList> <Rhs'> | /* epsilon */ ;
+
 <OptList>	->	<List> | /* epsilon */ ;
+
 <List>		->	<Atom> <List'> ;
 <List'>		->	<Atom> <List'> | /* epsilon */ ;
-<Atom>		->	NON_TER | TOKEN ;
+
+<Atom>		->	NON_TER | GLOBAL_TOK | LITERAL ;
 

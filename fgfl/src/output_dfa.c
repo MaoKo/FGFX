@@ -11,7 +11,7 @@
 
 static inline void
 output_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
-	dprintf(filde, INCLUDE(<stdint.h>)"\n");
+	dprintf(filde, INCLUDE_SYS(stdint.h)"\n");
 	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "dfa_state_t;\n",
 			min_size_type(size_trans));
 	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "final_state_t;\n\n",
@@ -37,7 +37,7 @@ output_token_enum(int filde, vector_t const* elst) {
 
 static void
 output_state_table(int filde, vector_t const* trans, char const* header) {
-	dprintf(filde, STATIC" dfa_state_t ");
+	dprintf(filde, STATIC" dfa_state_t\n");
 	output_verbatim_file(filde, header);
 	dprintf(filde, "_state_table[%zu][%d] = {\n",
 			SIZE_VECTOR(trans), MAX_ASCII);
@@ -67,7 +67,7 @@ output_state_table(int filde, vector_t const* trans, char const* header) {
 
 static void
 output_final_table(int filde, vector_t const* final, char const* header) {
-	dprintf(filde, STATIC" final_state_t ");
+	dprintf(filde, STATIC" final_state_t\n");
 	output_verbatim_file(filde, header);
 	dprintf(filde, "_final_table[][2] = {\n");
 
@@ -93,7 +93,7 @@ output_skip_table(int filde, vector_t const* elst, char const* header) {
 	}
 	
 	if (SIZE_VECTOR(skip_table)) {
-		dprintf(filde, STATIC" "INT" ");
+		dprintf(filde, STATIC" "INT"\n");
 		output_verbatim_file(filde, header);
 		dprintf(filde, "_skip_table[] = {\n");
 		for (size_t i = 0; i < SIZE_VECTOR(skip_table); ++i) {
@@ -115,25 +115,30 @@ output_dfa_useful_macro(int filde) {
 }
 
 int
-output_matrix(char const* header, vector_t const* trans,
+output_matrix(char const* base_file, vector_t const* trans,
 		vector_t const* final, vector_t const* elst) {
+	
+	char const* header = strjoin(base_file, ".h");
 	int flag = O_CREAT;
 	if (file_exist(header))
 		{ flag = O_TRUNC; }
 	int filde = open(header, O_WRONLY | flag, 0666);
 	if (filde == -1)
 		{ return (ERROR); }
-	output_require_macro(filde, header);
+
+	output_require_macro(filde, base_file);
 	output_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
 	output_token_enum(filde, elst);
-	IFNDEF_ONLY_TOKEN;
+	IFNDEF_ONLY_TOKEN(filde);
 	output_dfa_useful_macro(filde);
 	output_state_table(filde, trans, header);
 	output_final_table(filde, final, header);
 	output_skip_table(filde, elst, header);
-	ENDIF_ONLY_TOKEN;
-	output_endif(filde, header);
+	ENDIF_ONLY_TOKEN(filde);
+	output_endif(filde, base_file);
+
 	if (close(filde) == -1)
 		{ return (ERROR); }
+	FREE(header);
 	return (0);
 }

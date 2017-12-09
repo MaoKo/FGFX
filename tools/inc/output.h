@@ -25,7 +25,8 @@
 // Function declaration
 #define FUNC(name, ...)	#name"("#__VA_ARGS__")"
 // Preprocessor directive
-#define INCLUDE(x)	"#include "#x
+#define INCLUDE_SYS(x)	"#include <"#x">"
+#define INCLUDE(x)	"#include \""#x"\""
 #define DEFINE(x,y)	"#define "#x""TAB""#y
 #define UNDEF(x)	"#undef"TAB""#x
 #define IFNDEF(x)	"#ifndef"TAB""#x
