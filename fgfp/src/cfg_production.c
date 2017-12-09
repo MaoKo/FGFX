@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "cfg_production.h"
@@ -136,15 +137,16 @@ unreachable_production(cfg_t const* cfg) {
 			list = list->next;
 		}
 	}
-
-	COMPL_BITSET(nter_seen);
+	
 	int unreach = DONE;
-	int i;
-	while (((i = IT_NEXT(nter_seen)) != -1)
-			&& (i < (int)SIZE_VECTOR(cfg->non_terminal))) {
-		unreach = ERROR;
-		break;
-	}
+	for (int i = SIZE_VECTOR(cfg->non_terminal) - 1; i >= 0; --i) {
+		if (!IS_PRESENT(nter_seen, (size_t)i)) {
+			unreach = ERROR;
+			fprintf(stderr, "Warning %s unreachable.\n",
+				((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name);
+			erase_vector(cfg->non_terminal, i);
+		}
+	} 
 
 	del_bitset(nter_seen);
 	del_vector(stack_prod);

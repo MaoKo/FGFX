@@ -33,13 +33,13 @@ output_non_terminal_enum(int filde, vector_t const* nter) {
 		dprintf(filde, ",\n");
 	}
 	dprintf(filde, END_BLOCK SEMI "\n\n");
-	dprintf(filde, DEFINE(TOTAL_NTER, %zu)"\n\n", SIZE_VECTOR(nter));
+	dprintf(filde, DEFINE(%s, %zu)"\n\n", MACRO_NTER, SIZE_VECTOR(nter));
 }
 
 void
 output_ll_table(int filde, cfg_t const* cfg, vector_t const* ll_table) {
-	dprintf(filde, STATIC " " INT " ll_table[TOTAL_NTER][%zu] = " BEG_BLOCK "\n",
-			SIZE_VECTOR(cfg->terminal));
+	dprintf(filde, STATIC " " INT " ll_table["
+			MACRO_NTER "][" MACRO_TOKEN "] = " BEG_BLOCK "\n");
 	for (size_t i = 0; i < SIZE_VECTOR(ll_table); ++i) {
 		trans_list_t* list = AT_VECTOR(ll_table, i);
 		if (list)
@@ -55,6 +55,6 @@ output_ll_table(int filde, cfg_t const* cfg, vector_t const* ll_table) {
 		}
 		write(filde, "\n", 1);
 	}
-	dprintf(filde, END_BLOCK SEMI "\n");
+	dprintf(filde, END_BLOCK SEMI "\n\n");
 }
 

@@ -29,6 +29,9 @@
 #define DEFINE(x,y)	"#define "#x""TAB""#y
 #define UNDEF(x)	"#undef"TAB""#x
 #define IFNDEF(x)	"#ifndef"TAB""#x
+// Macro
+#define MACRO_NTER	"TOTAL_NTER"
+#define MACRO_TOKEN	"TOTAL_TOKEN"
 
 uint8_t min_size_type(size_t);
 void output_include_macro(int, char const*);

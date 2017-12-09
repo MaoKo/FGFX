@@ -32,7 +32,7 @@ output_token_enum(int filde, vector_t const* elst) {
 	}
 	dprintf(filde, TAB"TEOF,\n");
 	dprintf(filde, END_BLOCK""SEMI"\n\n");
-	dprintf(filde, DEFINE(TOTAL_TOKEN, %zu)"\n\n", count + 2);
+	dprintf(filde, DEFINE(%s, %zu)"\n\n", MACRO_TOKEN, count + 2);
 }
 
 static void

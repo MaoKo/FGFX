@@ -11,17 +11,20 @@ LOCAL_TOK	=	@{IDENT} ;
 EQUAL		=	= ;
 IGCASE		=	%igcase ;
 SKIP		=	%skip ;
+//TODO: beg regex with dollar
+//DOLLAR	=	$ ;
 
 /* FGFP */
-NON_TER		=	<{IDENT}'?> ;
+NTER		=	<{IDENT}'?> ;
 ARROW		=	-> ;
 UNION		=	\| ;
 STR		=	\"[^\n\"]+\" ;
-START		=	%start ;
-TOKEN_FILE	=	%token_file ;
 
 /* Both */
-TOKEN		=	{IDENT} ;
+GLOBAL_TOK	=	{IDENT} ;
+START		=	%start ;
+TOKEN		=	%token ;
+
 SEMI		=	\; ;
 COMMA		=	, ;
 

@@ -140,7 +140,7 @@ cfg_syntax(cfg_t* cfg) {
 
 int
 cfg_inst(cfg_t* cfg) {
-	if (in_first(lex, TSTART, TTOKEN_FILE, -1)) {
+	if (in_first(lex, TSTART, TTOKEN, -1)) {
 		if (cfg_directive(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -151,7 +151,7 @@ cfg_inst(cfg_t* cfg) {
 
 int
 cfg_directive(cfg_t* cfg) {
-	if (!in_first(lex, TSTART, TTOKEN_FILE, -1)) {
+	if (!in_first(lex, TSTART, TTOKEN, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}

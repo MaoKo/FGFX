@@ -11,12 +11,12 @@ enum {
 	TEQUAL,
 	TIGCASE,
 	TSKIP,
-	TNON_TER,
+	TNTER,
 	TARROW,
 	TUNION,
 	TSTR,
+	TGLOBAL_TOK,
 	TSTART,
-	TTOKEN_FILE,
 	TTOKEN,
 	TSEMI,
 	TCOMMA,
@@ -32,7 +32,7 @@ enum {
 #define START_STATE	1
 #define DEAD_STATE	0
 
-static dfa_state_t fgfx_state_table[49][256] = {
+static dfa_state_t fgfx_state_table[44][256] = {
 /*   0 */	{},
 /*   1 */	{[124]=13, [97 ... 122]=12, [95]=12, [65 ... 90]=12, [64]=11, [61]=10, [60]=9, [59]=8, [47]=7, [45]=6, [44]=5, [37]=4, [34]=3, [32]=2, [9 ... 10]=2},
 /*   2 */	{[32]=2, [9 ... 10]=2},
@@ -75,13 +75,8 @@ static dfa_state_t fgfx_state_table[49][256] = {
 /*  39 */	{[110]=42},
 /*  40 */	{[101]=43},
 /*  41 */	{},
-/*  42 */	{[95]=44},
+/*  42 */	{},
 /*  43 */	{},
-/*  44 */	{[102]=45},
-/*  45 */	{[105]=46},
-/*  46 */	{[108]=47},
-/*  47 */	{[101]=48},
-/*  48 */	{},
 };
 
 static final_state_t fgfx_final_table[][2] = {
@@ -89,18 +84,18 @@ static final_state_t fgfx_final_table[][2] = {
 	{ 5, 	TCOMMA },
 	{ 8, 	TSEMI },
 	{ 10, 	TEQUAL },
-	{ 12, 	TTOKEN },
+	{ 12, 	TGLOBAL_TOK },
 	{ 13, 	TUNION },
 	{ 18, 	TARROW },
 	{ 20, 	TCOM },
 	{ 22, 	TLOCAL_TOK },
 	{ 23, 	TSTR },
-	{ 30, 	TNON_TER },
+	{ 30, 	TNTER },
 	{ 35, 	TCOM },
 	{ 37, 	TSKIP },
 	{ 41, 	TSTART },
+	{ 42, 	TTOKEN },
 	{ 43, 	TIGCASE },
-	{ 48, 	TTOKEN_FILE },
 };
 
 #define SIZE_FINAL_TAB	16

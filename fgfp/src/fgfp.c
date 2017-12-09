@@ -8,6 +8,7 @@
 #include "cfg_set_op.h"
 #include "ll.h"
 #include "output_ll.h"
+#include "output.h"
 #include "utils.h"
 
 int main(int argc, char const* argv[]) {
@@ -29,8 +30,8 @@ int main(int argc, char const* argv[]) {
 	}
 
 	if (unreachable_production(cfg)) {
-		del_cfg(cfg);
-		exit(1);
+		fprintf(stderr,
+			"Some unreachable nonterminal has been remove.\n");
 	}
 
 	augment_grammar(cfg);
@@ -44,11 +45,15 @@ int main(int argc, char const* argv[]) {
 		exit(1);
 	}
 
+	output_require_macro(1, cfg->token_file);
+
 	output_location_token(1, cfg->token_file);
 	output_non_terminal_enum(1, cfg->non_terminal);	
 
 	vector_t* vect = gen_ll1_table(cfg);
 	output_ll_table(1, cfg, vect);
+
+	output_endif(1, cfg->token_file);
 
 #if 0
 	puts("=== NON_TERMINAL ===");

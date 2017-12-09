@@ -66,7 +66,7 @@ add_entry_lexeme(token_spec_t* spec, int token) {
 static int
 parse_assignement(token_spec_t* spec) {
 	int type = advance_token(spec->lex);
-	if ((type != TTOKEN) && (type != TLOCAL_TOK)) {
+	if ((type != TGLOBAL_TOK) && (type != TLOCAL_TOK)) {
 		fprintf(stderr, "Error (%d): Expected ident (Local or not).\n",
 			CURRENT_LINE(spec->lex));
 		return (-1);
@@ -116,7 +116,7 @@ parse_directive(token_spec_t* spec) {
 	if (!in_first(spec->lex, TIGCASE, TSKIP))
 		{ /* ERROR */ return (-1); }
 	int kind_directive = advance_token(spec->lex);
-	if (advance_token(spec->lex) != TTOKEN) {
+	if (advance_token(spec->lex) != TGLOBAL_TOK) {
 		fprintf(stderr, "Error (%d): Expected id after %s directive.\n",
 			CURRENT_LINE(spec->lex), ((kind_directive == TIGCASE) ?
 						"igcase" : "skip"));
@@ -126,7 +126,7 @@ parse_directive(token_spec_t* spec) {
 		{ return (-1); }		
 	while (peek_token(spec->lex) == TCOMMA) {
 		advance_token(spec->lex);
-		if (advance_token(spec->lex) != TTOKEN) {
+		if (advance_token(spec->lex) != TGLOBAL_TOK) {
 			fprintf(stderr, "Error (%d): Expected id after a comma.\n",
 				CURRENT_LINE(spec->lex));
 			return (-1);

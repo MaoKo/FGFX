@@ -44,7 +44,7 @@ void
 output_endif(int filde, char const* header) {
 	dprintf(filde, "#endif /* ");
 	output_include_macro(filde, header);
-	dprintf(filde, " */");
+	dprintf(filde, " */\n");
 }
 
 void
