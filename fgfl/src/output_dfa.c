@@ -21,16 +21,17 @@ output_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
 static void
 output_token_enum(int filde, vector_t const* elst) {
 	dprintf(filde, ENUM" "BEG_BLOCK"\n");
-	dprintf(filde, TAB"TNONE,\n");
 	size_t count = 0;
 	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
-		token_entry_t* te = (token_entry_t*)AT_VECTOR(elst, i);
-		if (!te->local) {
-			dprintf(filde, TAB"T%s,\n", te->name);
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
+		if (entry->kind == GLOBAL || entry->kind == KEYWORD) {
+			dprintf(filde, TAB TOKEN_PREFIX"%s,\n", entry->name);
 			++count;
 		}
 	}
-	dprintf(filde, TAB"TEOF,\n");
+	dprintf(filde, TAB TOKEN_PREFIX"ERROR,\n");
+	dprintf(filde, TAB TOKEN_PREFIX"EOF,\n");
+
 	dprintf(filde, END_BLOCK""SEMI"\n\n");
 	dprintf(filde, DEFINE(%s, %zu)"\n\n", MACRO_TOKEN, count + 2);
 }
@@ -73,7 +74,7 @@ output_final_table(int filde, vector_t const* final, char const* header) {
 
 	size_t count_final = SIZE_VECTOR(final) / 2;
 	for (size_t i = 0; i < count_final; ++i) {
-		dprintf(filde, TAB"{ %ld, "TAB"T%s },\n",
+		dprintf(filde, TAB"{ %ld, "TAB TOKEN_PREFIX"%s },\n",
 				(long)AT_VECTOR(final, i*2),
 				(char const*)AT_VECTOR(final, i*2+1));
 	}
@@ -88,7 +89,7 @@ output_skip_table(int filde, vector_t const* elst, char const* header) {
 
 	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
-		if (entry->skip && !entry->local)
+		if (entry->skip && (entry->kind == GLOBAL))
 			{ PUSH_BACK_VECTOR(skip_table, entry); }
 	}
 	
@@ -99,7 +100,7 @@ output_skip_table(int filde, vector_t const* elst, char const* header) {
 		for (size_t i = 0; i < SIZE_VECTOR(skip_table); ++i) {
 			token_entry_t* entry = (token_entry_t*)
 					AT_VECTOR(skip_table, i);
-			dprintf(filde, TAB"T%s,\n", entry->name);
+			dprintf(filde, TAB TOKEN_PREFIX"%s,\n", entry->name);
 		}
 		dprintf(filde, TAB"-1,\n};\n\n");
 	}

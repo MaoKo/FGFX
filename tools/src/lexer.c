@@ -28,7 +28,7 @@ del_lexer(lexer_t* lex) {
 
 static int
 get_next_token(lexer_t* lex) {
-	int rd, state = START_STATE, last_match = TNONE;
+	int rd, state = START_STATE, last_match = T_ERROR;
 	int c = 0;
 
 	if (!lex->last_lexeme)
@@ -46,11 +46,11 @@ get_next_token(lexer_t* lex) {
 		rd = read(lex->filde, &c, 1);
 		if (!rd) {
 			if (first_read)
-				{ return (TEOF); }
+				{ return (T_EOF); }
 			break;
 		}
 		state = fgfx_state_table[state][c];
-		if (is_final_state(state))
+		if (is_final_state(state) != T_ERROR)
 			{ last_match = is_final_state(state); }
 		write_char_buffer(lex->last_lexeme, c);
 		first_read = false;
@@ -58,9 +58,9 @@ get_next_token(lexer_t* lex) {
 			{ ++(lex->lineno); }
 	}
 	
-	if (last_match == TNONE) {
+	if (last_match == T_ERROR) {
 		fprintf(stderr, "Lexical Error <%d:%s>.\n",
-			lex->lineno, BODY_BUFFER(lex->last_lexeme));
+			lex->lineno, C_LEXEME(lex));
 		lex->last_char = -1;
 	}
 	else {
@@ -79,11 +79,11 @@ allow_skip(int token) {
 	return (false);
 }
 
-int
+long
 advance_token(lexer_t* lex) {
 	if (!lex)
 		{ return (-1); }
-	int found_token;
+	long found_token;
 	if (lex->last_token != -1)
 		{ found_token = lex->last_token; }
 	else {
@@ -94,6 +94,29 @@ advance_token(lexer_t* lex) {
 				{ break; }
 			reset_buffer(lex->last_lexeme);
 		}
+	}
+	if (found_token == T_GLOBAL_TOK) {
+		if (!strcmp(C_LEXEME(lex), "ERROR")
+				|| !strcmp(C_LEXEME(lex), "EOF")) {
+			fprintf(stderr, "<%s> name reserved for special use.\n",
+				C_LEXEME(lex));
+			return (T_ERROR);
+		}
+	}
+	else if (found_token == T_DIRECTIVE) {
+		static void* directive_tab[][2] = {
+			{ (void*)T_SKIP,	"%skip"	},
+			{ (void*)T_IGCASE,	"%igcase" },
+			{ (void*)T_TOKEN,	"%token" },
+			{ (void*)T_START,	"%start" },
+			{ (void*)T_ALIAS,	"%alias" },
+			{ (void*)T_KEYWORD,	"%keyword" },
+		};
+		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
+			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))
+				{ return ((long)*directive_tab[i]); }
+		}
+		fprintf(stderr, "Bad directive <%s>.\n", C_LEXEME(lex));
 	}
 	lex->last_token = -1;
 	return (found_token);
@@ -127,6 +150,6 @@ is_final_state(int state) {
 		if (fgfx_final_table[i][0] == state)
 			{ return (fgfx_final_table[i][1]); }
 	}
-	return (TNONE);
+	return (T_ERROR);
 }
 

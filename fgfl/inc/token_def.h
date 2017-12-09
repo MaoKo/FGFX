@@ -3,12 +3,10 @@
 
 #include "fgfl.h"
 
-#define READ			1
-#define NO_READ			0
-
 #define USED_ENTRY(entry)	(entry->used = true)
+#define REDEFINNING		(-2)
 
 void del_token_spec(token_spec_t*);
-int Reggen(char const*, token_spec_t**);
+int regex_gen(char const*, token_spec_t**);
 
 #endif /* TOKEN_DEF_H */

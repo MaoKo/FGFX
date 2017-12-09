@@ -179,14 +179,14 @@ ast2nfa(node_ast_t* root, int priority, bool igcase) {
 }
 
 int
-NFAgen(token_spec_t* spec) {
+nfa_gen(token_spec_t* spec) {
 	if (!spec)
 		{ return (-1); }
 	spec->master = new_state();
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)
 					AT_VECTOR(spec->entry_lst, i);
-		if (!entry->local) {
+		if (entry->kind == GLOBAL) {
 			node_ast_t* ast = entry->reg;
 			entry->frag = ast2nfa(ast, i + 1, entry->igcase);
 			del_node_ast(ast);

@@ -9,8 +9,6 @@
 /* FGFL */
 LOCAL_TOK	=	@{IDENT} ;
 EQUAL		=	= ;
-IGCASE		=	%igcase ;
-SKIP		=	%skip ;
 //TODO: beg regex with dollar
 //DOLLAR	=	$ ;
 
@@ -21,15 +19,15 @@ UNION		=	\| ;
 @ESCAPE		=	\\["'] ;
 LITERAL		=	'([^\n']|{ESCAPE})' ;
 STR		=	\"([^\n"]|{ESCAPE})+\" ;
-START		=	%start ;
-TOKEN		=	%token ;
 
-/* Both */
+/* Both FGFL & FGFP */
+DIRECTIVE	=	%{IDENT} ;
 GLOBAL_TOK	=	{IDENT} ;
 SEMI		=	\; ;
 COMMA		=	, ;
 SPACE		=	[ \t\n]+ ;
 COM		=	(//.*)|(/\*(\*+[^*/]|[^*])*\*+/) ;
 
-%skip		SPACE, COM ;
+%keyword		START, TOKEN, IGCASE, SKIP, KEYWORD, ALIAS ;
+%skip			SPACE, COM ;
 

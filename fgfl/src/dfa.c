@@ -196,7 +196,7 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 #endif /* OPTIMIZE */
 
 void
-DFAgen(token_spec_t* spec, char const* base_file) {
+dfa_gen(token_spec_t* spec, char const* base_file) {
 	if (!spec)
 		{ return; }
 	vector_t* trans = NULL;

@@ -1,20 +1,7 @@
-/* LR(1) Grammar  */
-
-/*
-
-<FGFP>		->	<FGFP> <Prod> | <Prod> ;
-<Prod>		->	NON_TER ARROW <Rhs> SEMI ;
-<Rhs>		->	<Rhs> UNION <OptList> | <OptList> ;
-<OptList>	->	<List> | // epsilon  ;
-<List>		->	<List> <Atom> | <Atom> ;
-<Atom>		->	NON_TER | TOKEN ;
-
-*/
-
 %token "fgfx.lex.h" ;
-// %alias ';' SEMI ;
 
-/* Equivalent LL(1) */
+// TODO: ALIAS
+// %alias ';' SEMI, '|' UNION ;
 
 <Syntax>	->	<Inst> <Syntax'> ;
 <Syntax'>	->	<Inst> <Syntax'> | /* epsilon */ ;

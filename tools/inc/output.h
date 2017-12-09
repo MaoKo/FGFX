@@ -34,6 +34,8 @@
 #define MACRO_NTER	"TOTAL_NTER"
 #define MACRO_TOKEN	"TOTAL_TOKEN"
 
+#define TOKEN_PREFIX	"T_"
+
 uint8_t min_size_type(size_t);
 void output_include_macro(int, char const*);
 void output_require_macro(int, char const*);

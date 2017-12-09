@@ -27,6 +27,6 @@ state_t* state_at(size_t);
 
 state_t* new_state(void);
 nfa_frag_t* ast2nfa(node_ast_t*, int, bool);
-int NFAgen(token_spec_t*);
+int nfa_gen(token_spec_t*);
 
 #endif /* NFA_H */

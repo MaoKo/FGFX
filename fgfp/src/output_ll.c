@@ -15,7 +15,7 @@ output_location_token(int filde, char const* path_token) {
 
 void
 output_nter_symbol(int filde, char const* nter_str) {
-	write(filde, "N", 1);
+	dprintf(filde, NTER_PREFIX);
 	for (size_t i = 1; nter_str[i] != '>'; ++i) {
 		if (nter_str[i] == '\'')
 			{ dprintf(filde, "_PRIME"); }
@@ -48,7 +48,7 @@ output_ll_table(int filde, cfg_t const* cfg, vector_t const* ll_table) {
 			dprintf(filde, "[");
 			output_nter_symbol(filde, ((symbol_t*)
 				AT_VECTOR(cfg->non_terminal, i))->name);
-			dprintf(filde, "][T%s]=%d, ", ((symbol_t*)
+			dprintf(filde, "]["TOKEN_PREFIX"%s]=%d, ", ((symbol_t*)
 				AT_VECTOR(cfg->terminal, list->input))->name,
 				list->state + 1);
 			list = list->next;

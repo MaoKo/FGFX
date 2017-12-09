@@ -131,7 +131,7 @@ int
 cfg_syntax(cfg_t* cfg) {
 	if (cfg_inst(cfg) == ERROR)
 		{ return (ERROR); }
-	while (peek_token(lex) != TEOF) {
+	while (peek_token(lex) != T_EOF) {
 		if (cfg_inst(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -140,7 +140,8 @@ cfg_syntax(cfg_t* cfg) {
 
 int
 cfg_inst(cfg_t* cfg) {
-	if (in_first(lex, TSTART, TTOKEN, -1)) {
+	printf("Peek = %d\n", peek_token(lex));
+	if (in_first(lex, T_START, T_TOKEN, -1)) {
 		if (cfg_directive(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -151,11 +152,11 @@ cfg_inst(cfg_t* cfg) {
 
 int
 cfg_directive(cfg_t* cfg) {
-	if (!in_first(lex, TSTART, TTOKEN, -1)) {
+	if (!in_first(lex, T_START, T_TOKEN, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}
-	if (advance_token(lex) == TSTART) {
+	if (advance_token(lex) == T_START) {
 		if (advance_token(lex) != NON_TERMINAL) {
 			/* ERROR */
 			return (ERROR);
@@ -163,7 +164,7 @@ cfg_directive(cfg_t* cfg) {
 		cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
 	}
 	else {
-		if (advance_token(lex) != TSTR) {
+		if (advance_token(lex) != T_STR) {
 			/* ERROR */
 			return (ERROR);
 		}
@@ -175,7 +176,7 @@ cfg_directive(cfg_t* cfg) {
 		*strrchr(cfg->token_file, '"') = EOS;
 	}
 
-	if (advance_token(lex) != TSEMI) {
+	if (advance_token(lex) != T_SEMI) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -189,8 +190,8 @@ int cfg_prod(cfg_t* cfg) {
 	}
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex));
 	symbol_lhs->is_defined = true;
-	if ((advance_token(lex) != TARROW) || (cfg_rhs(cfg, symbol_lhs) == ERROR)
-			|| (advance_token(lex) != TSEMI)) {
+	if ((advance_token(lex) != T_ARROW) || (cfg_rhs(cfg, symbol_lhs) == ERROR)
+			|| (advance_token(lex) != T_SEMI)) {
 		free_symbol(symbol_lhs);
 		/* ERROR */
 		return (ERROR);
@@ -211,7 +212,7 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 	ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 
-	while (peek_token(lex) == TUNION) {
+	while (peek_token(lex) == T_UNION) {
 		advance_token(lex);
 		prod = new_production(lhs);
 		if (!prod)
@@ -231,7 +232,7 @@ int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(lex, NON_TERMINAL, TERMINAL, -1))
 		{ return (cfg_list(cfg, prod)); }
-	else if (!in_first(lex, TUNION, TSEMI, -1)) {
+	else if (!in_first(lex, T_UNION, T_SEMI, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}

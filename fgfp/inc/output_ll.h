@@ -5,6 +5,7 @@
 #include "vector.h"
 
 #define ERROR_MACRO(x)	(dprintf(x, DEFINE(ERROR_SLOT, 0)"\n"))
+#define NTER_PREFIX	"N_"
 
 void output_location_token(int, char const*);
 void output_nter_symbol(int, char const*);

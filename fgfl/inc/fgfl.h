@@ -47,12 +47,12 @@ typedef struct {
 } nfa_frag_t;
 
 typedef struct {
-	bool local;
+	enum { GLOBAL, LOCAL, KEYWORD } kind;
 	bool used;
 	bool igcase;
 	bool skip;
 	char* name;
-	enum { AST, FRAGMENT, } phase;
+	enum { NONE, AST, FRAGMENT, } phase;
 	union {
 		node_ast_t* reg;
 		nfa_frag_t* frag;
