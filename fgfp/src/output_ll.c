@@ -33,7 +33,8 @@ output_non_terminal_enum(int filde, vector_t const* nter) {
 		dprintf(filde, ",\n");
 	}
 	dprintf(filde, END_BLOCK SEMI "\n\n");
-	dprintf(filde, DEFINE(%s, %zu)"\n\n", MACRO_NTER, SIZE_VECTOR(nter));
+	dprintf(filde, DEFINE(%s, %zu)"\n\n",
+			MACRO_NTER, SIZE_VECTOR(nter) - 1);
 }
 
 void

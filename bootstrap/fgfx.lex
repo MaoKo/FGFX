@@ -16,9 +16,8 @@ EQUAL		=	= ;
 NTER		=	<{IDENT}'?> ;
 ARROW		=	-> ;
 UNION		=	\| ;
-@ESCAPE		=	\\["'] ;
-LITERAL		=	'([^\n']|{ESCAPE})' ;
-STR		=	\"([^\n"]|{ESCAPE})+\" ;
+LITERAL		=	'([^\\\n']|\\['\\])' ;
+STR		=	\"([^\\\n"]|\\[\"])+\" ;
 
 /* Both FGFL & FGFP */
 DIRECTIVE	=	%{IDENT} ;

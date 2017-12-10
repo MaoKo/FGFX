@@ -48,6 +48,24 @@ add_symbol_rhs(production_t* prod, symbol_t* symbol) {
 	return (DONE);
 }
 
+int
+preprocess_literal(cfg_t const* cfg) {
+	if (!cfg)
+		{ return (ERROR); }
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		list_rhs* list = AT_VECTOR(cfg->productions, i);
+		while (list) {
+			if (list->symbol_rhs->kind == LITERAL) {
+				list->symbol_rhs = (symbol_t*)
+					AT_VECTOR(cfg->terminal,
+					list->symbol_rhs->terminal_alias);
+			}
+			list = list->next;
+		}
+	}
+	return (DONE);
+}
+
 bool
 production_is_nullable(production_t const* prod) {
 	if (!prod)
@@ -114,6 +132,9 @@ int
 unreachable_production(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
+	if (EMPTY_VECTOR(cfg->non_terminal))
+		{ return (DONE); }
+
 	bitset_t* nter_seen = new_bitset();
 	vector_t* stack_prod = NULL;
 

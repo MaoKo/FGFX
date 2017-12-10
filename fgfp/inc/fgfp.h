@@ -7,12 +7,11 @@
 #include "vector.h"
 #include "bitset.h"
 
-//#define HASH_SIZE	10
-
 typedef struct {
 	int kind;
 	char const* name;
 	size_t index;
+	bool is_defined;
 	union {
 		// if TERMINAL
 		struct {
@@ -20,7 +19,6 @@ typedef struct {
 		};
 		// if NON_TERMINAL
 		struct {
-			bool is_defined;
 			bool nullable;
 			bitset_t* first;
 			bitset_t* follow;
@@ -28,7 +26,7 @@ typedef struct {
 		};
 		// if ALIAS
 		struct {
-
+			int terminal_alias;
 		};
 	};
 } symbol_t;
@@ -47,10 +45,6 @@ typedef struct {
 
 typedef struct {
 	vector_t* productions;
-/*
-	vector_t* non_terminal[HASH_SIZE];
-	vector_t* terminal[HASH_SIZE];
-*/
 	vector_t* non_terminal;
 	vector_t* terminal;
 	size_t goal;

@@ -15,7 +15,6 @@ int main(int argc, char* argv[]) {
 	if (argc <= 1)
 		{ exit(1); }
 	int filde = open(argv[1], O_RDONLY);
-	puts("HERE");
 	cfg_t* cfg = parse_cfg(filde);
 	if (!cfg)
 		{ exit(1); }
@@ -35,6 +34,7 @@ int main(int argc, char* argv[]) {
 			"Some unreachable nonterminal has been remove.\n");
 	}
 
+	preprocess_literal(cfg);
 	augment_grammar(cfg);
 	detect_nullable(cfg);
 	compute_first(cfg);

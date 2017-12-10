@@ -1,32 +1,63 @@
 %token "fgfx.lex.h" ;
 
-// TODO: ALIAS
-// %alias ';' SEMI, '|' UNION ;
+%alias	SEMI	-> ';' ,
+	COMMA	-> ',' ,
+	UNION	-> '|' ;
 
-<Syntax>	->	<Inst> <Syntax'> ;
-<Syntax'>	->	<Inst> <Syntax'> | /* epsilon */ ;
+<Syntax>	->	<Inst> <Syntax'>
+		;
 
-<Inst>		->	<Prod> | <Directive> ;
+<Syntax'>	->	<Inst> <Syntax'>
+		|	/* epsilon */
+		;
 
-<Directive>	->	<StartDir> | <TokenDir> | <AliasDir> ;
+<Inst>		->	<Prod>
+		|	<Directive>
+		;
 
-<StartDir>	->	START NON_TER SEMI ;
+<Directive>	->	<StartDir>
+		|	<TokenDir>
+		|	<AliasDir>
+		;
 
-<TokenDir>	->	TOKEN STR SEMI ;
+<StartDir>	->	START NON_TER ';'
+		;
 
-<AliasDir>	->	ALIAS <AliasList> SEMI ;
-<AliasList>	->	LITERAL GLOBAL_TOK <AliasList'> ;
-<AliasList'>	->	COMMA LITERAL GLOBAL_TOK <AliasList'> | /* epsilon */ ;
+<TokenDir>	->	TOKEN STR ';'
+		;
 
-<Prod>		->	NON_TER ARROW <Rhs> SEMI ;
+<AliasDir>	->	ALIAS <AliasList> ';'
+		;
 
-<Rhs>		->	<OptList> <Rhs'> ;
-<Rhs'>		->	UNION <OptList> <Rhs'> | /* epsilon */ ;
+<AliasList>	->	GLOBAL_TOK ARROW LITERAL <AliasList'>
+		;
 
-<OptList>	->	<List> | /* epsilon */ ;
+<AliasList'>	->	',' GLOBAL_TOK ARROW LITERAL <AliasList'>
+		|	/* epsilon */
+		;
 
-<List>		->	<Atom> <List'> ;
-<List'>		->	<Atom> <List'> | /* epsilon */ ;
+<Prod>		->	NON_TER ARROW <Rhs> ';'
+		;
 
-<Atom>		->	NON_TER | GLOBAL_TOK | LITERAL ;
+<Rhs>		->	<OptList> <Rhs'>
+		;
 
+<Rhs'>		->	'|' <OptList> <Rhs'>
+		|	/* epsilon */
+		;
+
+<OptList>	->	<List>
+		|	/* epsilon */
+		;
+
+<List>		->	<Atom> <List'>
+		;
+
+<List'>		->	<Atom> <List'>
+		|	/* epsilon */
+		;
+
+<Atom>		->	NON_TER
+		|	GLOBAL_TOK
+		|	LITERAL
+		;

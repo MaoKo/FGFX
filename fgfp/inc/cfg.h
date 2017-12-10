@@ -9,7 +9,7 @@
 
 #define TERMINAL		T_GLOBAL_TOK
 #define NON_TERMINAL		T_NTER
-#define ALIAS			T_LITERAL
+#define LITERAL			T_LITERAL
 
 #define IS_TERMINAL(symbol)	((symbol)->kind == TERMINAL)
 #define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)
