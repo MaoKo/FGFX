@@ -147,7 +147,7 @@ enable_property(token_spec_t* spec, int token) {
 
 static int
 parse_directive(token_spec_t* spec) {
-	if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_SPECIAL, -1))
+	if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_SPECIAL, -1))
 		{ /* ERROR */ return (ERROR); }
 	int kind_directive = advance_token(spec->lex);
 	if (advance_token(spec->lex) != T_GLOBAL_TOK) {
@@ -195,7 +195,7 @@ parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
 	int token = T_ERROR;
 	while ((token = peek_token(spec->lex)) != T_EOF) {
-		if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_SPECIAL, -1))
+		if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_SPECIAL, -1))
 			{ parse_assignement(spec); }
 		else
 			{ parse_directive(spec); }

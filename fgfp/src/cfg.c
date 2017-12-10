@@ -148,7 +148,7 @@ cfg_syntax(cfg_t* cfg) {
 
 int
 cfg_inst(cfg_t* cfg) {
-	if (in_first(lex, T_START, T_INCLUDE, T_MATCH, -1)) {
+	if (in_first(lex, T_START, T_INCLUDE, T_DEFINE, -1)) {
 		if (cfg_directive(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -191,7 +191,7 @@ cfg_directive(cfg_t* cfg) {
 		cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
 	}
 	else if (advance_token(lex) == T_INCLUDE) {
-		if (advance_token(lex) != T_STR) {
+		if (advance_token(lex) != T_PATH) {
 			/* ERROR */
 			return (ERROR);
 		}
@@ -268,6 +268,8 @@ int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
+	else if (peek_token(lex) == T_EMPTY)
+		{ advance_token(lex); }
 	else if (!in_first(lex, T_UNION, T_SEMI, -1)) {
 		/* ERROR */
 		return (ERROR);

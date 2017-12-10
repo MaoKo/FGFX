@@ -2,35 +2,33 @@
 // Lexical Specification of both (FGFL & FGFP) //
 /////////////////////////////////////////////////
 
-(* High Precedence *)
+/* High Precedence */
 
-SPACE		=	/  [ \t\n]+  / ;
-COM		=	/  (\/\/.*)|(\(\*(\*+[^*)]|[^*])*\*+\))  / ;
+SPACE		=	/  [ \t\n]+					/ ;
+COM		=	/  (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/)	/ ;
 
-%skip
-	SPACE	,
-	COM	,
-;
+%ignore		SPACE, COM ;
 
-@LETTER		=	/  [a-zA-Z_]  / ;
-@DIGIT		=	/  [0-9]  / ;
-@IDENT		=	/  {LETTER}({LETTER}|{DIGIT})*  / ;
+@LETTER		=	/  [a-zA-Z_]			/ ;
+@DIGIT		=	/  [0-9]			/ ;
+@IDENT		=	/  {LETTER}({LETTER}|{DIGIT})*	/ ;
 
-(* FGFL *)
+/* FGFL */
 
-LOCAL_TOK	=	/  @{IDENT}  / ;
-EQUAL		=	/  =  / ;
-REGEX		=	/  \/([^\/\\\n]|\\(.|\n))*\/  / ;
+LOCAL_TOK	=	/  @{IDENT}			/ ;
+EQUAL		=	/  =				/ ;
+REGEX		=	/  \/([^\/\\\n]|\\(.|\n))*\/	/ ;
 
-(* FGFP *)
+/* FGFP */
 
-NTER		=	/  <{IDENT}'?>		/ ;
-ARROW		=	/  ->			/ ;
-UNION		=	/  \|			/ ;
-LITERAL		=	/  '([^\\\n']|\\['\\])'	/ ;
-STR		=	/  \"([^\\\n"]|\\[\"])+\" / ;
+NTER		=	/  <{IDENT}'?>			/ ;
+ARROW		=	/  ->				/ ;
+UNION		=	/  \|				/ ;
+EMPTY		=	/  %empty%			/ ;
+LITERAL		=	/  '([^\\\n']|\\['\\])'		/ ;
+PATH		=	/  \"([^\\\n"]|\\[\"])+\"	/ ;
 
-(* Both FGFL & FGFP *)
+/* Both FGFL & FGFP */
 
 DIRECTIVE	=	/  %{IDENT}	/ ;
 GLOBAL_TOK	=	/  {IDENT}	/ ;
@@ -40,6 +38,6 @@ LBRACK		=	/  \[		/ ;
 RBRACK		=	/  ]		/ ;
 
 %special DIRECTIVE -> [
-		START, INCLUDE, MATCH,
-		SKIP, SPECIAL, IGCASE,
+		START, INCLUDE, DEFINE,
+		IGNORE, SPECIAL, IGCASE,
 	];

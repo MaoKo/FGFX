@@ -1,6 +1,5 @@
-%token "fgfx.lex.h" ;
-
-%alias	SEMI	-> ';' ,
+%include "fgfx.lex.h" ;
+%define	SEMI	-> ';' ,
 	COMMA	-> ',' ,
 	UNION	-> '|' ;
 
