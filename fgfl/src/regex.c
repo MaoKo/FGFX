@@ -12,6 +12,8 @@
 #include "vector.h"
 
 static token_spec_t* local_spec = NULL;
+static char const* regex_str_env = NULL;
+static int peek_c = -1;
 static bool escaped = false;
 
 // Static Prototype
@@ -103,28 +105,19 @@ cpy_concat_node_ast(node_ast_t* root, size_t size) {
 
 static int
 read_c(void) {
-	char input_c = '\0';
-	int eof = read(FILDE_LEX(local_spec->lex), &input_c, 1);
-	if (!eof)
-		{ return (EOF); }
-	return (input_c);
+	if (!*regex_str_env)
+		{ return (EOS); }
+	return (*regex_str_env++);
 }
 
 static int
-skip_until(int(*predF)(int), int last) {
+skip_until(int(*predF)(int)) {
 	int c = 0;
-	if ((last != -1) && !((*predF)(last)))
-		{ return (last);  }
 	do {
-		if ((c = get_c()) == EOF)
-			{ return (EOF); }
+		if ((c = get_c()) == EOS)
+			{ return (EOS); }
 	} while ((*predF)(c));
 	return (c);
-}
-
-static inline void
-skip_front_whitespace(int last) {
-	local_spec->lex->last_char = skip_until(&isspace, last);
 }
 
 static inline int
@@ -134,12 +127,11 @@ is_tab_or_space(int c) {
 
 static int
 get_c(void) {
+	peek_c = -1;
 	int input_c = read_c();
 	escaped = false;
 
-	if (input_c == EOF)
-		{ return (EOF); }
-	else if (input_c == '\\') {
+	if (input_c == '\\') {
 		input_c = read_c();
 		escaped = true;
 	
@@ -157,10 +149,9 @@ get_c(void) {
 			case 't': input_c = '\t'; break;
 			case 'v': input_c = '\v'; break;
 			case '\n':
-				++CURRENT_LINE(local_spec->lex);
-				input_c = skip_until(&is_tab_or_space, -1);
+				input_c = skip_until(&is_tab_or_space);
 				break;
-			case EOF: /* ERROR */ ; break;
+			case EOS: /* ERROR */ ; break;
 			default: break;
 		}
 	}
@@ -169,21 +160,21 @@ get_c(void) {
 
 static int
 peek(void) {
-	if (local_spec->lex->last_char == -1)
-		{ local_spec->lex->last_char = get_c(); }
-	return (local_spec->lex->last_char);
+	if (peek_c == -1)
+		{ peek_c = get_c(); }
+	return (peek_c);
 }
 
 static inline int
 advance(void) {
 	int old_peek = peek();
-	local_spec->lex->last_char = get_c();
+	peek_c = get_c();
 	return (old_peek);
 }
 
 static bool
-match(int symbl) {
-	int is_match = (peek() == symbl);
+match(int symbol) {
+	int is_match = (peek() == symbol);
 	if (is_match)
 		{ advance(); }
 	return (is_match);
@@ -195,19 +186,21 @@ expected(char expect_c) {
 		{ /* ERROR */ }
 }
 
+#if 0
 static inline bool
 is_end_input(void) {
-	return (peek() == EOF);
+	return (peek() == EOS);
 }
 
 static inline bool
 is_end_regex(void) {
 	return ((isspace(peek()) || peek() == ';') && !escaped);
 }
+#endif
 
 static inline bool
 is_end(void) {
-	return (is_end_input() || is_end_regex());
+	return (peek() == EOS);
 }
 
 // Predicate Char Function
@@ -218,7 +211,7 @@ is_metachar(int symbl) {
 		case REG_UNION: case REG_LPAREN: case REG_RPAREN:
 		case REG_LBRACK: case REG_KLEENE: case REG_PKLEENE:
 		case REG_OKLEENE: case REG_LBRACE: case REG_DQUOTE:
-		case REG_DOT: case REG_SEMI: return (!escaped);
+		case REG_DOT: return (!escaped);
 	}
 	return (false);
 } 
@@ -322,10 +315,10 @@ bound_name(node_ast_t* root) {
 	buffer_t* bound = read_ident();
 	
 	int index = get_index_vector(local_spec->entry_lst,
-		BODY_BUFFER(bound), &cmp_entry_str);
+			BODY_BUFFER(bound), &cmp_entry_str);
 	if (index != -1) {
 		token_entry_t* entry = (token_entry_t*)
-				AT_VECTOR(local_spec->entry_lst, index);
+			AT_VECTOR(local_spec->entry_lst, index);
 		rep_node = cpy_node_ast(entry->reg);
 		USED_ENTRY(entry);
 	}
@@ -398,11 +391,13 @@ dot_regex(void) {
 }
 
 node_ast_t*
-regex2ast(token_spec_t* spec) {
-	if (!spec)
+regex2ast(token_spec_t* token_spec, char const* regex_str) {
+	if (!token_spec || !regex_str)
 		{ return (NULL); }
-	local_spec = spec;
-	skip_front_whitespace(local_spec->lex->last_char);
+	regex_str_env = regex_str;
+	local_spec = token_spec;
+	peek_c = -1;
+	escaped = false;
 	return (reg_expr());
 }
 
@@ -469,7 +464,6 @@ reg_fact(void) {
 
 static node_ast_t*
 reg_atom(void) {
-	//printf("Peek = %c\n", peek());
 	if (!is_metachar(peek()))
 		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
 	else if (match(REG_LPAREN)) { 
@@ -486,7 +480,7 @@ reg_atom(void) {
 static node_ast_t*
 reg_quote(void) {
 	node_ast_t* root_concat = NULL;
-	while (!is_in_follow(REG_DQUOTE, -1) && !is_end_input()) {
+	while (!is_in_follow(REG_DQUOTE, -1) && !is_end()) {
 		int c = advance();
 		node_ast_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
 		if (!root_concat)
@@ -509,7 +503,7 @@ reg_range(void) {
 		{ negate = true; }
 	int last = 0;
 	bool in_range = true;
-	while (!is_in_follow(REG_RBRACK, -1) && !is_end_input()) {
+	while (!is_in_follow(REG_RBRACK, -1) && !is_end()) {
 		long crt_c = advance();
 		if (crt_c == '-' && !in_range &&
 				(peek() != REG_RBRACK && !is_end())) {

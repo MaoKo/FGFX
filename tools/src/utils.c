@@ -38,6 +38,21 @@ get_filename(char const* path) {
 	return (last);
 }
 
+size_t
+char_in_str(char const* base_str, char c) {
+	if (!base_str)
+		{ return (0); }
+	size_t count = 0;
+	while (*base_str) {
+		if (*base_str == c)
+			{ ++count; }
+		++base_str;
+	}
+	if (!c)
+		{ ++count; }
+	return (count);
+}
+
 trans_list_t*
 new_trans_list(unsigned int input, unsigned int state) {
 	trans_list_t* list = NEW(trans_list_t, 1);

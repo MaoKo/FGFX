@@ -97,8 +97,17 @@ parse_assignement(token_spec_t* spec) {
 			CURRENT_LINE(spec->lex));
 		return (ERROR);
 	}
+	if (advance_token(spec->lex) != T_REGEX) {
+		fprintf(stderr, "Error (%d): No found regex after the equal sign.\n",
+			CURRENT_LINE(spec->lex));
+		return (ERROR);
+	}
+	unget_c_buffer(LAST_LEXEME(spec->lex), 1);
+	CURRENT_LINE(spec->lex) += char_in_str(C_LEXEME(spec->lex) + 1, '\n');
+
 	token_entry_t* last_entry = (token_entry_t*)BACK_VECTOR(spec->entry_lst);
-	last_entry->reg = regex2ast(spec);
+	last_entry->reg = regex2ast(spec, C_LEXEME(spec->lex) + 1);
+
 	return (DONE);
 }
 
