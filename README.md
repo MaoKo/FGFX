@@ -21,4 +21,6 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
 	.	Handle %alias in FGFP
+	.	Allow forward reference in FGFL
+	.	Learn MarkDown :)
 

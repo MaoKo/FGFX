@@ -28,6 +28,9 @@ typedef struct trans_list_t {
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
 char const* get_filename(char const*);
+int is_tab_or_space(int);
+size_t count_front(char const*, int(*)(int));
+size_t count_back(char const*, int(*)(int));
 size_t char_in_str(char const*, char);
 trans_list_t* new_trans_list(unsigned int, unsigned int);
 void del_trans_list(trans_list_t*);

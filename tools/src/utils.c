@@ -38,6 +38,34 @@ get_filename(char const* path) {
 	return (last);
 }
 
+int
+is_tab_or_space(int c) {
+	return (c == '\t' || c == ' ');
+}
+
+size_t
+count_front(char const* base_str, int (*pred)(int)) {
+	if (!base_str || !pred)
+		{ return (0); }
+	char const* front = base_str;
+	while (*base_str && (*pred)(*base_str))
+		{ ++base_str; }
+	return (base_str - front);
+}
+
+size_t
+count_back(char const* base_str, int (*pred)(int)) {
+	if (!base_str || !pred)
+		{ return (0); }
+	char const* back = base_str + (strlen(base_str) - 1);
+	size_t count = 0;
+	while (back >= base_str && (*pred)(*back)) {
+		++count;
+		--back;
+	}
+	return (count);
+}
+
 size_t
 char_in_str(char const* base_str, char c) {
 	if (!base_str)

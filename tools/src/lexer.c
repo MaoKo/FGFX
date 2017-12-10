@@ -107,10 +107,10 @@ advance_token(lexer_t* lex) {
 		static void* directive_tab[][2] = {
 			{ (void*)T_SKIP,	"%skip"	},
 			{ (void*)T_IGCASE,	"%igcase" },
-			{ (void*)T_TOKEN,	"%token" },
+			{ (void*)T_INCLUDE,	"%include" },
 			{ (void*)T_START,	"%start" },
-			{ (void*)T_ALIAS,	"%alias" },
-			{ (void*)T_KEYWORD,	"%keyword" },
+			{ (void*)T_MATCH,	"%match" },
+			{ (void*)T_SPECIAL,	"%special" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

@@ -102,18 +102,26 @@ parse_assignement(token_spec_t* spec) {
 			CURRENT_LINE(spec->lex));
 		return (ERROR);
 	}
+	// Get rid of /
 	unget_c_buffer(LAST_LEXEME(spec->lex), 1);
-	CURRENT_LINE(spec->lex) += char_in_str(C_LEXEME(spec->lex) + 1, '\n');
+
+	// Get rid of trailing space and tab
+	unget_c_buffer(LAST_LEXEME(spec->lex),
+		count_back(C_LEXEME(spec->lex), &is_tab_or_space));
+
+	int front = count_front(C_LEXEME(spec->lex) + 1, &is_tab_or_space) + 1;
+
+	CURRENT_LINE(spec->lex) += char_in_str(C_LEXEME(spec->lex) + front, '\n');
 
 	token_entry_t* last_entry = (token_entry_t*)BACK_VECTOR(spec->entry_lst);
-	last_entry->reg = regex2ast(spec, C_LEXEME(spec->lex) + 1);
+	last_entry->reg = regex2ast(spec, C_LEXEME(spec->lex) + front);
 
 	return (DONE);
 }
 
 static int
 enable_property(token_spec_t* spec, int token) {
-	if (token == T_KEYWORD) {
+	if (token == T_SPECIAL) {
 		add_entry_lexeme(spec, KEYWORD);
 		return (DONE);
 	}
@@ -139,7 +147,7 @@ enable_property(token_spec_t* spec, int token) {
 
 static int
 parse_directive(token_spec_t* spec) {
-	if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_KEYWORD, -1))
+	if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_SPECIAL, -1))
 		{ /* ERROR */ return (ERROR); }
 	int kind_directive = advance_token(spec->lex);
 	if (advance_token(spec->lex) != T_GLOBAL_TOK) {
@@ -148,10 +156,25 @@ parse_directive(token_spec_t* spec) {
 						"igcase" : "skip"));
 		return (ERROR);
 	}
+	if (kind_directive == T_SPECIAL) {
+		if (advance_token(spec->lex) != T_ARROW
+				|| advance_token(spec->lex) != T_LBRACK) {
+			/* ERROR */
+			return (ERROR);
+		}
+		if (advance_token(spec->lex) != T_GLOBAL_TOK) {
+			/* ERROR */
+			return (ERROR);
+		}
+	}
 	if (enable_property(spec, kind_directive) == ERROR)
 		{ return (ERROR); }		
 	while (peek_token(spec->lex) == T_COMMA) {
 		advance_token(spec->lex);
+		if (peek_token(spec->lex) == T_SEMI
+				|| (kind_directive == T_SPECIAL
+				&& peek_token(spec->lex) == T_RBRACK))
+			{ break; }
 		if (advance_token(spec->lex) != T_GLOBAL_TOK) {
 			fprintf(stderr, "Error (%d): Expected id after a comma.\n",
 				CURRENT_LINE(spec->lex));
@@ -159,6 +182,10 @@ parse_directive(token_spec_t* spec) {
 		}
 		if (enable_property(spec, kind_directive) == ERROR)
 			{ return (ERROR); }
+	}
+	if (kind_directive == T_SPECIAL && advance_token(spec->lex) != T_RBRACK) {
+		/* ERROR */
+		return (ERROR);
 	}
 	return (DONE);
 }
@@ -168,7 +195,7 @@ parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
 	int token = T_ERROR;
 	while ((token = peek_token(spec->lex)) != T_EOF) {
-		if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_KEYWORD, -1))
+		if (!in_first(spec->lex, T_IGCASE, T_SKIP, T_SPECIAL, -1))
 			{ parse_assignement(spec); }
 		else
 			{ parse_directive(spec); }

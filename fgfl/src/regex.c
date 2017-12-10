@@ -120,11 +120,6 @@ skip_until(int(*predF)(int)) {
 	return (c);
 }
 
-static inline int
-is_tab_or_space(int c) {
-	return (c == '\t' || c == ' ');
-}
-
 static int
 get_c(void) {
 	peek_c = -1;
