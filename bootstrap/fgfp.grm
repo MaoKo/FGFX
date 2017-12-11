@@ -1,62 +1,38 @@
-%include "fgfx.lex.h" ;
-%define	SEMI	-> ';' ,
-	COMMA	-> ',' ,
-	UNION	-> '|' ;
+[extern] 'fgfx.lex.h' ;
+[start] <syntax> ;
 
-<Syntax>	->	<Inst> <Syntax'>
-		;
+<syntax> -> <inst> <syntax'> ;
+<syntax'> -> <inst> <syntax'> | %empty% ;
 
-<Syntax'>	->	<Inst> <Syntax'>
-		|	/* epsilon */
-		;
+<inst> -> <prod> | <directive> ;
 
-<Inst>		->	<Prod>
-		|	<Directive>
-		;
+<directive> -> <startdir> | <tokendir> | <aliasdir> ;
 
-<Directive>	->	<StartDir>
-		|	<TokenDir>
-		|	<AliasDir>
-		;
+<startdir> -> '[start]' NON_TER ';' ;
 
-<StartDir>	->	START NON_TER ';'
-		;
+<tokendir> -> '[extern]' LITERAL ';' ;
 
-<TokenDir>	->	TOKEN STR ';'
-		;
+<aliasdir> -> '[alias]' <aliaslist> ';' ;
 
-<AliasDir>	->	ALIAS <AliasList> ';'
-		;
+<aliaslist> -> GLOBAL_TOK '->' LITERAL <aliaslist'> ;
+<aliaslist'> -> ',' GLOBAL_TOK '->' LITERAL <aliaslist'> | %empty% ;
 
-<AliasList>	->	GLOBAL_TOK ARROW LITERAL <AliasList'>
-		;
+<prod> -> NON_TER '->' <rhs> ';' ;
 
-<AliasList'>	->	',' GLOBAL_TOK ARROW LITERAL <AliasList'>
-		|	/* epsilon */
-		;
+<rhs> -> <optlist> <rhs'> ;
 
-<Prod>		->	NON_TER ARROW <Rhs> ';'
-		;
+<rhs'> -> '|' <optlist> <rhs'> | %empty% ;
 
-<Rhs>		->	<OptList> <Rhs'>
-		;
+<optlist> -> <list> | %empty% ;
 
-<Rhs'>		->	'|' <OptList> <Rhs'>
-		|	/* epsilon */
-		;
+<list> -> <atom> <list'> ;
+<list'> -> <atom> <list'> | %empty% ;
 
-<OptList>	->	<List>
-		|	/* epsilon */
-		;
+<atom> -> NON_TER | GLOBAL_TOK | LITERAL ;
 
-<List>		->	<Atom> <List'>
-		;
+[alias]
+	SEMI	-> ';'		, COMMA	-> ','		,
+	ARROW	-> '->'		, START	-> '[start]'	,
+	EXTERN	-> '[extern]'	, ALIAS	-> '[alias]'	,
+	UNION	-> '|'		;
 
-<List'>		->	<Atom> <List'>
-		|	/* epsilon */
-		;
-
-<Atom>		->	NON_TER
-		|	GLOBAL_TOK
-		|	LITERAL
-		;

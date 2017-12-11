@@ -121,7 +121,7 @@ parse_assignement(token_spec_t* spec) {
 
 static int
 enable_property(token_spec_t* spec, int token) {
-	if (token == T_SPECIAL) {
+	if (token == T_DEFINE) {
 		add_entry_lexeme(spec, KEYWORD);
 		return (DONE);
 	}
@@ -147,7 +147,7 @@ enable_property(token_spec_t* spec, int token) {
 
 static int
 parse_directive(token_spec_t* spec) {
-	if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_SPECIAL, -1))
+	if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_DEFINE, -1))
 		{ /* ERROR */ return (ERROR); }
 	int kind_directive = advance_token(spec->lex);
 	if (advance_token(spec->lex) != T_GLOBAL_TOK) {
@@ -156,9 +156,9 @@ parse_directive(token_spec_t* spec) {
 						"igcase" : "skip"));
 		return (ERROR);
 	}
-	if (kind_directive == T_SPECIAL) {
+	if (kind_directive == T_DEFINE) {
 		if (advance_token(spec->lex) != T_ARROW
-				|| advance_token(spec->lex) != T_LBRACK) {
+				|| advance_token(spec->lex) != T_LBRACE) {
 			/* ERROR */
 			return (ERROR);
 		}
@@ -172,8 +172,8 @@ parse_directive(token_spec_t* spec) {
 	while (peek_token(spec->lex) == T_COMMA) {
 		advance_token(spec->lex);
 		if (peek_token(spec->lex) == T_SEMI
-				|| (kind_directive == T_SPECIAL
-				&& peek_token(spec->lex) == T_RBRACK))
+				|| (kind_directive == T_DEFINE
+				&& peek_token(spec->lex) == T_RBRACE))
 			{ break; }
 		if (advance_token(spec->lex) != T_GLOBAL_TOK) {
 			fprintf(stderr, "Error (%d): Expected id after a comma.\n",
@@ -183,7 +183,7 @@ parse_directive(token_spec_t* spec) {
 		if (enable_property(spec, kind_directive) == ERROR)
 			{ return (ERROR); }
 	}
-	if (kind_directive == T_SPECIAL && advance_token(spec->lex) != T_RBRACK) {
+	if (kind_directive == T_DEFINE && advance_token(spec->lex) != T_RBRACE) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -195,7 +195,7 @@ parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
 	int token = T_ERROR;
 	while ((token = peek_token(spec->lex)) != T_EOF) {
-		if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_SPECIAL, -1))
+		if (!in_first(spec->lex, T_IGCASE, T_IGNORE, T_DEFINE, -1))
 			{ parse_assignement(spec); }
 		else
 			{ parse_directive(spec); }

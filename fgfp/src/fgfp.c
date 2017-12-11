@@ -33,11 +33,22 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr,
 			"Some unreachable nonterminal has been remove.\n");
 	}
-
+	
 	preprocess_literal(cfg);
 	augment_grammar(cfg);
 	detect_nullable(cfg);
 	compute_first(cfg);
+
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* symbol = AT_VECTOR(cfg->non_terminal, i);
+		if (is_empty_bitset(symbol->first)) {
+			fprintf(stderr, "Non terminal %s derive no string at all.\n",
+				symbol->name);
+			del_cfg(cfg);
+			exit(1);
+		}
+	}
+
 	compute_follow(cfg);
 	
 	if (!is_ll1(cfg)) {

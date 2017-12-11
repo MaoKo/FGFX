@@ -148,7 +148,7 @@ cfg_syntax(cfg_t* cfg) {
 
 int
 cfg_inst(cfg_t* cfg) {
-	if (in_first(lex, T_START, T_INCLUDE, T_DEFINE, -1)) {
+	if (in_first(lex, T_START, T_EXTERN, T_ALIAS, -1)) {
 		if (cfg_directive(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -190,8 +190,8 @@ cfg_directive(cfg_t* cfg) {
 		}
 		cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
 	}
-	else if (advance_token(lex) == T_INCLUDE) {
-		if (advance_token(lex) != T_PATH) {
+	else if (advance_token(lex) == T_EXTERN) {
+		if (advance_token(lex) != T_LITERAL) {
 			/* ERROR */
 			return (ERROR);
 		}
@@ -199,8 +199,8 @@ cfg_directive(cfg_t* cfg) {
 			/* WARNING */
 			FREE(cfg->token_file);
 		}
+		unget_c_buffer(LAST_LEXEME(lex), 1);
 		cfg->token_file = strdup(C_LEXEME(lex) + 1);
-		*strrchr(cfg->token_file, '"') = EOS;
 	}
 	else {
 		if (list_alias_directive(cfg) == ERROR)
