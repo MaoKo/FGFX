@@ -17,6 +17,8 @@
 #define POP_BACK_VECTOR(vect)		(erase_vector(vect, (vect)->index - 1))
 #define POP_FRONT_VECTOR(vect)		(erase_vector(vect, 0))
 
+#define LAST_INDEX_VECTOR(vect)		(SIZE_VECTOR(vect) - 1)
+
 #define NULL_VECT			NULL
 #define _VECT_SIZE			8
 

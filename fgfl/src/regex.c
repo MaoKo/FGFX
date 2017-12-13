@@ -146,8 +146,7 @@ get_c(void) {
 			case '\n':
 				input_c = skip_until(&is_tab_or_space);
 				break;
-			case EOS: /* ERROR */ ; break;
-			default: break;
+			default:  break;
 		}
 	}
 	return (input_c);

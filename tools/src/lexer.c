@@ -16,6 +16,7 @@ new_lexer(int filde) {
 	memset(lex, 0, sizeof(lexer_t));
 	lex->filde = filde;
 	lex->last_token = lex->last_char = -1;
+	lex->lineno = 1;
 	return (lex);
 }
 
@@ -105,12 +106,14 @@ advance_token(lexer_t* lex) {
 	}
 	else if (found_token == T_DIRECTIVE) {
 		static void* directive_tab[][2] = {
-			{ (void*)T_IGNORE,	"[ignore]" },
-			{ (void*)T_IGCASE,	"[igcase]" },
-			{ (void*)T_EXTERN,	"[extern]" },
-			{ (void*)T_START,	"[start]" },
-			{ (void*)T_DEFINE,	"[define]" },
-			{ (void*)T_ALIAS,	"[alias]" },
+			{ (void*)T_SKIP,	"$SKIP" },
+			{ (void*)T_TOKEN,	"$TOKEN" },
+			{ (void*)T_KEYWORD,	"$KEYWORD" },
+			{ (void*)T_IGCASE,	"$IGCASE" },
+			{ (void*)T_EXTERN,	"$EXTERN" },
+			{ (void*)T_START,	"$START" },
+			{ (void*)T_ALIAS,	"$ALIAS" },
+			{ (void*)T_PRODUCTION,	"$PRODUCTION" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

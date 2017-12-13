@@ -1,38 +1,77 @@
-[extern] 'fgfx.lex.h' ;
-[start] <syntax> ;
+$EXTERN {
+    'fgfx.lex.h',
+};
 
-<syntax> -> <inst> <syntax'> ;
-<syntax'> -> <inst> <syntax'> | %empty% ;
+$PRODUCTION {
+    <FGFP>  ->  <section> <FGFP'> ;
+    <FGFP'> ->  <section> <FGFP'> | %empty% ;
 
-<inst> -> <prod> | <directive> ;
+    <section>  ->  <extern_section>
+                |  <production_section>
+                |  <alias_section>
+                ;
+    
+    <extern_section>    ->  '$EXTERN' '{' <path_list> '}' ';' ;
+    <path_list>         ->  LITERAL <path_list'> 
+                         |  %empty%
+                         ;
+    <path_list'>        ->  ',' <path_list>
+                         |  %empty%
+                         ;
 
-<directive> -> <startdir> | <tokendir> | <aliasdir> ;
+    <alias_section>     ->  '$ALIAS' '{' <alias_list> '}' ';' ;
+    <alias_list>        ->  '(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
+                         |  %empty%
+                         ;
+    <aliast_list'>      ->  ',' <alias_list>
+                         |  %empty%
+                         ;
 
-<startdir> -> '[start]' NON_TER ';' ;
+    <production_section> ->  '$PRODUCTION' '{' <production_list> '}' ';' ;
+    <production_list>    ->  <production> <production_list'> ;
+    <production_list'>   ->  <production> <production_list'>
+                          |  %empty%
+                          ;
+    
+    <production>  ->  NTER <follow_prod> ';' ;
+    <follow_prod> ->  '=' '$START' | '->' <lhs> ;
+    
+    <lhs>  ->  <opt_list> <lsh'> ;
+    <lhs'> ->  '|' <opt_list> <lhs'>
+            |  %empty%
+            ;
+    
+    <opt_list> ->  <symbol_list>
+                |  '%empty%'
+                |   %empty%
+                ;
 
-<tokendir> -> '[extern]' LITERAL ';' ;
+    <symbol_list>  ->  <symbol> <symbol_list'> ;
+    <symbol_list'> ->  <symbol> <symbol_list'>
+                    |  %empty%
+                    ;
+ 
+    <symbol> -> GLOBAL_TOK
+              | NTER
+              | LITERAL
+              ;
+    
+    <FGFP> = $START;
+};
 
-<aliasdir> -> '[alias]' <aliaslist> ';' ;
-
-<aliaslist> -> GLOBAL_TOK '->' LITERAL <aliaslist'> ;
-<aliaslist'> -> ',' GLOBAL_TOK '->' LITERAL <aliaslist'> | %empty% ;
-
-<prod> -> NON_TER '->' <rhs> ';' ;
-
-<rhs> -> <optlist> <rhs'> ;
-
-<rhs'> -> '|' <optlist> <rhs'> | %empty% ;
-
-<optlist> -> <list> | %empty% ;
-
-<list> -> <atom> <list'> ;
-<list'> -> <atom> <list'> | %empty% ;
-
-<atom> -> NON_TER | GLOBAL_TOK | LITERAL ;
-
-[alias]
-	SEMI	-> ';'		, COMMA	-> ','		,
-	ARROW	-> '->'		, START	-> '[start]'	,
-	EXTERN	-> '[extern]'	, ALIAS	-> '[alias]'	,
-	UNION	-> '|'		;
+$ALIAS {
+    (EXTERN     => '$EXTERN')       ,
+    (ALIAS      => '$ALIAS')        ,
+    (PRODUCTION => '$PRODUCTION')   ,
+    (START      => '$START')        ,
+    (COMMA      => ',')             ,
+    (SEMI       => ';')             ,
+    (LPAREN     => '(')             ,
+    (RPAREN     => ')')             ,
+    (EQUAL      => '=')             ,
+    (UNION      => '|')             ,
+    (EMPTY      => '%empty%')       ,
+    (ARROW      => '->')            ,
+    (BARROW     => '=>')            ,
+};
 
