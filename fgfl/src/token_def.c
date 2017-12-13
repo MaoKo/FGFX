@@ -79,7 +79,27 @@ add_entry_lexeme(token_spec_t* spec, int kind) {
 	return (i);
 }
 
-static int
+static int parse_section(token_spec_t*);
+static inline int keyword_section(token_spec_t*);
+static inline int token_section(token_spec_t*);
+static inline int skip_section(token_spec_t*);
+static int keyword_list(token_spec_t*, int);
+static int regex_list(token_spec_t*, int);
+static int regex_assign(token_spec_t*, int, int);
+static int atom_FGFL(token_spec_t*, int);
+
+int
+atom_FGFL(token_spec_t* spec, int kind_symbol) {
+	int err_entry = add_entry_lexeme(spec, kind_symbol);
+	if (err_entry == ERROR) {
+		fprintf(stderr, "Error (%d): Unable to allocate for some entry.\n",
+			CURRENT_LINE(spec->lex));
+		return (ERROR);
+	}
+	return (err_entry);
+}
+
+int
 regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 	token_entry_t* entry = (token_entry_t*)
 				AT_VECTOR(spec->entry_lst, index_entry);
@@ -139,18 +159,7 @@ regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 	return (DONE);
 }
 
-static int
-atom_FGFL(token_spec_t* spec, int kind_symbol) {
-	int err_entry = add_entry_lexeme(spec, kind_symbol);
-	if (err_entry == ERROR) {
-		fprintf(stderr, "Error (%d): Unable to allocate for some entry.\n",
-			CURRENT_LINE(spec->lex));
-		return (ERROR);
-	}
-	return (err_entry);
-}
-
-static int
+int
 regex_list(token_spec_t* spec, int kind_section) {
 	if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
 		int index_entry = atom_FGFL(spec,
@@ -172,7 +181,7 @@ regex_list(token_spec_t* spec, int kind_section) {
 	return (DONE);
 }
 
-static int
+int
 keyword_list(token_spec_t* spec, int dummy) {
 	if (peek_token(spec->lex) == T_RBRACE)
 		{ return (DONE); }
@@ -229,22 +238,22 @@ entry_section(token_spec_t* spec, int kind) {
 	return (DONE);
 }
 
-static inline int
+int
 skip_section(token_spec_t* spec) {
 	return (entry_section(spec, T_SKIP));
 }
 
-static inline int
+int
 token_section(token_spec_t* spec) {
 	return (entry_section(spec, T_TOKEN));
 }
 
-static inline int
+int
 keyword_section(token_spec_t* spec) {
 	return (entry_section(spec, T_KEYWORD));
 }
 
-static int
+int
 parse_section(token_spec_t* spec) {
 	int exit_status = DONE;
 	if (peek_token(spec->lex) == T_SKIP)
@@ -263,8 +272,7 @@ parse_section(token_spec_t* spec) {
 int
 parse_token_entry(token_spec_t* spec) {
 	bool empty = true;
-	int token;
-	while ((token = peek_token(spec->lex)) != T_EOF) {
+	while (peek_token(spec->lex) != T_EOF) {
 		if (parse_section(spec) == ERROR)
 			{ return (ERROR); }
 		empty = false;

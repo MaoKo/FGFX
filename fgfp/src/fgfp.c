@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 	if (!cfg)
 		{ exit(1); }
 
-	if (!cfg->token_file) {
+	if (!SIZE_VECTOR(cfg->token_file)) {
 		fprintf(stderr, "Location of token not defined.\n");
 		exit(1);
 	}

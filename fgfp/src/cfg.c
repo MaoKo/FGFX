@@ -17,6 +17,7 @@ new_cfg(void) {
 	cfg->productions = new_vector();
 	cfg->non_terminal = new_vector();
 	cfg->terminal = new_vector();
+	cfg->token_file = new_vector();
 	return (cfg);
 }
 
@@ -96,7 +97,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	return (symbol);
 }
 
-static int cfg_syntax(cfg_t*);
+static int cfg_section(cfg_t*);
 
 cfg_t*
 parse_cfg(int filde) {
@@ -105,7 +106,7 @@ parse_cfg(int filde) {
 	cfg_t* cfg = new_cfg();
 	if (!cfg)
 		{ return (NULL); }
-	int exit_status = cfg_syntax(cfg);
+	int exit_status = cfg_section(cfg);
 	del_lexer(lex);
 	if (exit_status == ERROR) {
 		del_cfg(cfg);
@@ -119,7 +120,7 @@ void
 augment_grammar(cfg_t* cfg) {
 	if (!cfg)
 		{ return; }
-	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "$start");
+	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
 	production_t* prod = new_production(start);
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "EOF"));
@@ -127,108 +128,156 @@ augment_grammar(cfg_t* cfg) {
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 }
 
-static int cfg_inst(cfg_t*);
-static int cfg_directive(cfg_t*);
-static int cfg_prod(cfg_t*);
+// Different kind of section and their associate list.
+static int cfg_path_list(cfg_t*);
+static int cfg_alias_list(cfg_t*);
+static int cfg_production_list(cfg_t*);
+
+static int cfg_production(cfg_t*);
 static int cfg_rhs(cfg_t*, symbol_t* lhs);
 static int cfg_opt_list(cfg_t*, production_t*);
 static int cfg_list(cfg_t*, production_t*);
 static int cfg_atom(cfg_t*, production_t*);
 
-int
-cfg_syntax(cfg_t* cfg) {
-	if (cfg_inst(cfg) == ERROR)
-		{ return (ERROR); }
-	while (peek_token(lex) != T_EOF) {
-		if (cfg_inst(cfg) == ERROR)
-			{ return (ERROR); }
+static int
+cfg_entry_section(cfg_t* cfg, int kind) {
+	int (*section_ptr)(cfg_t*) = NULL;
+	switch (kind) {
+		case T_EXTERN:		section_ptr = &cfg_path_list;
+					break;
+		case T_ALIAS:		section_ptr = &cfg_alias_list;
+					break;
+		case T_PRODUCTION:	section_ptr = &cfg_production_list;
+					break;
+	}
+	if (!section_ptr) {
+		/* ERROR */
+		return (ERROR);
+	}
+	if (advance_token(lex) != kind
+			|| advance_token(lex) != T_LBRACE
+			|| (*section_ptr)(cfg) == ERROR
+			|| advance_token(lex) != T_RBRACE
+			|| advance_token(lex) != T_SEMI) {
+		/* ERROR */
+		return (ERROR);
 	}
 	return (DONE);
 }
 
 int
-cfg_inst(cfg_t* cfg) {
-	if (in_first(lex, T_START, T_EXTERN, T_ALIAS, -1)) {
-		if (cfg_directive(cfg) == ERROR)
+cfg_section(cfg_t* cfg) {
+	bool empty = true;
+	while (peek_token(lex) != T_EOF) {
+		if (cfg_entry_section(cfg, peek_token(lex)) == ERROR)
+			{ return (ERROR); }
+		empty = false;
+	}
+	if (empty) {
+		/* WARNING */
+	}
+	return (DONE);
+}
+
+int
+cfg_path_list(cfg_t* cfg) {
+	if (peek_token(lex) == T_RBRACE)
+		{ return (DONE); }
+	else if (advance_token(lex) == T_LITERAL) {
+		unget_c_buffer(LAST_LEXEME(lex), 1);
+		PUSH_BACK_VECTOR(cfg->token_file, strdup(C_LEXEME(lex) + 1));
+		if (peek_token(lex) == T_COMMA) {
+			advance_token(lex);
+			return (cfg_path_list(cfg));
+		}
+	}
+	else {
+		/* ERROR */
+		return (ERROR);
+	}
+	return (DONE);
+}
+
+int
+cfg_alias_list(cfg_t* cfg) {
+	if (peek_token(lex) == T_RBRACE)
+		{ return (DONE); }
+	else if (advance_token(lex) == T_LPAREN) {
+		if (advance_token(lex) != T_GLOBAL_TOK) {
+			/* ERROR */
+			return (ERROR);
+		}
+		size_t index_alias = add_symbol_cfg(cfg,
+				TERMINAL, C_LEXEME(lex))->index;
+		if (advance_token(lex) != T_BARROW
+				|| advance_token(lex) != T_LITERAL) {
+			/* ERROR */
+			return (ERROR);
+		}
+		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(lex));
+		if (literal->terminal_alias != -1) {
+			/* ERROR */
+			fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(lex));
+			return (ERROR);
+		}
+		literal->is_defined = true;
+		literal->terminal_alias = index_alias;
+		if (advance_token(lex) != T_RPAREN) {
+			/* ERROR */
+			return (ERROR);
+		}
+		if (peek_token(lex) == T_COMMA) {
+			advance_token(lex);
+			return (cfg_alias_list(cfg));
+		}
+	}
+	else {
+		/* ERROR */
+		return (ERROR);
+	}
+	return (DONE);
+}
+
+int
+cfg_production_list(cfg_t* cfg) {
+	while (peek_token(lex) != T_RBRACE) {
+		if (cfg_production(cfg) == ERROR)
 			{ return (ERROR); }
 	}
-	else if (cfg_prod(cfg) == ERROR)
-		{ return (ERROR); }
 	return (DONE);
 }
 
 static int
-list_alias_directive(cfg_t* cfg) {
-	if (advance_token(lex) != T_GLOBAL_TOK) {
+follow_prod(cfg_t* cfg) {
+	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex));
+	if (peek_token(lex) == T_ARROW) {
+		advance_token(lex);
+		symbol_lhs->is_defined = true;
+		if (cfg_rhs(cfg, symbol_lhs) == ERROR) {
+			/* ERROR */
+			return (ERROR);
+		}
+	}
+	else if (advance_token(lex) == T_EQUAL) {
+		if (advance_token(lex) != T_START) {
+			fprintf(stderr, "Must $START follow %s = .\n",
+				symbol_lhs->name);
+			return (ERROR);
+		}
+		cfg->goal = symbol_lhs->index;
+	}
+	else {
 		/* ERROR */
 		return (ERROR);
 	}
-	size_t index_alias = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(lex))->index;
-	if ((advance_token(lex) != T_ARROW)
-			|| (advance_token(lex) != T_LITERAL)) {
-		/* ERROR */
-		return (ERROR);
-	}
-	symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(lex));
-	if (literal->terminal_alias != -1) {
-		/* ERROR */
-		fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(lex));
-		return (ERROR);
-	}
-	literal->is_defined = true;
-	literal->terminal_alias = index_alias;
 	return (DONE);
 }
 
 int
-cfg_directive(cfg_t* cfg) {
-	if (peek_token(lex) == T_START) {
-		advance_token(lex);
-		if (advance_token(lex) != NON_TERMINAL) {
-			/* ERROR */
-			return (ERROR);
-		}
-		cfg->goal = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex))->index;
-	}
-	else if (advance_token(lex) == T_EXTERN) {
-		if (advance_token(lex) != T_LITERAL) {
-			/* ERROR */
-			return (ERROR);
-		}
-		if (cfg->token_file) {
-			/* WARNING */
-			FREE(cfg->token_file);
-		}
-		unget_c_buffer(LAST_LEXEME(lex), 1);
-		cfg->token_file = strdup(C_LEXEME(lex) + 1);
-	}
-	else {
-		if (list_alias_directive(cfg) == ERROR)
-			{ return (ERROR); }
-		while (peek_token(lex) == T_COMMA) {
-			advance_token(lex);
-			if (list_alias_directive(cfg) == ERROR)
-				{ return (ERROR); }
-		}
-	}
-
-	if (advance_token(lex) != T_SEMI) {
-		/* ERROR */
-		return (ERROR);
-	}
-	return (DONE);
-}
-
-int cfg_prod(cfg_t* cfg) {
-	if (advance_token(lex) != NON_TERMINAL) {
-		/* ERROR */
-		return (ERROR);
-	}
-	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex));
-	symbol_lhs->is_defined = true;
-	if ((advance_token(lex) != T_ARROW) || (cfg_rhs(cfg, symbol_lhs) == ERROR)
-			|| (advance_token(lex) != T_SEMI)) {
-		free_symbol(symbol_lhs);
+cfg_production(cfg_t* cfg) {
+	if (advance_token(lex) != NON_TERMINAL
+			|| follow_prod(cfg) == ERROR
+			|| advance_token(lex) != T_SEMI) {
 		/* ERROR */
 		return (ERROR);
 	}

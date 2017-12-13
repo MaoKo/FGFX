@@ -35,7 +35,7 @@ $PRODUCTION {
                  |  LOCAL_TOK
                  ;
 
-    <FGFL> = $TSTART;
+    <FGFL> = $START;
 };
 
 $ALIAS {

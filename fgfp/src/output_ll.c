@@ -7,9 +7,12 @@
 #include "utils.h"
 
 void
-output_location_token(int filde, char const* path_token) {
+output_location_token(int filde, vector_t const* path_token) {
 	dprintf(filde, DEFINE(ONLY_TOKEN,) "\n");
-	dprintf(filde, INCLUDE(%s) "\n", path_token);
+	for (size_t i = 0; i < SIZE_VECTOR(path_token); ++i) {
+		dprintf(filde, INCLUDE(%s) "\n", 
+				(char const*)AT_VECTOR(path_token, i));
+	}
 	dprintf(filde, UNDEF(ONLY_TOKEN) "\n\n");
 }
 

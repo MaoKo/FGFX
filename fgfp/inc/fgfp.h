@@ -48,7 +48,7 @@ typedef struct {
 	vector_t* non_terminal;
 	vector_t* terminal;
 	size_t goal;
-	char const* token_file;
+	vector_t* token_file;
 } cfg_t;
 
 #endif /* FGFP_H */

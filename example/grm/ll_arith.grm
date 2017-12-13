@@ -1,11 +1,35 @@
-%token "arith.lex.h" ;
-//%alias '+' PLUS, '*' MUL, '(' LPAREN, ')' RPAREN ;
+$EXTERN
+{
+	'arith.lex.h',
+};
 
-<E>	->	<T> <E'> ;
-<E'>	->	PLUS <T> <E'> | ;
+$PRODUCTION
+{
+	<E>	->	<T> <E'> ;
 
-<T>	->	<F> <T'> ;
-<T'>	->	MUL <F> <T'> | ;
+	<E'>	->	'+' <T> <E'>
+		 |	'-' <T> <E'>
+		 |	%empty%
+		 ;
 
-<F>	->	LPAREN <E> RPAREN
-	 |	ID ;
+	<T>	->	<F> <T'> ;
+	<T'>	->	'*' <F> <T'>
+		 |	'/' <F> <T'>
+		 |	%empty%
+		 ;
+
+	<F>	->	'(' <E> ')'
+		 |	ID ;
+
+	<E> = $START;
+};
+
+$ALIAS
+{
+	(PLUS	=>	'+'),
+	(MINUS	=>	'-'),
+	(MUL	=>	'*'),
+	(DIV	=>	'/'),
+	(LPAREN	=>	'('),
+	(RPAREN	=>	')'),
+};

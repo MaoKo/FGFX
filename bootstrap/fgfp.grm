@@ -23,12 +23,14 @@ $PRODUCTION {
     <alias_list>        ->  '(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
                          |  %empty%
                          ;
-    <aliast_list'>      ->  ',' <alias_list>
+    <alias_list'>      ->  ',' <alias_list>
                          |  %empty%
                          ;
 
     <production_section> ->  '$PRODUCTION' '{' <production_list> '}' ';' ;
-    <production_list>    ->  <production> <production_list'> ;
+    <production_list>    ->  <production> <production_list'>
+                          |  %empty%
+                          ;
     <production_list'>   ->  <production> <production_list'>
                           |  %empty%
                           ;
@@ -36,7 +38,7 @@ $PRODUCTION {
     <production>  ->  NTER <follow_prod> ';' ;
     <follow_prod> ->  '=' '$START' | '->' <lhs> ;
     
-    <lhs>  ->  <opt_list> <lsh'> ;
+    <lhs>  ->  <opt_list> <lhs'> ;
     <lhs'> ->  '|' <opt_list> <lhs'>
             |  %empty%
             ;
@@ -68,6 +70,8 @@ $ALIAS {
     (SEMI       => ';')             ,
     (LPAREN     => '(')             ,
     (RPAREN     => ')')             ,
+    (LBRACE     => '{')             ,
+    (RBRACE     => '}')             ,
     (EQUAL      => '=')             ,
     (UNION      => '|')             ,
     (EMPTY      => '%empty%')       ,
