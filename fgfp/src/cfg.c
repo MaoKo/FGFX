@@ -6,10 +6,8 @@
 #include "lexer.h"
 #include "utils.h"
 
-static lexer_t* lex = NULL;
-
 cfg_t*
-new_cfg(void) {
+new_cfg(int filde) {
 	cfg_t* cfg = NEW(cfg_t, 1);
 	if (!cfg)
 		{ return (NULL); }
@@ -18,6 +16,7 @@ new_cfg(void) {
 	cfg->non_terminal = new_vector();
 	cfg->terminal = new_vector();
 	cfg->token_file = new_vector();
+	cfg->lex = new_lexer(filde);
 	return (cfg);
 }
 
@@ -45,9 +44,11 @@ del_cfg(cfg_t* cfg) {
 	
 		foreach_vector(cfg->productions, &del_production);
 		del_vector(cfg->productions);
+	
+		foreach_vector(cfg->token_file, &free);
+		del_vector(cfg->token_file);
 
-		if (cfg->token_file)
-			{ FREE(cfg->token_file); }
+		del_lexer(cfg->lex);		
 	}
 	FREE(cfg);
 }
@@ -101,16 +102,10 @@ static int cfg_section(cfg_t*);
 
 cfg_t*
 parse_cfg(int filde) {
-	if (!(lex = new_lexer(filde)))
-		{ return (NULL); }
-	cfg_t* cfg = new_cfg();
-	if (!cfg)
-		{ return (NULL); }
-	int exit_status = cfg_section(cfg);
-	del_lexer(lex);
-	if (exit_status == ERROR) {
-		del_cfg(cfg);
+	cfg_t* cfg = new_cfg(filde);
+	if (cfg_section(cfg) == ERROR) {
 		/* ERROR */
+		del_cfg(cfg);
 		return (NULL);
 	}
 	return (cfg);
@@ -122,9 +117,7 @@ augment_grammar(cfg_t* cfg) {
 		{ return; }
 	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
 	production_t* prod = new_production(start);
-	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "EOF"));
-	cfg->goal = SIZE_VECTOR(cfg->productions);
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 }
 
@@ -154,11 +147,11 @@ cfg_entry_section(cfg_t* cfg, int kind) {
 		/* ERROR */
 		return (ERROR);
 	}
-	if (advance_token(lex) != kind
-			|| advance_token(lex) != T_LBRACE
+	if (advance_token(cfg->lex) != kind
+			|| advance_token(cfg->lex) != T_LBRACE
 			|| (*section_ptr)(cfg) == ERROR
-			|| advance_token(lex) != T_RBRACE
-			|| advance_token(lex) != T_SEMI) {
+			|| advance_token(cfg->lex) != T_RBRACE
+			|| advance_token(cfg->lex) != T_SEMI) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -168,8 +161,8 @@ cfg_entry_section(cfg_t* cfg, int kind) {
 int
 cfg_section(cfg_t* cfg) {
 	bool empty = true;
-	while (peek_token(lex) != T_EOF) {
-		if (cfg_entry_section(cfg, peek_token(lex)) == ERROR)
+	while (peek_token(cfg->lex) != T_EOF) {
+		if (cfg_entry_section(cfg, peek_token(cfg->lex)) == ERROR)
 			{ return (ERROR); }
 		empty = false;
 	}
@@ -181,13 +174,13 @@ cfg_section(cfg_t* cfg) {
 
 int
 cfg_path_list(cfg_t* cfg) {
-	if (peek_token(lex) == T_RBRACE)
+	if (peek_token(cfg->lex) == T_RBRACE)
 		{ return (DONE); }
-	else if (advance_token(lex) == T_LITERAL) {
-		unget_c_buffer(LAST_LEXEME(lex), 1);
-		PUSH_BACK_VECTOR(cfg->token_file, strdup(C_LEXEME(lex) + 1));
-		if (peek_token(lex) == T_COMMA) {
-			advance_token(lex);
+	else if (advance_token(cfg->lex) == T_LITERAL) {
+		unget_c_buffer(LAST_LEXEME(cfg->lex), 1);
+		PUSH_BACK_VECTOR(cfg->token_file, strdup(C_LEXEME(cfg->lex) + 1));
+		if (peek_token(cfg->lex) == T_COMMA) {
+			advance_token(cfg->lex);
 			return (cfg_path_list(cfg));
 		}
 	}
@@ -200,34 +193,36 @@ cfg_path_list(cfg_t* cfg) {
 
 int
 cfg_alias_list(cfg_t* cfg) {
-	if (peek_token(lex) == T_RBRACE)
+	if (peek_token(cfg->lex) == T_RBRACE)
 		{ return (DONE); }
-	else if (advance_token(lex) == T_LPAREN) {
-		if (advance_token(lex) != T_GLOBAL_TOK) {
+	else if (advance_token(cfg->lex) == T_LPAREN) {
+		if (advance_token(cfg->lex) != T_GLOBAL_TOK) {
 			/* ERROR */
 			return (ERROR);
 		}
 		size_t index_alias = add_symbol_cfg(cfg,
-				TERMINAL, C_LEXEME(lex))->index;
-		if (advance_token(lex) != T_BARROW
-				|| advance_token(lex) != T_LITERAL) {
+				TERMINAL, C_LEXEME(cfg->lex))->index;
+		if (advance_token(cfg->lex) != T_BARROW
+				|| advance_token(cfg->lex) != T_LITERAL) {
 			/* ERROR */
 			return (ERROR);
 		}
-		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(lex));
+		symbol_t* literal = add_symbol_cfg(cfg,
+					LITERAL, C_LEXEME(cfg->lex));
 		if (literal->terminal_alias != -1) {
 			/* ERROR */
-			fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(lex));
+			fprintf(stderr, "Redefinning literal %s.\n",
+					C_LEXEME(cfg->lex));
 			return (ERROR);
 		}
 		literal->is_defined = true;
 		literal->terminal_alias = index_alias;
-		if (advance_token(lex) != T_RPAREN) {
+		if (advance_token(cfg->lex) != T_RPAREN) {
 			/* ERROR */
 			return (ERROR);
 		}
-		if (peek_token(lex) == T_COMMA) {
-			advance_token(lex);
+		if (peek_token(cfg->lex) == T_COMMA) {
+			advance_token(cfg->lex);
 			return (cfg_alias_list(cfg));
 		}
 	}
@@ -240,7 +235,7 @@ cfg_alias_list(cfg_t* cfg) {
 
 int
 cfg_production_list(cfg_t* cfg) {
-	while (peek_token(lex) != T_RBRACE) {
+	while (peek_token(cfg->lex) != T_RBRACE) {
 		if (cfg_production(cfg) == ERROR)
 			{ return (ERROR); }
 	}
@@ -249,17 +244,17 @@ cfg_production_list(cfg_t* cfg) {
 
 static int
 follow_prod(cfg_t* cfg) {
-	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(lex));
-	if (peek_token(lex) == T_ARROW) {
-		advance_token(lex);
+	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(cfg->lex));
+	if (peek_token(cfg->lex) == T_ARROW) {
+		advance_token(cfg->lex);
 		symbol_lhs->is_defined = true;
 		if (cfg_rhs(cfg, symbol_lhs) == ERROR) {
 			/* ERROR */
 			return (ERROR);
 		}
 	}
-	else if (advance_token(lex) == T_EQUAL) {
-		if (advance_token(lex) != T_START) {
+	else if (advance_token(cfg->lex) == T_EQUAL) {
+		if (advance_token(cfg->lex) != T_START) {
 			fprintf(stderr, "Must $START follow %s = .\n",
 				symbol_lhs->name);
 			return (ERROR);
@@ -275,9 +270,9 @@ follow_prod(cfg_t* cfg) {
 
 int
 cfg_production(cfg_t* cfg) {
-	if (advance_token(lex) != NON_TERMINAL
+	if (advance_token(cfg->lex) != NON_TERMINAL
 			|| follow_prod(cfg) == ERROR
-			|| advance_token(lex) != T_SEMI) {
+			|| advance_token(cfg->lex) != T_SEMI) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -297,8 +292,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 	ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 
-	while (peek_token(lex) == T_UNION) {
-		advance_token(lex);
+	while (peek_token(cfg->lex) == T_UNION) {
+		advance_token(cfg->lex);
 		prod = new_production(lhs);
 		if (!prod)
 			{ return (ERROR); }
@@ -315,11 +310,11 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 
 int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
-	if (in_first(lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
+	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
-	else if (peek_token(lex) == T_EMPTY)
-		{ advance_token(lex); }
-	else if (!in_first(lex, T_UNION, T_SEMI, -1)) {
+	else if (peek_token(cfg->lex) == T_EMPTY)
+		{ advance_token(cfg->lex); }
+	else if (!in_first(cfg->lex, T_UNION, T_SEMI, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -328,11 +323,11 @@ cfg_opt_list(cfg_t* cfg, production_t* prod) {
 
 int
 cfg_list(cfg_t* cfg, production_t* prod) {
-	if (in_first(lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
+	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
 		if (cfg_atom(cfg, prod) == ERROR)
 			{ return (ERROR); }
 	}
-	while (in_first(lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
+	while (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
 		if (cfg_atom(cfg, prod) == ERROR)
 			{ return (ERROR); }
 	}
@@ -342,7 +337,7 @@ cfg_list(cfg_t* cfg, production_t* prod) {
 int
 cfg_atom(cfg_t* cfg, production_t* prod) {
 	symbol_t* atom_symbol = add_symbol_cfg(cfg,
-				advance_token(lex), C_LEXEME(lex));
+				advance_token(cfg->lex), C_LEXEME(cfg->lex));
 	if ((atom_symbol->kind == LITERAL)
 			&& (atom_symbol->terminal_alias != -1)) {
 		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,

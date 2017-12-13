@@ -23,7 +23,7 @@ $PRODUCTION {
     <alias_list>        ->  '(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
                          |  %empty%
                          ;
-    <alias_list'>      ->  ',' <alias_list>
+    <alias_list'>       ->  ',' <alias_list>
                          |  %empty%
                          ;
 

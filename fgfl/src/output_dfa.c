@@ -36,7 +36,7 @@ output_token_enum(int filde, vector_t const* elst) {
 	dprintf(filde, DEFINE(%s, %zu)"\n\n", MACRO_TOKEN, count + 2);
 }
 
-static void
+void
 output_state_table(int filde, vector_t const* trans, char const* header) {
 	dprintf(filde, STATIC" dfa_state_t\n");
 	output_verbatim_file(filde, header);
@@ -66,7 +66,7 @@ output_state_table(int filde, vector_t const* trans, char const* header) {
 	dprintf(filde, END_BLOCK""SEMI"\n\n");
 }
 
-static void
+void
 output_final_table(int filde, vector_t const* final, char const* header) {
 	dprintf(filde, STATIC" final_state_t\n");
 	output_verbatim_file(filde, header);
@@ -81,7 +81,7 @@ output_final_table(int filde, vector_t const* final, char const* header) {
 	dprintf(filde, "};\n\n"DEFINE(SIZE_FINAL_TAB, %zu)"\n\n", count_final);
 }
 
-static void
+void
 output_skip_table(int filde, vector_t const* elst, char const* header) {
 	vector_t* skip_table = new_vector();
 	if (!skip_table)
@@ -116,14 +116,11 @@ output_dfa_useful_macro(int filde) {
 }
 
 int
-output_matrix(char const* base_file, vector_t const* trans,
+output_dfa_matrix(char const* base_file, vector_t const* trans,
 		vector_t const* final, vector_t const* elst) {
 	
 	char const* header = strjoin(base_file, ".h");
-	int flag = O_CREAT;
-	if (file_exist(header))
-		{ flag = O_TRUNC; }
-	int filde = open(header, O_WRONLY | flag, 0666);
+	int filde = open_new_file(header);
 	if (filde == -1)
 		{ return (ERROR); }
 
@@ -140,6 +137,7 @@ output_matrix(char const* base_file, vector_t const* trans,
 
 	if (close(filde) == -1)
 		{ return (ERROR); }
+
 	FREE(header);
-	return (0);
+	return (DONE);
 }

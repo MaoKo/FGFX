@@ -19,9 +19,10 @@ $PRODUCTION
 		 ;
 
 	<F>	->	'(' <E> ')'
-		 |	ID ;
+		 |	ID
+		 ;
 
-	<E> = $START;
+	<E> = $START ;
 };
 
 $ALIAS

@@ -207,7 +207,7 @@ dfa_gen(token_spec_t* spec, char const* base_file) {
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	output_matrix(base_file, trans, final, spec->entry_lst);
+	output_dfa_matrix(base_file, trans, final, spec->entry_lst);
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
 		{ del_trans_list(AT_VECTOR(trans, i)); }
 

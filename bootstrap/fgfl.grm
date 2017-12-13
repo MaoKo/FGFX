@@ -41,7 +41,7 @@ $PRODUCTION {
 $ALIAS {
     (SKIP     => '$SKIP')      ,
     (TOKEN    => '$TOKEN')     ,
-    (KEYWPORD => '$KEYWORD')   ,
+    (KEYWORD  => '$KEYWORD')   ,
     (IGCASE   => '$IGCASE')    ,
     (LBRACE   => '{')          ,
     (RBRACE   => '}')          ,

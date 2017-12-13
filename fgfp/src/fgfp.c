@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 		{ exit(1); }
 
 	if (!SIZE_VECTOR(cfg->token_file)) {
-		fprintf(stderr, "Location of token not defined.\n");
+		fprintf(stderr, "At most one location of token must be defined.\n");
 		exit(1);
 	}
 
@@ -29,11 +29,9 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	if (unreachable_production(cfg)) {
-		fprintf(stderr,
-			"Some unreachable nonterminal has been remove.\n");
-	}
-	
+	if (unreachable_production(cfg))
+		{fprintf(stderr,"Some unreachable nonterminal has been remove.\n"); }
+
 	preprocess_literal(cfg);
 	augment_grammar(cfg);
 	detect_nullable(cfg);
@@ -57,17 +55,7 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
-	argv[1] = (char*)get_filename(argv[1]);
-	output_require_macro(1, argv[1]);
-
-	output_location_token(1, cfg->token_file);
-	output_non_terminal_enum(1, cfg->non_terminal);	
-
-	vector_t* vect = gen_ll1_table(cfg);
-	ERROR_MACRO(1);
-	output_ll_table(1, cfg, vect);
-
-	output_endif(1, argv[1]);
+	output_ll_matrix(cfg, get_filename(argv[1]));
 
 #if 0
 	puts("=== NON_TERMINAL ===");

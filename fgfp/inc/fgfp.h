@@ -6,6 +6,7 @@
 
 #include "vector.h"
 #include "bitset.h"
+#include "lexer.h"
 
 typedef struct {
 	int kind;
@@ -49,6 +50,7 @@ typedef struct {
 	vector_t* terminal;
 	size_t goal;
 	vector_t* token_file;
+	lexer_t* lex;
 } cfg_t;
 
 #endif /* FGFP_H */

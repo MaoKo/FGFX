@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 #include "utils.h"
 
@@ -134,6 +135,14 @@ hash_str(char const* str) {
 bool
 file_exist(char const* filename) {
 	return (open(filename, O_WRONLY | O_EXCL) != -1);
+}
+
+int
+open_new_file(char const* path_name) {
+	int filde = open(path_name, O_WRONLY | O_CREAT | O_EXCL, 0644);
+	if ((filde == -1) && (EEXIST == errno))
+		{ filde = open(path_name, O_WRONLY | O_TRUNC); }
+	return (filde);
 }
 
 void*
