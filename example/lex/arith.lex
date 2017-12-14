@@ -1,10 +1,13 @@
-PLUS	=	/"+"/		;
-MINUS	=	/"-"/		;
-MUL	=	/"*"/		;
-DIV	=	/"/"/		;
-LPAREN	=	/"("/		;
-RPAREN	=	/")"/		;
-NUM	=	/[0-9]+/	;
-SPACE	=	/[ \n\t]+/	;
+$TOKEN {
+	PLUS	= /	"+"	 /	;
+	MINUS	= /	"-"	 /	;
+	MUL	= /	"*"	 /	;
+	DIV	= /	"\/"	 /	;
+	LPAREN	= /	"("	 /	;
+	RPAREN	= /	")"	 /	;
+	NUM	= /	[0-9]+	 /	;
+};
 
-%skip		SPACE		;
+$SKIP {
+	SPACE	= /	[ \n\t]+ /	;
+};

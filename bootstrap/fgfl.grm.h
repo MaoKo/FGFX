@@ -1,5 +1,5 @@
-#ifndef _FGFL_GRM_H_H
-#define _FGFL_GRM_H_H
+#ifndef _FGFL_GRM_H
+#define _FGFL_GRM_H
 
 #define ONLY_TOKEN	
 #include "fgfx.lex.h"
@@ -41,17 +41,17 @@ fgfl_ll_table[TOTAL_NTER][TOTAL_TOKEN] = {
 
 static int
 fgfl_sync_token[TOTAL_NTER][5] = {
-	[N_FGFL] = {-1},
-	[N_section] = {T_SKIP, T_TOKEN, T_KEYWORD, -1},
-	[N_FGFL_PRIME] = {-1},
-	[N_skip_section] = {T_SKIP, T_TOKEN, T_KEYWORD, -1},
-	[N_token_section] = {T_SKIP, T_TOKEN, T_KEYWORD, -1},
-	[N_keyword_section] = {T_SKIP, T_TOKEN, T_KEYWORD, -1},
-	[N_regex_list] = {T_RBRACE, -1},
-	[N_keyword_list] = {T_RBRACE, -1},
-	[N_atom_FGFL] = {T_RBRACE, T_COMMA, T_EQUAL, T_ARROW, -1},
-	[N_regex_assign] = {T_SEMI, -1},
-	[N_keyword_list_PRIME] = {T_RBRACE, -1},
+	[N_FGFL] = { -1 },
+	[N_section] = { T_SKIP, T_TOKEN, T_KEYWORD, -1 },
+	[N_FGFL_PRIME] = { -1 },
+	[N_skip_section] = { T_SKIP, T_TOKEN, T_KEYWORD, -1 },
+	[N_token_section] = { T_SKIP, T_TOKEN, T_KEYWORD, -1 },
+	[N_keyword_section] = { T_SKIP, T_TOKEN, T_KEYWORD, -1 },
+	[N_regex_list] = { T_RBRACE, -1 },
+	[N_keyword_list] = { T_RBRACE, -1 },
+	[N_atom_FGFL] = { T_RBRACE, T_COMMA, T_EQUAL, T_ARROW, -1 },
+	[N_regex_assign] = { T_SEMI, -1 },
+	[N_keyword_list_PRIME] = { T_RBRACE, -1 },
 };
 
-#endif /* _FGFL_GRM_H_H */
+#endif /* _FGFL_GRM_H */

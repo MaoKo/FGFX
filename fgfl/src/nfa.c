@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "utils.h"
 #include "bitset.h"
@@ -85,33 +86,34 @@ static bool crt_igcase = false;
 static inline nfa_frag_t*
 ast_symbol(node_ast_t* root) {
 	state_t* final_s = new_state();
-//	static bitset_t* all_letter = NULL;
-//	static int first_time = 1;
-#if 0
-	if (first_time) {
-		all_letter = new_bitset();	
-		for (int i = 'A'; i <= 'Z'; ++i)
-			{ ADD_BITSET(all_letter, i); }
-		for (int i = 'a'; i <= 'z'; ++i)
-			{ ADD_BITSET(all_letter, i); }
-		first_time = 0;
-	}
+	if ((root->alone && !crt_igcase)
+			|| (root->alone && crt_igcase
+			&& !isalpha(root->symbol)))
+		{ return (new_nfa_frag(root->symbol, final_s, final_s)); }
 
-	if (root->alone && crt_igcase && isalpha(root->symbol)) {
-		int symbol = root->symbol;
-		root->cclass = bitset();
-		add_bitset(root->cclass, symbol);
+	if (root->alone) {
+		size_t symbol = root->symbol;
+		root->cclass = new_bitset();
+		ADD_BITSET(root->cclass, symbol);
 		root->alone = false;
 	}
-#endif
-	if (root->alone)
-		{ return (new_nfa_frag(root->symbol, final_s, final_s)); }
 
 	state_t* relay_s  = new_state();
 	relay_s->class = dup_bitset(root->cclass);
 	relay_s->out_class = final_s;
 
-//	UNION_BITSET(relay_s->class, all_letter);
+	if (crt_igcase) {
+		int i;
+		while ((i = IT_NEXT(root->cclass)) != -1) {
+			if (isalpha(i)) {
+				size_t target = islower(i)
+					? toupper(i) : tolower(i);
+				ADD_BITSET(relay_s->class, target);	
+			}	
+		}
+		IT_RESET(root->cclass);
+	}
+
 	return (new_nfa_frag(EPSILON, relay_s, final_s));
 }
 

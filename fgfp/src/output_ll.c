@@ -100,13 +100,13 @@ output_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
 		symbol_t* nter = AT_VECTOR(cfg->non_terminal, i);
 		dprintf(filde, TAB "[");
 		output_nter_symbol(filde, cfg->non_terminal, i);
-		dprintf(filde, "] = " BEG_BLOCK);
+		dprintf(filde, "] = " BEG_BLOCK " ");
 		int j;
 		while ((j = IT_NEXT(nter->follow)) != -1) {
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
 			dprintf(filde, TOKEN_PREFIX "%s, ", terminal->name);
 		}
-		dprintf(filde, "-1" END_BLOCK COMMA "\n");
+		dprintf(filde, "-1" " " END_BLOCK COMMA "\n");
 	}
 	dprintf(filde, END_BLOCK SEMI "\n\n");
 }
@@ -117,7 +117,7 @@ output_ll_matrix(cfg_t const* cfg, char const* base_file) {
 	int filde = open_new_file(header);
 	if (filde == -1)
 		{ return (ERROR); }
-	output_require_macro(filde, header);
+	output_require_macro(filde, base_file);
 
 	output_location_token(filde, cfg->token_file);
 	output_non_terminal_enum(filde, cfg->non_terminal);	
@@ -130,7 +130,7 @@ output_ll_matrix(cfg_t const* cfg, char const* base_file) {
 
 	output_synchronizing_token(filde, cfg, header);
 
-	output_endif(filde, header);
+	output_endif(filde, base_file);
 
 	if (close(filde) == -1)
 		{ return (ERROR); }

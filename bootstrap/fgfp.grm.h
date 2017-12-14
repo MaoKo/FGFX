@@ -1,5 +1,5 @@
-#ifndef _FGFP_GRM_H_H
-#define _FGFP_GRM_H_H
+#ifndef _FGFP_GRM_H
+#define _FGFP_GRM_H
 
 #define ONLY_TOKEN	
 #include "fgfx.lex.h"
@@ -59,26 +59,26 @@ fgfp_ll_table[TOTAL_NTER][TOTAL_TOKEN] = {
 
 static int
 fgfp_sync_token[TOTAL_NTER][6] = {
-	[N_FGFP] = {-1},
-	[N_section] = {T_EXTERN, T_ALIAS, T_PRODUCTION, -1},
-	[N_FGFP_PRIME] = {-1},
-	[N_extern_section] = {T_EXTERN, T_ALIAS, T_PRODUCTION, -1},
-	[N_production_section] = {T_EXTERN, T_ALIAS, T_PRODUCTION, -1},
-	[N_alias_section] = {T_EXTERN, T_ALIAS, T_PRODUCTION, -1},
-	[N_path_list] = {T_RBRACE, -1},
-	[N_path_list_PRIME] = {T_RBRACE, -1},
-	[N_alias_list] = {T_RBRACE, -1},
-	[N_alias_list_PRIME] = {T_RBRACE, -1},
-	[N_production_list] = {T_RBRACE, -1},
-	[N_production] = {T_NTER, T_RBRACE, -1},
-	[N_production_list_PRIME] = {T_RBRACE, -1},
-	[N_follow_prod] = {T_SEMI, -1},
-	[N_lhs] = {T_SEMI, -1},
-	[N_opt_list] = {T_SEMI, T_UNION, -1},
-	[N_lhs_PRIME] = {T_SEMI, -1},
-	[N_symbol_list] = {T_SEMI, T_UNION, -1},
-	[N_symbol] = {T_LITERAL, T_GLOBAL_TOK, T_NTER, T_SEMI, T_UNION, -1},
-	[N_symbol_list_PRIME] = {T_SEMI, T_UNION, -1},
+	[N_FGFP] = { -1 },
+	[N_section] = { T_EXTERN, T_ALIAS, T_PRODUCTION, -1 },
+	[N_FGFP_PRIME] = { -1 },
+	[N_extern_section] = { T_EXTERN, T_ALIAS, T_PRODUCTION, -1 },
+	[N_production_section] = { T_EXTERN, T_ALIAS, T_PRODUCTION, -1 },
+	[N_alias_section] = { T_EXTERN, T_ALIAS, T_PRODUCTION, -1 },
+	[N_path_list] = { T_RBRACE, -1 },
+	[N_path_list_PRIME] = { T_RBRACE, -1 },
+	[N_alias_list] = { T_RBRACE, -1 },
+	[N_alias_list_PRIME] = { T_RBRACE, -1 },
+	[N_production_list] = { T_RBRACE, -1 },
+	[N_production] = { T_NTER, T_RBRACE, -1 },
+	[N_production_list_PRIME] = { T_RBRACE, -1 },
+	[N_follow_prod] = { T_SEMI, -1 },
+	[N_lhs] = { T_SEMI, -1 },
+	[N_opt_list] = { T_SEMI, T_UNION, -1 },
+	[N_lhs_PRIME] = { T_SEMI, -1 },
+	[N_symbol_list] = { T_SEMI, T_UNION, -1 },
+	[N_symbol] = { T_LITERAL, T_GLOBAL_TOK, T_NTER, T_SEMI, T_UNION, -1 },
+	[N_symbol_list_PRIME] = { T_SEMI, T_UNION, -1 },
 };
 
-#endif /* _FGFP_GRM_H_H */
+#endif /* _FGFP_GRM_H */
