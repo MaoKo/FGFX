@@ -1,4 +1,6 @@
 /* Hello */
 
-@B	=	// ;
-%skip B;
+$TOKEN {
+
+B	=	/  / ;
+};

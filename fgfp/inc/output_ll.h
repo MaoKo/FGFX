@@ -5,6 +5,7 @@
 #include "vector.h"
 
 #define NTER_PREFIX	"N_"
+#define PROD_PREFIX	"P_"
 
 void output_location_token(int, vector_t const*);
 void output_nter_symbol(int, vector_t const*, size_t);

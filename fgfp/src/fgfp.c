@@ -20,20 +20,23 @@ int main(int argc, char* argv[]) {
 		{ exit(1); }
 
 	if (!SIZE_VECTOR(cfg->token_file)) {
-		fprintf(stderr, "At most one location of token must be defined.\n");
+		fprintf(stderr, "At most one location"
+				"of token must be defined.\n");
 		exit(1);
 	}
-
+	
+	augment_grammar(cfg);
 	if (detect_bad_symbol(cfg)) {
 		del_cfg(cfg);
 		exit(1);
 	}
 
-	if (unreachable_production(cfg))
-		{fprintf(stderr,"Some unreachable nonterminal has been remove.\n"); }
+	if (unreachable_production(cfg)) {
+		fprintf(stderr, "Some unreachable nonterminal"
+				"has been remove.\n");
+	}
 
 	preprocess_literal(cfg);
-	augment_grammar(cfg);
 	detect_nullable(cfg);
 	compute_first(cfg);
 

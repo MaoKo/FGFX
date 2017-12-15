@@ -77,7 +77,8 @@ follow_symbol_rhs(production_t const* prod, symbol_t* non_ter,
 					list->symbol_rhs->index));
 		}
 		else {
-			bool change = follow_non_terminal(non_ter, list->symbol_rhs);
+			bool change = follow_non_terminal(non_ter,
+							list->symbol_rhs);
 			if (!list->symbol_rhs->nullable)
 				{ return (change); }
 		}
@@ -117,7 +118,7 @@ compute_follow(cfg_t* cfg) {
 		for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 			if (follow_symbol(AT_VECTOR(cfg->non_terminal, i), cfg))
 				{ change = true; }
-		}	
+		}
 	} while (change);
 }
 

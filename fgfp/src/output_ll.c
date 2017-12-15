@@ -43,12 +43,48 @@ output_non_terminal_enum(int filde, vector_t const* nter) {
 			MACRO_NTER, SIZE_VECTOR(nter) - 1);
 }
 
+static void
+output_nproduction_macro(int filde, cfg_t const* cfg, size_t index) {
+	dprintf(filde, PROD_PREFIX);
+	production_t* prod = (production_t*)AT_VECTOR(cfg->productions, index);
+	output_nter_symbol(filde, cfg->non_terminal,
+			prod->symbol_lhs->index);
+	list_rhs* list = prod->rhs_element;
+	while (list) {
+		dprintf(filde, "_");
+		if (IS_TERMINAL(list->symbol_rhs)) {
+			dprintf(filde, TOKEN_PREFIX "%s",
+				list->symbol_rhs->name);
+		}
+		else {
+			output_nter_symbol(filde, cfg->non_terminal,
+						list->symbol_rhs->index);
+		}
+		list = list->next;
+	}
+}
+
+static void
+output_production_macro(int filde, cfg_t const* cfg) {
+	dprintf(filde, "//Various macro representing production.\n");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
+		dprintf(filde, "#define ");
+		output_nproduction_macro(filde, cfg, i);
+		dprintf(filde, TAB "%zu\n", i + 1);
+	}
+	dprintf(filde, "\n");
+}
+
 void
 output_ll_useful_macro(int filde, cfg_t const* cfg) {
 	dprintf(filde, DEFINE(ERROR_SLOT, 0)"\n");
 	dprintf(filde, DEFINE(START_SYMBOL,));
-	output_nter_symbol(filde, cfg->non_terminal, cfg->goal);
+	production_t* start_prod = AT_VECTOR(cfg->productions,
+				SIZE_VECTOR(cfg->productions) - 1);
+	output_nter_symbol(filde, cfg->non_terminal,
+				start_prod->rhs_element->symbol_rhs->index);
 	dprintf(filde, "\n\n");
+	output_production_macro(filde, cfg);
 }
 
 void
@@ -66,9 +102,10 @@ output_ll_table(int filde, cfg_t const* cfg,
 		while (list) {
 			dprintf(filde, "[");
 			output_nter_symbol(filde, cfg->non_terminal, i);
-			dprintf(filde, "]["TOKEN_PREFIX"%s]=%d, ", ((symbol_t*)
-				AT_VECTOR(cfg->terminal, list->input))->name,
-				list->state + 1);
+			dprintf(filde, "]["TOKEN_PREFIX"%s]=", ((symbol_t*)
+				AT_VECTOR(cfg->terminal, list->input))->name);
+			output_nproduction_macro(filde, cfg, list->state);
+			dprintf(filde, ", ");
 			list = list->next;
 		}
 		write(filde, "\n", 1);

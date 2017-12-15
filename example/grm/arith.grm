@@ -1,3 +1,5 @@
+$EXTERN { 'arith.lex.h' };
+$PRODUCTION {
 <E>	->	<E> PLUS <T>
 	 |	<E> MINUS <T>
 	 |	<T>
@@ -11,3 +13,4 @@
 <F>	->	LPAREN <E> RPAREN
  	 |	NUM
 	 ; 
+};

@@ -116,9 +116,13 @@ augment_grammar(cfg_t* cfg) {
 	if (!cfg)
 		{ return; }
 	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
+	start->is_defined = true;
 	production_t* prod = new_production(start);
+	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "EOF"));
+	ADD_BITSET(start->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
+	cfg->goal = start->index;
 }
 
 // Different kind of section and their associate list.

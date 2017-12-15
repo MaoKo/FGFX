@@ -458,7 +458,7 @@ reg_fact(void) {
 
 static node_ast_t*
 reg_atom(void) {
-	if (!is_metachar(peek()))
+	if (!is_metachar(peek()) && peek() != EOS)
 		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
 	else if (match(REG_LPAREN)) { 
 		node_ast_t* expr = reg_expr();
