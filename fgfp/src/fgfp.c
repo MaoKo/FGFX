@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "cfg.h"
 #include "bitset.h"
@@ -59,12 +60,19 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
-	printf("Total production %zu\n", SIZE_VECTOR(cfg->productions));
-	int index = new_item(AT_VECTOR(cfg->productions, 2));
+	production_t* start_prod = BACK_VECTOR(cfg->productions);
+	int index = new_item(start_prod, start_prod->rhs_element);
 	bitset_t* test = new_bitset();
 	ADD_BITSET(test, (size_t)index);
 	closure(cfg, test);
-	printf("%zu\n", count_elt_bitset(test));	
+	symbol_t* A = NULL;
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* tmp = AT_VECTOR(cfg->non_terminal, i);
+		if (!strcmp(tmp->name, "<B>"))
+			{ A = tmp; break; }
+	}
+	test = goto_lr(cfg, test, A);
+	print_item(test);
 	return (0);	
 	output_ll_matrix(cfg, get_filename(argv[1]));
 

@@ -62,9 +62,11 @@ bitset_t* _op_bitset(int, bitset_t*, bitset_t*);
 void truncate_bitset(bitset_t*);
 int _next_bitset(bitset_t*);
 _SETTYPE hash_bitset(bitset_t const*);
-void print_bitset(bitset_t*);
 bool is_subset_bitset(bitset_t const*, bitset_t const*);
 bool is_disjoint_bitset(bitset_t const*, bitset_t const*);
 size_t count_elt_bitset(bitset_t const*);
+#ifdef PRINT_DEBUG
+void print_bitset(bitset_t*);
+#endif /* PRINT_DEBUG */
 
 #endif /* BITSET_H */

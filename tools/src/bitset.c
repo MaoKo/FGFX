@@ -163,19 +163,6 @@ hash_bitset(bitset_t const* bs) {
 	return (count);
 }
 
-void
-print_bitset(bitset_t* bs) {
-	printf("{");
-	if (bs) {
-		unsigned int iter_back = bs->siter;
-		int i;
-		while ((i = IT_NEXT(bs)) != -1)
-			{ printf("%d,", i); }
-		bs->siter = iter_back;
-	}
-	printf("}\n");
-}
-
 bool
 is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	if (!bset1 || !bset2)
@@ -234,3 +221,19 @@ count_elt_bitset(bitset_t const* bset) {
 		{ count += bit_count[((uint8_t*)bset->map)[i]]; }
 	return (count);
 }
+
+#ifdef PRINT_DEBUG
+void
+print_bitset(bitset_t* bs) {
+	printf("{");
+	if (bs) {
+		unsigned int iter_back = bs->siter;
+		int i;
+		while ((i = IT_NEXT(bs)) != -1)
+			{ printf("%d,", i); }
+		bs->siter = iter_back;
+	}
+	printf("}\n");
+}
+#endif /* PRINT_DEBUG */
+
