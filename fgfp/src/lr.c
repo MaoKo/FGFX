@@ -11,8 +11,8 @@ static vector_t* record_item = NULL;
 
 static void
 del_item(lr1_item_t* item) {
-	if (item)
-		{ del_bitset(item->lookahead); }
+	if (item) {  }
+//		{ del_bitset(item->lookahead); }
 	FREE(item);
 }
 
@@ -55,7 +55,8 @@ new_item(production_t const* prod, list_rhs const* dot_pos) {
 static void
 include_production_item(cfg_t const* cfg,
 			bitset_t* dst, lr1_item_t* crt_item) {
-	if (!IS_NON_TERMINAL(crt_item->dot_pos->symbol_rhs))
+	if (crt_item->is_last
+			|| !IS_NON_TERMINAL(crt_item->dot_pos->symbol_rhs))
 		{ return; }
 	vector_t* target_prod = stack_production_lhs(cfg,
 					crt_item->dot_pos->symbol_rhs);
@@ -92,7 +93,6 @@ bitset_t*
 goto_lr(cfg_t const* cfg, bitset_t* item_set, symbol_t const* match_symbol) {
 	if (!item_set || !match_symbol)
 		{ return (NULL); }
-	(void)cfg;
 	bitset_t* goto_lr_state = new_bitset();
 	int i = 0;
 	while ((i = IT_NEXT(item_set)) != -1) {
@@ -106,7 +106,66 @@ goto_lr(cfg_t const* cfg, bitset_t* item_set, symbol_t const* match_symbol) {
 		}
 	}
 	IT_RESET(item_set);
+	if (is_empty_bitset(goto_lr_state)) {
+		del_bitset(goto_lr_state);
+		return (NULL_BITSET);
+	}
 	return (closure(cfg, goto_lr_state));
+}
+
+static bitset_t*
+move_item_next(cfg_t const* cfg, bitset_t* item_state, int index) {
+	lr1_item_t* item = (lr1_item_t*)AT_VECTOR(record_item, index);
+	if (item->is_last)
+		{ return (NULL_BITSET); }
+	int back = IT_BACK(item_state);
+	IT_RESET(item_state);
+	bitset_t* lrg = goto_lr(cfg, item_state, item->dot_pos->symbol_rhs);
+	IT_SET(item_state, back);
+	return (lrg);
+}
+
+static int
+cmp_bitset(bitset_t* b1, bitset_t* b2) {
+	return (!eq_bitset(b1, b2));
+}
+
+vector_t*
+gen_lalr1_table(cfg_t const* cfg) {
+	if (!cfg)
+		{ return (NULL_VECT); }
+
+	bitset_t* start_state = new_bitset();
+	production_t* start_prod = BACK_VECTOR(cfg->productions);
+	ADD_BITSET(start_state, (size_t)new_item(start_prod,
+					start_prod->rhs_element));
+
+	vector_t* lr1_states = new_vector();
+	PUSH_BACK_VECTOR(lr1_states, closure(cfg, start_state));
+
+	bool change;
+	do {
+		change = false;
+		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
+			bitset_t* state = (bitset_t*)AT_VECTOR(lr1_states, i);
+			int j;
+			while ((j = IT_NEXT(state)) != -1) {
+				bitset_t* next = move_item_next(cfg, state, j);
+				if (next == NULL_BITSET)
+					{ continue; }
+				int index = get_index_vector(lr1_states,
+					next, &cmp_bitset);
+				if (index == -1) {
+					PUSH_BACK_VECTOR(lr1_states, next);
+					change = true;
+				}
+				else
+					{ del_bitset(next); }
+			}
+			IT_RESET(state);
+		}
+	} while (change);
+	return (lr1_states);
 }
 
 #ifdef PRINT_DEBUG
@@ -116,16 +175,17 @@ void print_item(bitset_t* item_set) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_item, i);
 		printf("%s -> ", crt_item->prod->symbol_lhs->name);
 		list_rhs* list = crt_item->prod->rhs_element;
-		if (!list)
-			{ printf("."); }
 		while (list) {
 			if (list == crt_item->dot_pos)
 				{ printf(". "); }
 			printf("%s ", list->symbol_rhs->name);
 			list = list->next;
 		}
+		if (crt_item->is_last)
+			{ printf("."); }
 		puts("");
 	}
+	IT_RESET(item_set);
 }
 #endif /* PRINT_DEBUG */
 

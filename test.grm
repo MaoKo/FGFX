@@ -1,9 +1,7 @@
 $EXTERN		{ 'nothing.h' };
 $PRODUCTION
 {
-<A> -> <B> <C> ;
-<B> -> b ;
-<C> -> c ;
+<A> -> a ;
 };
 
 /*

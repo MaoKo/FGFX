@@ -16,6 +16,8 @@ typedef uint64_t		_SETTYPE;
 
 //Iterator Bitset
 #define IT_NEXT(bs)		(_next_bitset(bs))
+#define IT_BACK(bs)		((bs)->siter)
+#define IT_SET(bs, iter)	((bs)->siter = iter)
 #define IT_RESET(bs)		((bs) ? (bs)->siter = 0 : 0)
 
 #define OP_BITSET(bs, x, op)	((bs)->map[_DIV_WSIZE(x)] op (1UL<<_MOD_WSIZE(x)))

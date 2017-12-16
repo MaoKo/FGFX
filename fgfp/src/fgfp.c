@@ -60,20 +60,14 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
-	production_t* start_prod = BACK_VECTOR(cfg->productions);
-	int index = new_item(start_prod, start_prod->rhs_element);
-	bitset_t* test = new_bitset();
-	ADD_BITSET(test, (size_t)index);
-	closure(cfg, test);
-	symbol_t* A = NULL;
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
-		symbol_t* tmp = AT_VECTOR(cfg->non_terminal, i);
-		if (!strcmp(tmp->name, "<B>"))
-			{ A = tmp; break; }
+	vector_t* lr1_states = gen_lalr1_table(cfg);
+	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
+		printf("===== State %zu =====\n", i);
+		bitset_t* bset = AT_VECTOR(lr1_states, i);
+		print_item(bset);
 	}
-	test = goto_lr(cfg, test, A);
-	print_item(test);
 	return (0);	
+
 	output_ll_matrix(cfg, get_filename(argv[1]));
 
 #if 0

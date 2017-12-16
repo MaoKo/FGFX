@@ -9,8 +9,10 @@ edges(state_t* state, int symbol, bitset_t* result) {
 	if (state->trans) {
 		edge_t* it = state->trans;
 		while (it) {
-			if (it->label == symbol)
-				{ ADD_BITSET(result, it->out_state->index_state); }
+			if (it->label == symbol) {
+				ADD_BITSET(result,
+					it->out_state->index_state);
+			}
 			it = it->next;
 		}
 	}
