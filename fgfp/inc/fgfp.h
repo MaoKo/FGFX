@@ -45,12 +45,19 @@ typedef struct {
 } production_t;
 
 typedef struct {
+	size_t index;
+	list_rhs const* dot_pos;
+	bitset_t* lookahead;
+	bool is_last;
+} lr1_item;
+
+typedef struct {
 	vector_t* productions;
 	vector_t* non_terminal;
 	vector_t* terminal;
-	size_t goal;
 	vector_t* token_file;
 	lexer_t* lex;
+	size_t goal;
 } cfg_t;
 
 #endif /* FGFP_H */

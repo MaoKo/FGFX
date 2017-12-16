@@ -7,6 +7,7 @@
 #include "cfg_production.h"
 #include "cfg_set_op.h"
 #include "ll.h"
+#include "lr.h"
 #include "output_ll.h"
 #include "output.h"
 #include "utils.h"
@@ -58,6 +59,13 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
+	printf("Total production %zu\n", SIZE_VECTOR(cfg->productions));
+	int index = new_item(AT_VECTOR(cfg->productions, 2));
+	bitset_t* test = new_bitset();
+	ADD_BITSET(test, (size_t)index);
+	closure(cfg, test);
+	printf("%zu\n", count_elt_bitset(test));	
+	return (0);	
 	output_ll_matrix(cfg, get_filename(argv[1]));
 
 #if 0

@@ -20,7 +20,7 @@ edges(state_t* state, int symbol, bitset_t* result) {
 }
 
 bitset_t*
-closure(bitset_t* set_state) {
+epsilon_closure(bitset_t* set_state) {
 	if (!set_state)
 		{ return (NULL); }
 	bitset_t* last = NULL_BITSET;
@@ -46,7 +46,7 @@ DFAedge(bitset_t* states, int symbol) {
 		del_bitset(target);
 		return (NULL_BITSET);
 	}
-	return (closure(target));
+	return (epsilon_closure(target));
 }
 
 static vector_t*
@@ -57,7 +57,7 @@ gen_state_table(state_t* master, vector_t** rstates) {
 	ADD_BITSET(start, master->index_state);
 	
 	PUSH_BACK_VECTOR(states, NULL_BITSET);
-	PUSH_BACK_VECTOR(states, closure(start));
+	PUSH_BACK_VECTOR(states, epsilon_closure(start));
 	
 	vector_t* trans = new_vector();
 	PUSH_BACK_VECTOR(trans, NULL_TRANS_LST); //Dead State

@@ -1,0 +1,20 @@
+$EXTERN		{ 'nothing.h' };
+$PRODUCTION	{ <A> -> a | b ; };
+
+/*
+
+state 0:
+%start% -> . <A> EOF, ???
+<A>     -> . a      , EOF
+<A>     -> . b      , EOF
+
+state 1:
+%start% -> <A> . EOF, ???
+
+state 2:
+<A>     -> a .      , EOF
+
+state 3:
+<A>     -> b .      , EOF
+
+*/
