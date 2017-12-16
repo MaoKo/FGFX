@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "utils.h"
 #include "vector.h"
 #include "bitset.h"
 #include "lexer.h"
@@ -16,6 +17,7 @@ typedef struct {
 	union {
 		// if TERMINAL
 		struct {
+			bool is_eof;
 			/* TODO: prec, left, right, ... */
 		};
 		// if NON_TERMINAL
@@ -51,6 +53,13 @@ typedef struct {
 //	bitset_t* lookahead;
 	bool is_last;
 } lr1_item_t;
+
+typedef struct {
+	bitset_t* items;
+	trans_list_t* edges;
+	bool accept;
+	bool first_reach;
+} lr1_state_t;
 
 typedef struct {
 	vector_t* productions;

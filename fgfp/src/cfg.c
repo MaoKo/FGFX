@@ -119,7 +119,9 @@ augment_grammar(cfg_t* cfg) {
 	start->is_defined = true;
 	production_t* prod = new_production(start);
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
-	add_symbol_rhs(prod, add_symbol_cfg(cfg, TERMINAL, "EOF"));
+	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
+	eof_symbol->is_eof = true;
+	add_symbol_rhs(prod, eof_symbol);
 	ADD_BITSET(start->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 	cfg->goal = start->index;
@@ -375,3 +377,38 @@ detect_bad_symbol(cfg_t* cfg) {
 			|| unused_symbol(cfg->terminal);
 	return (exit_status);
 }
+
+#ifdef PRINT_DEBUG
+void print_terminal(cfg_t const* cfg) {
+	puts("=== TERMINAL ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
+		printf("%s\n", ((symbol_t*)
+			AT_VECTOR(cfg->terminal, i))->name);
+	}
+}
+
+void print_non_terminal(cfg_t const* cfg) {
+	puts("=== NON_TERMINAL ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		printf("%s\n", ((symbol_t*)
+			AT_VECTOR(cfg->non_terminal, i))->name);
+	}
+}
+
+void print_production(cfg_t const* cfg) {
+	puts("=== PRODUCTION ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* prod = AT_VECTOR(cfg->productions, i);
+		printf("%s -> ", prod->symbol_lhs->name);
+		list_rhs* list = prod->rhs_element;
+		while (list) {
+			printf("%s", list->symbol_rhs->name);
+			if (list->next)
+				{ printf(" "); }
+			list = list->next;
+		}
+		puts("");
+	}
+}
+#endif /* PRINT_DEBUG */
+

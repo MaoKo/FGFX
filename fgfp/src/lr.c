@@ -9,6 +9,17 @@
 
 static vector_t* record_item = NULL;
 
+static lr1_state_t*
+new_lr1_state(bitset_t* item) {
+	lr1_state_t* state = NEW(lr1_state_t, 1);
+	if (!state)
+		{ return (NULL); }
+	memset(state, 0, sizeof(lr1_state_t));
+	state->items = item;
+	state->first_reach = true;
+	return (state);
+}
+
 static void
 del_item(lr1_item_t* item) {
 	if (item) {  }
@@ -72,7 +83,7 @@ include_production_item(cfg_t const* cfg,
 bitset_t*
 closure(cfg_t const* cfg, bitset_t* item_set) {
 	if (!cfg || !item_set || !record_item)
-		{ return (NULL); }
+		{ return (NULL_BITSET); }
 	bitset_t* last = NULL_BITSET;
 	do {
 		del_bitset(last);
@@ -92,7 +103,7 @@ closure(cfg_t const* cfg, bitset_t* item_set) {
 bitset_t*
 goto_lr(cfg_t const* cfg, bitset_t* item_set, symbol_t const* match_symbol) {
 	if (!item_set || !match_symbol)
-		{ return (NULL); }
+		{ return (NULL_BITSET); }
 	bitset_t* goto_lr_state = new_bitset();
 	int i = 0;
 	while ((i = IT_NEXT(item_set)) != -1) {
@@ -114,20 +125,41 @@ goto_lr(cfg_t const* cfg, bitset_t* item_set, symbol_t const* match_symbol) {
 }
 
 static bitset_t*
-move_item_next(cfg_t const* cfg, bitset_t* item_state, int index) {
+move_item_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 	lr1_item_t* item = (lr1_item_t*)AT_VECTOR(record_item, index);
 	if (item->is_last)
 		{ return (NULL_BITSET); }
-	int back = IT_BACK(item_state);
-	IT_RESET(item_state);
-	bitset_t* lrg = goto_lr(cfg, item_state, item->dot_pos->symbol_rhs);
-	IT_SET(item_state, back);
+	else if (IS_TERMINAL(item->dot_pos->symbol_rhs)
+			&& IS_EOF(item->dot_pos->symbol_rhs)) {
+		state->accept = true;
+		return (NULL_BITSET);
+	}
+	
+	if (state->first_reach) {
+		trans_list_t* action;
+		if (IS_TERMINAL(item->dot_pos->symbol_rhs)) {
+			action = new_trans_list(SHIFT(
+				GET_INDEX(item->dot_pos->symbol_rhs)), 0);
+		}
+		else {
+			action = new_trans_list(GOTO(
+				GET_INDEX(item->dot_pos->symbol_rhs)), 0);
+		}
+	
+		action->next = state->edges;
+		state->edges = action;
+	}
+
+	int back = IT_BACK(state->items);
+	IT_RESET(state->items);
+	bitset_t* lrg = goto_lr(cfg, state->items, item->dot_pos->symbol_rhs);
+	IT_SET(state->items, back);
 	return (lrg);
 }
 
 static int
-cmp_bitset(bitset_t* b1, bitset_t* b2) {
-	return (!eq_bitset(b1, b2));
+cmp_lr1_state(lr1_state_t const* s1, bitset_t const* b2) {
+	return (!eq_bitset(s1->items, b2));
 }
 
 vector_t*
@@ -141,28 +173,35 @@ gen_lalr1_table(cfg_t const* cfg) {
 					start_prod->rhs_element));
 
 	vector_t* lr1_states = new_vector();
-	PUSH_BACK_VECTOR(lr1_states, closure(cfg, start_state));
+	PUSH_BACK_VECTOR(lr1_states, new_lr1_state(closure(cfg, start_state)));
 
 	bool change;
 	do {
 		change = false;
 		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
-			bitset_t* state = (bitset_t*)AT_VECTOR(lr1_states, i);
+			lr1_state_t* state = (lr1_state_t*)
+						AT_VECTOR(lr1_states, i);
 			int j;
-			while ((j = IT_NEXT(state)) != -1) {
+			while ((j = IT_NEXT(state->items)) != -1) {
 				bitset_t* next = move_item_next(cfg, state, j);
 				if (next == NULL_BITSET)
 					{ continue; }
 				int index = get_index_vector(lr1_states,
-					next, &cmp_bitset);
+					next, &cmp_lr1_state);
 				if (index == -1) {
-					PUSH_BACK_VECTOR(lr1_states, next);
+					index = SIZE_VECTOR(lr1_states);
+					PUSH_BACK_VECTOR(lr1_states,
+							new_lr1_state(next));
 					change = true;
 				}
 				else
 					{ del_bitset(next); }
+				if (state->first_reach)
+					{ state->edges->state = index; }
+
 			}
-			IT_RESET(state);
+			IT_RESET(state->items);
+			state->first_reach = false;
 		}
 	} while (change);
 	return (lr1_states);

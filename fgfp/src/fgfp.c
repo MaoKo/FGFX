@@ -54,48 +54,44 @@ int main(int argc, char* argv[]) {
 
 	compute_follow(cfg);
 	
+/*
 	if (!is_ll1(cfg)) {
 		printf("Is not LL(1) :(\n");
 		del_cfg(cfg);
 		exit(1);
 	}
+*/
 	
 	vector_t* lr1_states = gen_lalr1_table(cfg);
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		printf("===== State %zu =====\n", i);
-		bitset_t* bset = AT_VECTOR(lr1_states, i);
-		print_item(bset);
+		lr1_state_t* state = AT_VECTOR(lr1_states, i);
+		if (state->accept)
+			{ printf("(Accept): "); }
+		print_item(state->items);
+		trans_list_t* list = state->edges;
+		while (list) {
+			if (_SHIFT & list->input) {
+				printf("SHIFT(%s)",
+((symbol_t*)AT_VECTOR(cfg->terminal, list->input ^ _SHIFT))->name);
+			}
+			else if (_GOTO & list->input) {
+				printf("GOTO(%s)",
+((symbol_t*)AT_VECTOR(cfg->non_terminal, list->input ^ _GOTO))->name);
+			}
+			printf(" into state %d.\n", list->state);
+			list = list->next;
+		}
 	}
+
 	return (0);	
 
 	output_ll_matrix(cfg, get_filename(argv[1]));
 
 #if 0
-	puts("=== NON_TERMINAL ===");
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
-		printf("%s\n", ((symbol_t*)
-			AT_VECTOR(cfg->non_terminal, i))->name);
-	}
-
-	puts("=== TERMINAL ===");
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
-		printf("%s\n", ((symbol_t*)
-			AT_VECTOR(cfg->terminal, i))->name);
-	}
-	
-	puts("=== PRODUCTION ===");
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
-		production_t* prod = AT_VECTOR(cfg->productions, i);
-		printf("%s -> ", prod->symbol_lhs->name);
-		list_rhs* list = prod->rhs_element;
-		while (list) {
-			printf("%s", list->symbol_rhs->name);
-			if (list->next)
-				{ printf(" "); }
-			list = list->next;
-		}
-		puts("");
-	}
+	print_terminal(cfg);
+	print_non_terminal(cfg);
+	print_production(cfg);
 
 	puts("=== NULLABLE SYMBOL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
