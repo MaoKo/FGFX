@@ -23,7 +23,7 @@ new_lr1_state(bitset_t* item) {
 static void
 del_item(lr1_item_t* item) {
 	if (item) {  }
-//		{ del_bitset(item->lookahead); }
+		{ del_bitset(item->lookahead); }
 	FREE(item);
 }
 
@@ -213,6 +213,28 @@ gen_lr1_states(cfg_t const* cfg) {
 	return (lr1_states);
 }
 
+static int
+check_conflict(lr1_state_t* state, trans_list_t* reduce_list, int kind) {
+	trans_list_t* target_action = (kind == SHIFT_REDUCE)
+									? state->edges : state->reduces;
+
+	while (target_action) {
+		trans_list_t* reset_list = reduce_list;
+		while (reset_list) {
+			if ((kind == SHIFT_REDUCE) && (_SHIFT & target_action->input)
+					&& ((_SHIFT ^ target_action->input) == reset_list->input))
+				{ return (true); }
+			else if ((kind == REDUCE_REDUCE)
+					&& (target_action->input == reset_list->input))
+				{ return (true); }
+			reset_list = reset_list->next;
+		}
+		target_action = target_action->next;
+	}
+	return (false);
+}
+
+#if 0
 static void
 add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
 					lr1_item_t* item, size_t index) {
@@ -238,12 +260,44 @@ add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
 		state->reduces = new_reduce;
 	}
 }
+#endif
+
+static void
+add_reduce_slr(cfg_t const* cfg, lr1_state_t* state,
+					lr1_item_t* item, size_t index) {
+	(void)cfg;
+	symbol_t* symbol_lhs = item->prod->symbol_lhs;
+
+	trans_list_t* reduce_list = NULL;
+	int i;
+	while ((i = IT_NEXT(symbol_lhs->follow)) != IT_NULL) {
+		trans_list_t* next = new_trans_list(i, REDUCE(item->prod->index));
+		next->next = reduce_list;
+		reduce_list = next;
+	}
+	IT_RESET(symbol_lhs->follow);
+	bool fail = false;
+	if (check_conflict(state, reduce_list, SHIFT_REDUCE)) {
+			fprintf(stderr, "Shift/Reduce (state %zu).\n", index);
+			fail = true;
+	}
+	if (check_conflict(state, reduce_list, REDUCE_REDUCE)) {
+		fprintf(stderr, "Reduce/Reduce (state %zu).\n", index);
+		fail = true;
+	}
+
+	if (fail) {
+		del_trans_list(reduce_list);
+		return;
+	}
+
+	if (!state->reduces)
+		{ state->reduces = reduce_list; }
+	else
+		{ append_trans_list(state->reduces, reduce_list); }
+}
 
 #if 0
-static void
-add_reduce_slr(cfg_t const* cfg, lr1_state_t* state, lr1_item_t* item) {
-	
-}
 
 static void
 add_reduce_lr1(cfg_t const* cfg, lr1_state_t* state, lr1_item_t* item) {
@@ -262,7 +316,7 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 			lr1_item_t* item = (lr1_item_t*)
 					AT_VECTOR(record_item, j);
 			if (item->is_final)
-				{ add_reduce_lr0(cfg, state, item, i); }
+				{ add_reduce_slr(cfg, state, item, i); }
 		}
 		IT_RESET(state->items);
 	}

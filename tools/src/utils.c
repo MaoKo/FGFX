@@ -94,6 +94,15 @@ new_trans_list(unsigned int input, unsigned int state) {
 }
 
 void
+append_trans_list(trans_list_t* dst, trans_list_t* src) {
+	if (!dst)
+		{ return; }
+	while (dst->next)
+		{ dst = dst->next; }
+	dst->next = src;
+}
+
+void
 del_trans_list(trans_list_t* list) {
 	while (list) {
 		trans_list_t* next = list->next;

@@ -15,6 +15,9 @@ enum {
 #define GOTO(x)		(x | _GOTO)
 #define REDUCE(x)	(x | _REDUCE)
 
+#define SHIFT_REDUCE	1
+#define REDUCE_REDUCE	2
+
 void del_record_item(void);
 int new_item(production_t const*, list_rhs const*);
 bitset_t* closure(cfg_t const*, bitset_t*);

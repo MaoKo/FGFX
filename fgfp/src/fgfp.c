@@ -54,12 +54,14 @@ int main(int argc, char* argv[]) {
 
 	compute_follow(cfg);
 	
+#if 0
 	if (!is_ll1(cfg)) {
 		printf("Is not LL(1) :(\n");
 		del_cfg(cfg);
 		exit(1);
 	}
-	
+#endif	
+
 	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0
