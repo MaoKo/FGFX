@@ -1,11 +1,13 @@
-#ifndef OUTPUT_H
-#define OUTPUT_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
 #include <stddef.h>
 #include <stdint.h>
 
 // Format Character
 #define TAB		"\t"
+#define NL		"\n"
+#define SP		" "
 // Keywords
 #define STATIC		"static"
 #define VOID		"void"
@@ -34,12 +36,16 @@
 #define MACRO_NTER	"TOTAL_NTER"
 #define MACRO_TOKEN	"TOTAL_TOKEN"
 
-#define TOKEN_PREFIX	"T_"
+#define HEADER_SUF	"_H"
+
+#define BYTE		8
+#define SHORT		16
+#define LONG		32
 
 uint8_t min_size_type(size_t);
-void output_include_macro(int, char const*);
-void output_require_macro(int, char const*);
-void output_endif(int, char const*);
-void output_verbatim_file(int, char const*);
+void display_include_macro(int, char const*);
+void display_require_macro(int, char const*);
+void display_endif(int, char const*);
+void display_verbatim_file(int, char const*);
 
-#endif /* OUTPUT_H */
+#endif /* DISPLAY_H */

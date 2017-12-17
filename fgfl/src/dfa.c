@@ -1,5 +1,5 @@
 #include "dfa.h"
-#include "output_dfa.h"
+#include "display_dfa.h"
 #include "token_def.h"
 #include "nfa.h"
 #include "utils.h"
@@ -209,7 +209,7 @@ dfa_gen(token_spec_t* spec, char const* base_file) {
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	output_dfa_matrix(base_file, trans, final, spec->entry_lst);
+	display_dfa_matrix(base_file, trans, final, spec->entry_lst);
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
 		{ del_trans_list(AT_VECTOR(trans, i)); }
 

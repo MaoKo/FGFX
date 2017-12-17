@@ -9,8 +9,8 @@
 #include "cfg_set_op.h"
 #include "ll.h"
 #include "lr.h"
-#include "output_ll.h"
-#include "output.h"
+#include "display_lr.h"
+#include "display_ll.h"
 #include "utils.h"
 
 int main(int argc, char* argv[]) {
@@ -94,9 +94,14 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	return (0);	
+	display_action_enum(1);
+	display_lr_useful_macro(1);
+	display_action_table(1, cfg, lr1_states);
+	display_goto_table(1, cfg, lr1_states);
 
-	output_ll_matrix(cfg, get_filename(argv[1]));
+	return (0);
+
+	display_ll_matrix(cfg, get_filename(argv[1]));
 
 #if 0
 	print_terminal(cfg);

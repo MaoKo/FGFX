@@ -1,4 +1,4 @@
-#ifndef ERROR_MSG_H
-#define ERROR_MSG_H
+#ifndef FGFL_ERROR_H
+#define FGFL_ERROR_H
 
-#endif /* ERROR_MSG_H */
+#endif /* FGFL_ERROR_H */

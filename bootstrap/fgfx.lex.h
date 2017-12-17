@@ -94,8 +94,10 @@ fgfx_state_table[46][256] = {
 /*  45 */	{},
 };
 
+#define SIZE_FINAL_TAB	21
+
 static final_state_t
-fgfx_final_table[][2] = {
+fgfx_final_table[SIZE_FINAL_TAB][2] = {
 	{ 2, 	T_SPACE },
 	{ 6, 	T_LPAREN },
 	{ 7, 	T_RPAREN },
@@ -119,10 +121,8 @@ fgfx_final_table[][2] = {
 	{ 45, 	T_EMPTY },
 };
 
-#define SIZE_FINAL_TAB	21
-
 static int
-fgfx_skip_table[] = {
+fgfx_skip_table[3] = {
 	T_SPACE,
 	T_COMMENT,
 	-1,

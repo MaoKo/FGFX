@@ -3,18 +3,19 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include "output.h"
+#include "display.h"
 
 uint8_t
 min_size_type(size_t size) {
-	if (size <= UCHAR_MAX) { return (8); }
+	if (size <= UCHAR_MAX)
+		{ return (BYTE); }
 	else if (size > UCHAR_MAX && size <= USHRT_MAX)
-		{ return (16); }
-	return (32);
+		{ return (SHORT); }
+	return (LONG);
 }
 
 void
-output_include_macro(int filde, char const* header) {
+display_include_macro(int filde, char const* header) {
 	write(filde, "_", 1);
 	while (*header) {
 		char c;
@@ -25,28 +26,28 @@ output_include_macro(int filde, char const* header) {
 		write(filde, &c, 1);
 		++header;
 	}
-	write(filde, "_H", 2);
+	dprintf(filde, HEADER_SUF);
 }
 
 void
-output_require_macro(int filde, char const* header) {
+display_require_macro(int filde, char const* header) {
 	dprintf(filde, "#ifndef ");
-	output_include_macro(filde, header);
-	dprintf(filde, "\n");
+	display_include_macro(filde, header);
+	dprintf(filde, NL);
 	dprintf(filde, "#define ");
-	output_include_macro(filde, header);
-	dprintf(filde, "\n\n");
+	display_include_macro(filde, header);
+	dprintf(filde, NL NL);
 }
 
 void
-output_endif(int filde, char const* header) {
+display_endif(int filde, char const* header) {
 	dprintf(filde, "#endif /* ");
-	output_include_macro(filde, header);
-	dprintf(filde, " */\n");
+	display_include_macro(filde, header);
+	dprintf(filde, " */" NL);
 }
 
 void
-output_verbatim_file(int filde, char const* header) {
+display_verbatim_file(int filde, char const* header) {
 	if (isdigit(*header))
 		{ write(filde, "_", 1); }
 	while (*header && (isalnum(*header) || (*header == '_')))
