@@ -23,6 +23,7 @@ vector_t* gen_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG
 void print_item(bitset_t*);
+void print_debug_report(cfg_t const*, vector_t const*);
 #endif /* PRINT_DEBUG */
 
 #endif /* LR_H */

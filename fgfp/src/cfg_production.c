@@ -125,7 +125,7 @@ stack_production_lhs(cfg_t const* cfg, symbol_t* nter) {
 		{ return (NULL); }
 	vector_t* stack = new_vector();
 	int i;
-	while ((i = IT_NEXT(nter->prod_lst)) != -1)
+	while ((i = IT_NEXT(nter->prod_lst)) != IT_NULL)
 		{ PUSH_BACK_VECTOR(stack, AT_VECTOR(cfg->productions, i)); }
 	IT_RESET(nter->prod_lst);
 	return (stack);

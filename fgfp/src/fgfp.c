@@ -54,57 +54,15 @@ int main(int argc, char* argv[]) {
 
 	compute_follow(cfg);
 	
-/*
 	if (!is_ll1(cfg)) {
 		printf("Is not LL(1) :(\n");
 		del_cfg(cfg);
 		exit(1);
 	}
-*/
 	
-	vector_t* lr1_states = gen_lr1_states(cfg);
-	compute_reduce_op(cfg, lr1_states);
-
-	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
-		printf("===== State %zu =====\n", i);
-		lr1_state_t* state = AT_VECTOR(lr1_states, i);
-		if (state->accept)
-			{ printf("(Accept): "); }
-		print_item(state->items);
-		trans_list_t* list = state->edges;
-		while (list) {
-			if (_SHIFT & list->input) {
-				printf("SHIFT(%s)",
-((symbol_t*)AT_VECTOR(cfg->terminal, list->input ^ _SHIFT))->name);
-			}
-			else if (_GOTO & list->input) {
-				printf("GOTO(%s)",
-((symbol_t*)AT_VECTOR(cfg->non_terminal, list->input ^ _GOTO))->name);
-			}
-			printf(" into state %d.\n", list->state);
-			list = list->next;
-		}
-		list = state->reduces;
-		while (list) {
-			printf("TOKEN(%s) => REDUCE(%d).\n",
-((symbol_t*)AT_VECTOR(cfg->terminal, list->input))->name,
-(_REDUCE ^ list->state) + 1
-);
-			list = list->next;
-		}
-	}
-
-	display_action_enum(1);
-	display_lr_useful_macro(1);
-	display_action_table(1, cfg, lr1_states);
-	display_goto_table(1, cfg, lr1_states);
-
-	return (0);
-
-	display_ll_matrix(cfg, get_filename(argv[1]));
+	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0
-	print_terminal(cfg);
 	print_non_terminal(cfg);
 	print_production(cfg);
 
@@ -121,7 +79,7 @@ int main(int argc, char* argv[]) {
 		printf("FIRST(%s) = {", non_terminal->name);
 		bool first = true;
 		int j;
-		while ((j = IT_NEXT(non_terminal->first)) != -1) {
+		while ((j = IT_NEXT(non_terminal->first)) != IT_NULL) {
 			if (!first)
 				{ printf(", "); }
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
@@ -137,7 +95,7 @@ int main(int argc, char* argv[]) {
 		printf("FOLLOW(%s) = {", non_terminal->name);
 		bool first = true;
 		int j;
-		while ((j = IT_NEXT(non_terminal->follow)) != -1) {
+		while ((j = IT_NEXT(non_terminal->follow)) != IT_NULL) {
 			if (!first)
 				{ printf(", "); }
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);

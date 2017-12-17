@@ -19,7 +19,6 @@ is_ll1(cfg_t const* cfg) {
 	return (disjoint);
 }
 
-#include <stdio.h>
 vector_t*
 gen_ll1_table(cfg_t const* cfg) {
 	vector_t* ll_table = new_vector();
@@ -27,10 +26,10 @@ gen_ll1_table(cfg_t const* cfg) {
 		symbol_t* nter = AT_VECTOR(cfg->non_terminal, i);
 		PUSH_BACK_VECTOR(ll_table, NULL_TRANS_LST);
 		int j;
-		while ((j = IT_NEXT(nter->prod_lst)) != -1) {
+		while ((j = IT_NEXT(nter->prod_lst)) != IT_NULL) {
 			production_t* prod = AT_VECTOR(cfg->productions, j);
 			int k;
-			while ((k = IT_NEXT(prod->select_set)) != -1) {
+			while ((k = IT_NEXT(prod->select_set)) != IT_NULL) {
 				trans_list_t* lst = new_trans_list(((symbol_t*)
 					AT_VECTOR(cfg->terminal, k))->index, j);
 				lst->next = BACK_VECTOR(ll_table);
@@ -39,7 +38,7 @@ gen_ll1_table(cfg_t const* cfg) {
 			IT_RESET(prod->select_set);
 			if (!prod->can_get_rid)
 				{ continue; }
-			while ((k = IT_NEXT(prod->symbol_lhs->follow)) != -1) {
+			while ((k = IT_NEXT(prod->symbol_lhs->follow)) != IT_NULL) {
 				trans_list_t* lst = new_trans_list(((symbol_t*)
 					AT_VECTOR(cfg->terminal, k))->index, j);
 				lst->next = BACK_VECTOR(ll_table);

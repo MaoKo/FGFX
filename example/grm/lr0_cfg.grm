@@ -1,0 +1,17 @@
+$EXTERN
+{
+	'none.h',
+};
+
+$PRODUCTION
+{
+	<S> -> '(' <L> ')' | x;
+	<L> -> <S> | <L> ',' <S> ;
+};
+
+$ALIAS
+{
+	(LPAREN	=> '('),
+	(RPAREN	=> ')'),
+	(COMMA	=> ','),
+};

@@ -11,10 +11,11 @@
 #define NON_TERMINAL		T_NTER
 #define LITERAL			T_LITERAL
 
-#define IS_TERMINAL(symbol)	((symbol)->kind == TERMINAL)
+#define IS_TERMINAL(symbol)		((symbol)->kind == TERMINAL)
 #define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)
-#define IS_EOF(symbol)		((symbol)->is_eof)
-#define GET_INDEX(symbol)	((symbol)->index)
+#define IS_LITERAL(symbol)		((symbol)->kind == LITERAL)
+#define IS_EOF(symbol)			((symbol)->is_eof)
+#define GET_INDEX(symbol)		((symbol)->index)
 
 #define SET_START(cfg, index)	((cfg)->goal = index)
 

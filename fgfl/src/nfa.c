@@ -104,7 +104,7 @@ ast_symbol(node_ast_t* root) {
 
 	if (crt_igcase) {
 		int i;
-		while ((i = IT_NEXT(root->cclass)) != -1) {
+		while ((i = IT_NEXT(root->cclass)) != IT_NULL) {
 			if (isalpha(i)) {
 				size_t target = islower(i)
 					? toupper(i) : tolower(i);

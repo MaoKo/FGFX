@@ -89,7 +89,7 @@ closure(cfg_t const* cfg, bitset_t* item_set) {
 		del_bitset(last);
 		last = dup_bitset(item_set);
 		int i;
-		while ((i = IT_NEXT(last)) != -1) {
+		while ((i = IT_NEXT(last)) != IT_NULL) {
 			lr1_item_t* crt_item = (lr1_item_t*)
 					AT_VECTOR(record_item, i);
 			include_production_item(cfg, item_set, crt_item);
@@ -106,7 +106,7 @@ goto_lr(cfg_t const* cfg, bitset_t* item_set, symbol_t const* match_symbol) {
 		{ return (NULL_BITSET); }
 	bitset_t* goto_lr_state = new_bitset();
 	int i = 0;
-	while ((i = IT_NEXT(item_set)) != -1) {
+	while ((i = IT_NEXT(item_set)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_item, i);
 		if (crt_item->dot_pos && (crt_item->dot_pos->symbol_rhs
 				== match_symbol)) {
@@ -135,17 +135,24 @@ move_item_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 		return (NULL_BITSET);
 	}
 	
-	if (state->first_reach) {
-		trans_list_t* action;
-		if (IS_TERMINAL(item->dot_pos->symbol_rhs)) {
-			action = new_trans_list(SHIFT(
-				GET_INDEX(item->dot_pos->symbol_rhs)), 0);
+	unsigned int input;
+	if (IS_TERMINAL(item->dot_pos->symbol_rhs))
+		{ input = SHIFT(GET_INDEX(item->dot_pos->symbol_rhs)); }
+	else
+		{ input = GOTO(GET_INDEX(item->dot_pos->symbol_rhs)); }
+
+	trans_list_t* action = state->edges;
+	bool find = false;
+	while (action) {
+		if (action->input == input) {
+			find = true;
+			break;
 		}
-		else {
-			action = new_trans_list(GOTO(
-				GET_INDEX(item->dot_pos->symbol_rhs)), 0);
-		}
-	
+		action = action->next;
+	}
+
+	if (!find) {
+		action = new_trans_list(input, 0);
 		action->next = state->edges;
 		state->edges = action;
 	}
@@ -182,7 +189,7 @@ gen_lr1_states(cfg_t const* cfg) {
 			lr1_state_t* state = (lr1_state_t*)
 						AT_VECTOR(lr1_states, i);
 			int j;
-			while ((j = IT_NEXT(state->items)) != -1) {
+			while ((j = IT_NEXT(state->items)) != IT_NULL) {
 				bitset_t* next = move_item_next(cfg, state, j);
 				if (next == NULL_BITSET)
 					{ continue; }
@@ -190,15 +197,14 @@ gen_lr1_states(cfg_t const* cfg) {
 					next, &cmp_lr1_state);
 				if (index == -1) {
 					index = SIZE_VECTOR(lr1_states);
-					PUSH_BACK_VECTOR(lr1_states,
-							new_lr1_state(next));
+					PUSH_BACK_VECTOR(lr1_states, new_lr1_state(next));
 					change = true;
 				}
 				else
 					{ del_bitset(next); }
+
 				if (state->first_reach)
 					{ state->edges->state = index; }
-
 			}
 			IT_RESET(state->items);
 			state->first_reach = false;
@@ -223,6 +229,9 @@ add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
 		return;
 	}
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
+		symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, i);
+		if (IS_LITERAL(ter))
+			{ continue; }
 		trans_list_t* new_reduce = new_trans_list(i,
 						REDUCE(item->prod->index));
 		new_reduce->next = state->reduces;
@@ -249,7 +258,7 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 		int j;
-		while ((j = IT_NEXT(state->items)) != -1) {
+		while ((j = IT_NEXT(state->items)) != IT_NULL) {
 			lr1_item_t* item = (lr1_item_t*)
 					AT_VECTOR(record_item, j);
 			if (item->is_final)
@@ -260,9 +269,10 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 }
 
 #ifdef PRINT_DEBUG
-void print_item(bitset_t* item_set) {
+void
+print_item(bitset_t* item_set) {
 	int i;
-	while ((i = IT_NEXT(item_set)) != -1) {
+	while ((i = IT_NEXT(item_set)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_item, i);
 		printf("%s -> ", crt_item->prod->symbol_lhs->name);
 		list_rhs* list = crt_item->prod->rhs_element;
@@ -277,6 +287,37 @@ void print_item(bitset_t* item_set) {
 		puts("");
 	}
 	IT_RESET(item_set);
+}
+
+void
+print_debug_report(cfg_t const* cfg, vector_t const* lr1_states) {
+	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
+		printf("===== State %zu =====\n", i);
+		lr1_state_t* state = AT_VECTOR(lr1_states, i);
+		if (state->accept)
+			{ printf("(Accept): "); }
+		print_item(state->items);
+		trans_list_t* list = state->edges;
+		while (list) {
+			if (_SHIFT & list->input) {
+				printf("SHIFT(%s)", ((symbol_t*)
+					AT_VECTOR(cfg->terminal, list->input ^ _SHIFT))->name);
+			}
+			else if (_GOTO & list->input) {
+				printf("GOTO(%s)", ((symbol_t*)
+					AT_VECTOR(cfg->non_terminal, list->input ^ _GOTO))->name);
+			}
+			printf(" into state %d.\n", list->state);
+			list = list->next;
+		}
+		list = state->reduces;
+		while (list) {
+			printf("TOKEN(%s) => REDUCE(%d).\n",
+				((symbol_t*)AT_VECTOR(cfg->terminal, list->input))->name,
+				(_REDUCE ^ list->state) + 1);
+			list = list->next;
+		}
+	}
 }
 #endif /* PRINT_DEBUG */
 

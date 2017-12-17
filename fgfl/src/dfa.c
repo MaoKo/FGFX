@@ -30,7 +30,7 @@ epsilon_closure(bitset_t* set_state) {
 		del_bitset(last);
 		last = dup_bitset(set_state);
 		int i;
-		while ((i = IT_NEXT(last)) != -1)
+		while ((i = IT_NEXT(last)) != IT_NULL)
 			{ edges(STATE_AT(i), EPSILON, set_state); }
 	} while (!eq_bitset(set_state, last));
 	del_bitset(last);
@@ -41,7 +41,7 @@ bitset_t*
 DFAedge(bitset_t* states, int symbol) {
 	bitset_t* target = new_bitset();
 	int i;
-	while ((i = IT_NEXT(states)) != -1)
+	while ((i = IT_NEXT(states)) != IT_NULL)
 		{ edges(STATE_AT(i), symbol, target); }
 	IT_RESET(states);
 	if (is_empty_bitset(target)) {
@@ -105,7 +105,7 @@ gen_final_table(vector_t* states, vector_t* elst) {
 		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
 		int min_tok = 0;
 		int it;
-		while ((it = IT_NEXT(set_state)) != -1) {
+		while ((it = IT_NEXT(set_state)) != IT_NULL) {
 			state_t* crt_state = STATE_AT(it);
 			if (crt_state->final) {
 				if (!min_tok || min_tok > crt_state->final)

@@ -143,13 +143,13 @@ truncate_bitset(bitset_t* bs) {
 int
 _next_bitset(bitset_t* bs) {
 	if (!bs)
-		{ return (-1); }
+		{ return (IT_NULL); }
 	while (bs->siter < bs->nbits) {
-		if (bs->map[_DIV_WSIZE(bs->siter)] & (1UL<<_MOD_WSIZE(bs->siter)))
+		if (OP_BITSET(bs, bs->siter, &))
 			{ return (bs->siter++); }
 		++bs->siter;
 	}
-	return (-1);
+	return (IT_NULL);
 }
 
 _SETTYPE
@@ -229,7 +229,7 @@ print_bitset(bitset_t* bs) {
 	if (bs) {
 		unsigned int iter_back = bs->siter;
 		int i;
-		while ((i = IT_NEXT(bs)) != -1)
+		while ((i = IT_NEXT(bs)) != IT_NULL)
 			{ printf("%d,", i); }
 		bs->siter = iter_back;
 	}

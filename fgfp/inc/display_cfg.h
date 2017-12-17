@@ -14,5 +14,7 @@ void display_nter_symbol(int, cfg_t const*, size_t);
 void display_non_terminal_enum(int, cfg_t const*);
 void display_nproduction_macro(int, cfg_t const*, size_t);
 void display_production_macro(int, cfg_t const*);
+void display_synchronizing_token(int, cfg_t const*, char const*);
+int display_parsing_table(cfg_t const*, char const*);
 
 #endif /* DISPLAY_CFG_H */
