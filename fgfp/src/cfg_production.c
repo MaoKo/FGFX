@@ -7,12 +7,13 @@
 #include "vector.h"
 
 production_t*
-new_production(symbol_t* lhs) {
+new_production(symbol_t* lhs, size_t index) {
 	production_t* prod = NEW(production_t, 1);
 	if (!prod)
 		{ return (NULL); }
 	memset(prod, 0, sizeof(production_t));
 	prod->symbol_lhs = lhs;
+	prod->index = index;
 	return (prod);
 }
 
@@ -53,7 +54,9 @@ preprocess_literal(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
-		list_rhs* list = AT_VECTOR(cfg->productions, i);
+		production_t* prod = (production_t*)
+					AT_VECTOR(cfg->productions, i);
+		list_rhs* list = prod->rhs_element;
 		while (list) {
 			if (list->symbol_rhs->kind == LITERAL) {
 				list->symbol_rhs = (symbol_t*)
@@ -144,12 +147,13 @@ unreachable_production(cfg_t const* cfg) {
 	stack_prod = stack_production_lhs(cfg, crt_symbol);
 
 	while (!EMPTY_VECTOR(stack_prod)) {
-		production_t* crt_prod = BACK_VECTOR(stack_prod);
+		production_t* crt_prod = (production_t*)BACK_VECTOR(stack_prod);
 		POP_BACK_VECTOR(stack_prod);
 		list_rhs* list = crt_prod->rhs_element;
 		while (list) {
 			crt_symbol = list->symbol_rhs;
-			if (IS_NON_TERMINAL(crt_symbol) && !IS_PRESENT(nter_seen,
+			if (IS_NON_TERMINAL(crt_symbol)
+						&& !IS_PRESENT(nter_seen,
 						crt_symbol->index)) {
 				ADD_BITSET(nter_seen, crt_symbol->index);
 				move_vector(stack_prod,

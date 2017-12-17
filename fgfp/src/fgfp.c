@@ -62,7 +62,9 @@ int main(int argc, char* argv[]) {
 	}
 */
 	
-	vector_t* lr1_states = gen_lalr1_table(cfg);
+	vector_t* lr1_states = gen_lr1_states(cfg);
+	compute_reduce_op(cfg, lr1_states);
+
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		printf("===== State %zu =====\n", i);
 		lr1_state_t* state = AT_VECTOR(lr1_states, i);
@@ -80,6 +82,14 @@ int main(int argc, char* argv[]) {
 ((symbol_t*)AT_VECTOR(cfg->non_terminal, list->input ^ _GOTO))->name);
 			}
 			printf(" into state %d.\n", list->state);
+			list = list->next;
+		}
+		list = state->reduces;
+		while (list) {
+			printf("TOKEN(%s) => REDUCE(%d).\n",
+((symbol_t*)AT_VECTOR(cfg->terminal, list->input))->name,
+(_REDUCE ^ list->state) + 1
+);
 			list = list->next;
 		}
 	}

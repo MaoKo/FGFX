@@ -1,7 +1,5 @@
-$EXTERN { 'arith.lex.h' };
-
-$PRODUCTION {
-<S> -> <E> SEMI | <E>;
-<E> -> PLUS <T> ;
-<T> -> NUM ;
+$EXTERN		{ 'nothing.h' };
+$PRODUCTION
+{
+	<T>	-> x | x b ;
 };

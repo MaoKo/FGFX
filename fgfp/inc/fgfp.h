@@ -10,9 +10,9 @@
 #include "lexer.h"
 
 typedef struct {
+	size_t index;
 	int kind;
 	char const* name;
-	size_t index;
 	bool is_defined;
 	union {
 		// if TERMINAL
@@ -40,6 +40,7 @@ typedef struct list_rhs {
 } list_rhs;
 
 typedef struct {
+	size_t index;
 	symbol_t* symbol_lhs;
 	list_rhs* rhs_element;
 	bitset_t* select_set;
@@ -50,13 +51,14 @@ typedef struct {
 	size_t index;
 	production_t const* prod;
 	list_rhs const* dot_pos;
-//	bitset_t* lookahead;
-	bool is_last;
+	bitset_t* lookahead;
+	bool is_final;
 } lr1_item_t;
 
 typedef struct {
 	bitset_t* items;
 	trans_list_t* edges;
+	trans_list_t* reduces;
 	bool accept;
 	bool first_reach;
 } lr1_state_t;

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "fgfp.h"
 
-production_t* new_production(symbol_t*);
+production_t* new_production(symbol_t*, size_t);
 void del_production(production_t*);
 int add_symbol_rhs(production_t*, symbol_t*);
 int preprocess_literal(cfg_t const*);

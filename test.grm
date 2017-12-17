@@ -1,5 +1,0 @@
-$EXTERN		{ 'nothing.h' };
-$PRODUCTION
-{
-	<T>	-> x ;
-};

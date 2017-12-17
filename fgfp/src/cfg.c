@@ -117,7 +117,8 @@ augment_grammar(cfg_t* cfg) {
 		{ return; }
 	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
 	start->is_defined = true;
-	production_t* prod = new_production(start);
+	production_t* prod = new_production(start,
+					SIZE_VECTOR(cfg->productions));
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
 	eof_symbol->is_eof = true;
@@ -287,7 +288,7 @@ cfg_production(cfg_t* cfg) {
 
 int
 cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
-	production_t* prod = new_production(lhs);
+	production_t* prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 	if (!prod)
 		{ return (ERROR); }
 	if (cfg_opt_list(cfg, prod) == ERROR) {
@@ -295,12 +296,12 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		return (ERROR);
 	}
 
-	ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
+	ADD_BITSET(lhs->prod_lst, prod->index);
 	PUSH_BACK_VECTOR(cfg->productions, prod);
 
 	while (peek_token(cfg->lex) == T_UNION) {
 		advance_token(cfg->lex);
-		prod = new_production(lhs);
+		prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 		if (!prod)
 			{ return (ERROR); }
 		if (cfg_opt_list(cfg, prod) == ERROR) {
@@ -308,7 +309,7 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 			return (ERROR);
 		}
 
-		ADD_BITSET(lhs->prod_lst, SIZE_VECTOR(cfg->productions));
+		ADD_BITSET(lhs->prod_lst, prod->index);
 		PUSH_BACK_VECTOR(cfg->productions, prod);
 	}
 	return (DONE);
