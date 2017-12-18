@@ -70,12 +70,9 @@ preprocess_literal(cfg_t const* cfg) {
 }
 
 bool
-production_is_nullable(production_t const* prod) {
-	if (!prod)
-		{ return (false); }
-	if (!prod->rhs_element)
+list_is_nullable(list_rhs const* list) {
+	if (!list)
 		{ return (true); }
-	list_rhs const* list = prod->rhs_element;
 	while (list) {
 		if (list->symbol_rhs->kind == TERMINAL)
 			{ return (false); }
@@ -86,12 +83,18 @@ production_is_nullable(production_t const* prod) {
 	return (true);
 }
 
+bool
+production_is_nullable(production_t const* prod) {
+	if (!prod)
+		{ return (false); }
+	return (list_is_nullable(prod->rhs_element));
+}
+
 bitset_t*
-first_production(production_t const* prod) {
-	if (!prod || !(prod->rhs_element))
+first_list_rhs(list_rhs const* list) {
+	if (!list)
 		{ return (NULL_BITSET); }
 	bitset_t* select_set = new_bitset();
-	list_rhs* list = prod->rhs_element;
 	while (list) {
 		if (IS_TERMINAL(list->symbol_rhs)) {
 			ADD_BITSET(select_set, list->symbol_rhs->index);
@@ -105,6 +108,13 @@ first_production(production_t const* prod) {
 		list = list->next;
 	}
 	return (select_set);
+}
+
+bitset_t*
+first_production(production_t const* prod) {
+	if (!prod)
+		{ return (NULL_BITSET); }
+	return (first_list_rhs(prod->rhs_element));
 }
 
 list_rhs const*

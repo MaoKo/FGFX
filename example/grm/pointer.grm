@@ -1,0 +1,16 @@
+$EXTERN { 'none.h', };
+
+$PRODUCTION
+{
+	<S> -> <L> '=' <R>
+		 | <R> ;
+
+	<L> -> '*' <R> | id ;
+	<R> -> <L> ;
+};
+
+$ALIAS
+{
+	(EQUAL => '='),
+	(STAR  => '*'),
+};

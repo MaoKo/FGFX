@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 		{ exit(1); }
 
 	if (!SIZE_VECTOR(cfg->token_file)) {
-		fprintf(stderr, "At most one location"
+		fprintf(stderr, "At most one location "
 				"of token must be defined.\n");
 		exit(1);
 	}
@@ -62,6 +62,9 @@ int main(int argc, char* argv[]) {
 	}
 #endif	
 
+//	vector_t* lr1_states = gen_lr1_states(cfg);
+//	compute_reduce_op(cfg, lr1_states);
+//	print_debug_report(cfg, lr1_states);
 	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0

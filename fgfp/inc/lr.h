@@ -19,13 +19,13 @@ enum {
 #define REDUCE_REDUCE	2
 
 void del_record_item(void);
-int new_item(production_t const*, list_rhs const*);
+int new_item(production_t const*, list_rhs const*, bitset_t const*);
 bitset_t* closure(cfg_t const*, bitset_t*);
 bitset_t* goto_lr(cfg_t const*, bitset_t*, symbol_t const*);
 vector_t* gen_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG
-void print_item(bitset_t*);
+void print_item(cfg_t const*, bitset_t*);
 void print_debug_report(cfg_t const*, vector_t const*);
 #endif /* PRINT_DEBUG */
 
