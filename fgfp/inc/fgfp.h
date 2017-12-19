@@ -52,7 +52,6 @@ typedef struct {
 	production_t const* prod;
 	list_rhs const* dot_pos;
 	bitset_t* lookahead;
-//	bool left_recur;
 	bool is_final;
 } lr1_item_t;
 

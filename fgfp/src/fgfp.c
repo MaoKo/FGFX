@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
 	}
 #endif	
 
-//	vector_t* lr1_states = gen_lr1_states(cfg);
-//	compute_reduce_op(cfg, lr1_states);
-//	print_debug_report(cfg, lr1_states);
-	display_parsing_table(cfg, get_filename(argv[1]));
+	vector_t* lr1_states = gen_lr1_states(cfg);
+	compute_reduce_op(cfg, lr1_states);
+	print_debug_report(cfg, lr1_states);
+//	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0
 	print_non_terminal(cfg);

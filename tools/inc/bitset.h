@@ -28,7 +28,7 @@ typedef uint64_t			_SETTYPE;
 #define ADD_BITSET(bs, x)	((x >= (bs)->nbits)  ? _add_bitset(bs, x)\
 								: (OP_BITSET(bs, x, |=)))
 
-#define OFF_BITSET(bs, x)	((x >= (bs)->nbits) ? 0 : (OP_BISET(bs, x, |= ~)))
+#define OFF_BITSET(bs, x)	((x >= (bs)->nbits) ? 0 : (OP_BITSET(bs, x, |= ~)))
 #define CLEAR_BITSET(bs)	(memset((bs)->map, 0, _BYTE_SETTYPE((bs)->nwords)))
 
 //Common operation available with set
