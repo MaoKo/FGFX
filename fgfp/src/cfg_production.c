@@ -36,14 +36,19 @@ add_symbol_rhs(production_t* prod, symbol_t* symbol) {
 	list_rhs* new_list = NEW(list_rhs, 1);
 	if (!new_list)
 		{ return (ERROR); }
+
+	memset(new_list, 0, sizeof(list_rhs));
+	new_list->pos = 1;
 	new_list->symbol_rhs = symbol;
-	new_list->next = NULL;
+
 	if (!prod->rhs_element)
 		{ prod->rhs_element = new_list; }
 	else {
 		list_rhs* crt_rhs = prod->rhs_element;
-		while (crt_rhs->next)
-			{ crt_rhs = crt_rhs->next; }
+		while (crt_rhs->next) {
+			crt_rhs = crt_rhs->next;
+			++(new_list->pos);
+		}
 		crt_rhs->next = new_list;
 	}
 	return (DONE);

@@ -35,6 +35,7 @@ typedef struct {
 } symbol_t;
 
 typedef struct list_rhs {
+	size_t pos;
 	symbol_t* symbol_rhs;
 	struct list_rhs* next;
 } list_rhs;
@@ -49,6 +50,7 @@ typedef struct {
 
 typedef struct {
 	size_t index;
+	size_t bucket;
 	production_t const* prod;
 	list_rhs const* dot_pos;
 	bool is_final;

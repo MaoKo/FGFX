@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "vector.h"
 
-static vector_t* record_lr0_item = NULL;
+static vector_t* record_lr0_item[HASH_LR0_ITEM] = {};
 static vector_t* record_lr1_item = NULL;
 
 static lr1_state_t*
@@ -19,6 +19,16 @@ new_lr1_state(bitset_t* item) {
 	state->items = item;
 	state->first_reach = true;
 	return (state);
+}
+
+void
+del_lr1_state(lr1_state_t* state) {
+	if (state) {
+		del_bitset(state->items);
+		del_trans_list(state->edges);
+		del_trans_list(state->reduces);
+	}
+	FREE(state);
 }
 
 static void
@@ -33,8 +43,20 @@ del_record_item(void) {
 	foreach_vector(record_lr1_item, &del_lr1_item);
 	del_vector(record_lr1_item);
 
-	foreach_vector(record_lr0_item, &free);
-	del_vector(record_lr0_item);
+	for (size_t i = 0; i < HASH_LR0_ITEM; ++i) {
+		if (!record_lr0_item[i])
+			{ continue; }
+		foreach_vector(record_lr0_item[i], &free);
+		del_vector(record_lr0_item[i]);
+	}
+}
+
+static inline int
+hash_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
+	size_t hash = prod->index;
+	if (dot_pos)
+		{ hash += dot_pos->pos; }
+	return (hash % HASH_LR0_ITEM);
 }
 
 static inline int
@@ -46,7 +68,7 @@ cmp_lr0_item(lr0_item_t const* it1, lr0_item_t const* it2) {
 
 static inline int
 cmp_lr1_item(lr1_item_t const* it1, lr1_item_t const* it2) {
-	return 	(!  	(!cmp_lr0_item(it1->base_item, it2->base_item)
+	return 	(!  	((it1->base_item == it2->base_item)
 				&&  (eq_bitset(it1->lookahead, it2->lookahead))
 			));
 }
@@ -55,22 +77,41 @@ static lr0_item_t*
 new_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
 	if (!prod)
 		{ return (NULL); }
-	if (!record_lr0_item)
-		{ record_lr0_item = new_vector(); }
+
+	size_t hash = hash_lr0_item(prod, dot_pos);
+	if (!record_lr0_item[hash])
+		{ record_lr0_item[hash] = new_vector(); }
+
+	for (size_t i = 0; i < SIZE_VECTOR(record_lr0_item[hash]); ++i) {
+		lr0_item_t* target = (lr0_item_t*)AT_VECTOR(record_lr0_item[hash], i);
+		if ((target->prod == prod) && (target->dot_pos == dot_pos))
+			{ return (target); }
+	}
+
 	lr0_item_t* item = NEW(lr0_item_t, 1);
 	if (!item)
 		{ return (NULL); }
+
 	memset(item, 0, sizeof(lr0_item_t));
 	item->prod = prod;
 	item->dot_pos = dot_pos;
 
+/*
 	int index = get_index_vector(record_lr0_item, item, &cmp_lr0_item);
 	if (index != -1) {
 		FREE(item);
-		return (lr0_item_t*)AT_VECTOR(record_lr0_item, index);
+		return ((lr0_item_t*)AT_VECTOR(record_lr0_item, index));
 	}
+*/
+
 	if (!item->dot_pos)
 		{ item->is_final = true; }
+
+	item->index = SIZE_VECTOR(record_lr0_item[hash]);
+	item->bucket = hash;
+
+	PUSH_BACK_VECTOR(record_lr0_item[hash], item);
+
 	return (item);
 }
 
@@ -164,15 +205,17 @@ include_new_item(cfg_t const* cfg,
 							prod->rhs_element, target_first);
 		if (!add_item)
 			{ return /* (ERROR) */ ; }
-	
-		if (check_exist_item(state_item, add_item, LR1_ITEM) != -1)
-			{ continue; }
+		
+		int lr0_exist = -1;
+		if ((check_exist_item(state_item, add_item, LR1_ITEM) != -1)
+					|| ((lr0_exist = check_exist_item(state_item,
+					add_item, LR0_ITEM)) != -1)) {
 
-		int lr0_exist = check_exist_item(state_item, add_item, LR0_ITEM);
-		if (lr0_exist != -1) {
-			lr1_item_t* new_it = (lr1_item_t*)
+			if (lr0_exist != -1) {
+				lr1_item_t* new_it = (lr1_item_t*)
 							AT_VECTOR(record_lr1_item, lr0_exist);
-			merge_lr1_item(new_it, add_item);
+				merge_lr1_item(new_it, add_item);
+			}
 			del_lr1_item(add_item);
 		}
 		else {
@@ -326,6 +369,8 @@ gen_lr1_states(cfg_t const* cfg) {
 	bool change;
 	do {
 		change = false;
+		if (SIZE_VECTOR(lr1_states) > 500)
+			{ break; }
 		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
 			lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 			if (!state->first_reach)
@@ -352,6 +397,7 @@ gen_lr1_states(cfg_t const* cfg) {
 			state->first_reach = false;
 		}
 	} while (change);
+
 	return (lr1_states);
 }
 
@@ -490,33 +536,49 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 #ifdef PRINT_DEBUG
 
 void
-print_item(cfg_t const* cfg, bitset_t* item_set) {
+print_lr0_item(lr0_item_t* lr0_item) {
+	printf("%s -> ", PROD(lr0_item)->symbol_lhs->name);
+	list_rhs* list = PROD(lr0_item)->rhs_element;
+	while (list) {
+		if (list == DOT(lr0_item))
+			{ printf(". "); }
+		printf("%s", list->symbol_rhs->name);
+		if (list->next)
+			{ printf(" "); }
+		list = list->next;
+	}
+	if (lr0_item->is_final)
+		{ printf(" ."); }
+}
+
+void
+print_lr1_item(cfg_t const* cfg, lr1_item_t* lr1_item) {
+	print_lr0_item(BASE_LR0(lr1_item));
+	printf(", ");
+	if (is_empty_bitset(lr1_item->lookahead))
+		{ printf("???"); }
+	else {
+		printf("[");
+		int j;
+		bool first = true;
+		while ((j = IT_NEXT(lr1_item->lookahead)) != IT_NULL) {
+			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, j);
+			if (!first)
+				{ printf(", "); }
+			printf("%s", ter->name);
+			first = false;
+		}
+		IT_RESET(lr1_item->lookahead);
+		printf("]");
+	}	
+}
+
+void
+print_state(cfg_t const* cfg, bitset_t* item_set) {
 	int i;
 	while ((i = IT_NEXT(item_set)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
-		printf("%s -> ", PROD(BASE_LR0(crt_item))->symbol_lhs->name);
-		list_rhs* list = PROD(BASE_LR0(crt_item))->rhs_element;
-		while (list) {
-			if (list == DOT(BASE_LR0(crt_item)))
-				{ printf(". "); }
-			printf("%s ", list->symbol_rhs->name);
-			list = list->next;
-		}
-		if (BASE_LR0(crt_item)->is_final)
-			{ printf("."); }
-		printf(", ");
-		if (is_empty_bitset(crt_item->lookahead))
-			{ printf("???"); }
-		else {
-			printf("[");
-			int j;
-			while ((j = IT_NEXT(crt_item->lookahead)) != IT_NULL) {
-				symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, j);
-				printf("%s,", ter->name);
-			}
-			IT_RESET(crt_item->lookahead);
-			printf("]");
-		}
+		print_lr1_item(cfg, crt_item);
 		puts("");
 	}
 	IT_RESET(item_set);
@@ -529,7 +591,7 @@ print_debug_report(cfg_t const* cfg, vector_t const* lr1_states) {
 		lr1_state_t* state = AT_VECTOR(lr1_states, i);
 		if (state->accept)
 			{ printf("(Accept): "); }
-		print_item(cfg, state->items);
+		print_state(cfg, state->items);
 		trans_list_t* list = state->edges;
 		while (list) {
 			if (_SHIFT & list->input) {

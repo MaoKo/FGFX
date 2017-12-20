@@ -1,16 +1,27 @@
 $EXTERN { 'arith.lex.h' };
+
 $PRODUCTION {
-<E>	->	<E> PLUS <T>
-	 |	<E> MINUS <T>
+<E>	->	<E> '+' <T>
+	 |	<E> '-' <T>
 	 |	<T>
 	 ;
 
-<T>	->	<T> MUL <F>
-	 |	<T> DIV <F>
+<T>	->	<T> '*' <F>
+	 |	<T> '/' <F>
 	 |	<F>
 	 ;
 
-<F>	->	LPAREN <E> RPAREN
+<F>	->	'(' <E> ')'
  	 |	NUM
 	 ; 
+};
+
+$ALIAS
+{
+	(PLUS	=> '+'),
+	(MINUS	=> '-'),
+	(MUL	=> '*'),
+	(DIV	=> '/'),
+	(LPAREN	=> '('),
+	(RPAREN	=> ')'),
 };

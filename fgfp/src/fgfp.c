@@ -18,15 +18,17 @@ int main(int argc, char* argv[]) {
 		{ exit(1); }
 	int filde = open(argv[1], O_RDONLY);
 	cfg_t* cfg = parse_cfg(filde);
+
 	if (!cfg)
 		{ exit(1); }
 
 	if (!SIZE_VECTOR(cfg->token_file)) {
 		fprintf(stderr, "At most one location "
 				"of token must be defined.\n");
+		del_cfg(cfg);
 		exit(1);
 	}
-	
+
 	augment_grammar(cfg);
 	if (detect_bad_symbol(cfg)) {
 		del_cfg(cfg);
@@ -53,7 +55,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	compute_follow(cfg);
-	
+
 #if 0
 	if (!is_ll1(cfg)) {
 		printf("Is not LL(1) :(\n");
@@ -65,6 +67,10 @@ int main(int argc, char* argv[]) {
 	vector_t* lr1_states = gen_lr1_states(cfg);
 	compute_reduce_op(cfg, lr1_states);
 	print_debug_report(cfg, lr1_states);
+
+	del_record_item();
+	foreach_vector(lr1_states, &del_lr1_state);
+	del_vector(lr1_states);
 
 #if 0
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
@@ -78,7 +84,6 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-	del_vector(lr1_states);
 //	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0

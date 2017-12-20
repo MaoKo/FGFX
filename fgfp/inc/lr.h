@@ -26,6 +26,9 @@ enum {
 #define PROD(item)		((item)->prod)
 #define BASE_LR0(item)	((item)->base_item)
 
+#define HASH_LR0_ITEM	25
+
+void del_lr1_state(lr1_state_t*);
 void del_record_item(void);
 int new_item(production_t const*, list_rhs const*, bitset_t const*);
 bitset_t* closure(cfg_t const*, bitset_t*);
@@ -35,7 +38,9 @@ int cmp_lr1_state(lr1_state_t*, bitset_t*);
 vector_t* gen_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG
-void print_item(cfg_t const*, bitset_t*);
+void print_lr0_item(lr0_item_t*);
+void print_lr1_item(cfg_t const*, lr1_item_t*);
+void print_state(cfg_t const*, bitset_t*);
 void print_debug_report(cfg_t const*, vector_t const*);
 #endif /* PRINT_DEBUG */
 

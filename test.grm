@@ -1,5 +1,0 @@
-$EXTERN { 'none.h'};
-
-$PRODUCTION {
-	<A> -> <A> a | a ;
-};

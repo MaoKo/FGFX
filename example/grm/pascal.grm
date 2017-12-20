@@ -1,4 +1,5 @@
 $EXTERN { 'none.h',};
+
 $PRODUCTION
 {
 <file>    -> <program>

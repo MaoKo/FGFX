@@ -53,7 +53,6 @@ del_cfg(cfg_t* cfg) {
 	FREE(cfg);
 }
 
-
 static int
 cmp_symbol_name(symbol_t const* sym, char const* name) {
 	return (strcmp(sym->name, name));
@@ -61,25 +60,34 @@ cmp_symbol_name(symbol_t const* sym, char const* name) {
 
 static symbol_t*
 add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
-	vector_t* dest = (kind == NON_TERMINAL) ? cfg->non_terminal : cfg->terminal;
+	vector_t* dest = (kind == NON_TERMINAL)
+						? cfg->non_terminal : cfg->terminal;
 	int index = get_index_vector(dest, crt_lexeme, &cmp_symbol_name);
 	if (index != -1)
-		{ return (AT_VECTOR(dest, index)); }
+		{ return ((symbol_t*)AT_VECTOR(dest, index)); }
 	symbol_t* symbol = NEW(symbol_t, 1);
 	if (!symbol)
 		{ return (NULL); }
 	memset(symbol, 0, sizeof(symbol_t));
 
-	symbol->kind = kind;	
+	symbol->kind = kind;
 	symbol->name = strdup(crt_lexeme);
-	symbol->prod_lst = new_bitset();
+
+	int fail = 0;
+	if (!symbol->name)
+		{ fail = 1; }
 
 	if (kind == LITERAL)
 		{ symbol->terminal_alias = -1; }
 	else if (kind == TERMINAL)
 		{ symbol->is_defined = true; }
+	else {
+		symbol->prod_lst = new_bitset();
+		if (!symbol->prod_lst)
+			{ fail = 1; }
+	}
 
-	if (!symbol->name || !symbol->prod_lst) {
+	if (fail) {
 		free_symbol(symbol);
 		return (NULL);
 	}
@@ -380,6 +388,7 @@ detect_bad_symbol(cfg_t* cfg) {
 }
 
 #ifdef PRINT_DEBUG
+
 void print_terminal(cfg_t const* cfg) {
 	puts("=== TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
@@ -411,5 +420,6 @@ void print_production(cfg_t const* cfg) {
 		puts("");
 	}
 }
+
 #endif /* PRINT_DEBUG */
 
