@@ -1,53 +1,57 @@
-$EXTERN {
+$EXTERN
+{
     'fgfx.lex.h',
 };
 
-$PRODUCTION {
-    <FGFL>  ->  <section> <FGFL'> ;
-    <FGFL'> ->  <section> <FGFL'> | %empty% ;
+$PRODUCTION
+{
+	<FGFL>		->	<section> <FGFL'> ;
+ 
+	<FGFL'>		->	<section> <FGFL'> | %empty% ;
 
-    <section> ->  <skip_section>
-               |  <token_section>
-               |  <keyword_section>
-               ;
+	<section>	->	<skip_section>
+				|	<token_section>
+				|	<keyword_section>
+				;
 
-    <skip_section>    ->  '$SKIP'    '{' <regex_list>   '}' ';' ;
-    <token_section>   ->  '$TOKEN'   '{' <regex_list>   '}' ';' ;
-    <keyword_section> ->  '$KEYWORD' '{' <keyword_list> '}' ';' ;
+	<skip_section>		->	'$SKIP'		'{' <regex_list>   '}' ';' ;
+	<token_section>		->	'$TOKEN'	'{' <regex_list>   '}' ';' ;
+	<keyword_section>	->	'$KEYWORD'	'{' <keyword_list> '}' ';' ;
 
-    <regex_list> ->  <atom_FGFL> <regex_assign> ';' <regex_list>
-                  |  %empty%
-                  ;
+	<regex_list>	->	<atom_FGFL> <regex_assign> ';' <regex_list>
+					|	%empty%
+					;
 
-    <regex_assign> ->  '=' REGEX
-                    |  '->' '$IGCASE'
-                    ;
+	<regex_assign>	->	'=' REGEX
+					|	'->' '$IGCASE'
+					;
 
-    <keyword_list> ->  <atom_FGFL> <keyword_list'>
-                    |  %empty%
-                    ;
+	<keyword_list>	->	<atom_FGFL> <keyword_list'>
+					|	%empty%
+					;
 
-    <keyword_list'> ->  ',' <keyword_list>
-                     |  %empty%
-                     ;
+	<keyword_list'>	->	',' <keyword_list>
+					|	%empty%
+					;
 
-    <atom_FGFL> ->  GLOBAL_TOK
-                 |  LOCAL_TOK
-                 ;
+	<atom_FGFL>	->	GLOBAL_TOK
+				|	LOCAL_TOK
+				;
 
-    <FGFL> = $START;
+	<FGFL>	=	$START;
 };
 
-$ALIAS {
-    (SKIP     => '$SKIP')      ,
-    (TOKEN    => '$TOKEN')     ,
-    (KEYWORD  => '$KEYWORD')   ,
-    (IGCASE   => '$IGCASE')    ,
-    (LBRACE   => '{')          ,
-    (RBRACE   => '}')          ,
-    (SEMI     => ';')          ,
-    (COMMA    => ',')          ,
-    (EQUAL    => '=')          ,
-    (ARROW    => '->')         ,
+$ALIAS
+{
+	(SKIP		=> '$SKIP')		,
+	(TOKEN		=> '$TOKEN')	,
+	(KEYWORD	=> '$KEYWORD')	,
+	(IGCASE		=> '$IGCASE')	,
+	(LBRACE		=> '{')			,
+	(RBRACE		=> '}')			,
+	(SEMI		=> ';')			,
+	(COMMA		=> ',')			,
+	(EQUAL		=> '=')			,
+	(ARROW		=> '->')		,
 };
 

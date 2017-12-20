@@ -65,6 +65,20 @@ int main(int argc, char* argv[]) {
 	vector_t* lr1_states = gen_lr1_states(cfg);
 	compute_reduce_op(cfg, lr1_states);
 	print_debug_report(cfg, lr1_states);
+
+#if 0
+	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
+		lr1_state_t* outer_state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
+		printf("State equivalent with state %2zu :\n", i);
+		for (size_t j = i + 1; j < SIZE_VECTOR(lr1_states); ++j) {
+			lr1_state_t* inner_state = (lr1_state_t*)AT_VECTOR(lr1_states, j);
+			if (!cmp_lr0_state(outer_state, inner_state->items))
+				{ printf("\t- state %2zu\n", j); }
+		}
+	}
+#endif
+
+	del_vector(lr1_states);
 //	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0

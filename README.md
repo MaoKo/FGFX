@@ -9,18 +9,17 @@ I also no free memory or only a subset. I try to fix this as soon as possible.
 
 ### How to make? ###
 Git clone the repository.
-Then, type:
-	.	make
+Then, type: make
 
-After you can do:
-	.	./efgfl example/lex/token_c.lex
+After you can do: ./efgfl example/lex/token_c.lex
 Which create a file called token_c.h.lex ready for lexing.
 
 ### TODO ###
 	.	More accurate handle of error in FGFX
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
-	.	Handle %alias in FGFP
 	.	Allow forward reference in FGFL
+	.	Allow optional elements in FGFP with [ ... ]
+	.	Allow list elements in FGFP with { ... }
 	.	Learn MarkDown :)
 

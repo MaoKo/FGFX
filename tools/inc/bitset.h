@@ -48,7 +48,7 @@ enum {
 #define NULL_BITSET		NULL
 
 typedef struct {
-	unsigned char nwords;
+	unsigned short nwords;
 	unsigned int nbits;
 	_SETTYPE* map;
 	_SETTYPE defmap[_DEFWORDS];

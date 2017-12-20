@@ -18,10 +18,20 @@ enum {
 #define SHIFT_REDUCE	1
 #define REDUCE_REDUCE	2
 
+// CMP Check
+#define LR0_ITEM		1
+#define LR1_ITEM		2
+
+#define DOT(item)		((item)->dot_pos)
+#define PROD(item)		((item)->prod)
+#define BASE_LR0(item)	((item)->base_item)
+
 void del_record_item(void);
 int new_item(production_t const*, list_rhs const*, bitset_t const*);
 bitset_t* closure(cfg_t const*, bitset_t*);
 bitset_t* goto_lr(cfg_t const*, bitset_t*, symbol_t const*);
+int cmp_lr0_state(lr1_state_t*, bitset_t*);
+int cmp_lr1_state(lr1_state_t*, bitset_t*);
 vector_t* gen_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG

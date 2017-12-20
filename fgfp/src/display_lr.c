@@ -20,6 +20,7 @@ display_lr_useful_macro(int filde) {
 	dprintf(filde, DEFINE(REDUCE(x),(x | _REDUCE)) NL);
 	dprintf(filde, DEFINE(GOTO(x),(x | _GOTO)) NL);
 	dprintf(filde, DEFINE(ACCEPT, (~0)) NL NL);
+	dprintf(filde, DEFINE(LR_START_STATE, 0) NL NL);
 }
 
 void
@@ -36,8 +37,8 @@ display_action_table(int filde, cfg_t const* cfg, vector_t const* lr1_states) {
 			if (_SHIFT & action->input) {
 				symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal,
 								action->input ^ _SHIFT);
-				dprintf(filde, "[" TOKEN_PREFIX "%s]=" SHIFT_STR "(%d)" COMMA,
-						ter->name, action->state);
+				dprintf(filde, "[" TOKEN_PREFIX SEP "%s]="
+						SHIFT_STR "(%d)" COMMA, ter->name, action->state);
 			}
 			action = action->next;
 		}
@@ -71,7 +72,7 @@ display_goto_table(int filde, cfg_t const* cfg, vector_t const* lr1_states) {
 		while (action) {
 			if (_GOTO & action->input) {
 				dprintf(filde, "[");
-				display_nter_symbol(filde, cfg, action->input ^ _GOTO);
+				display_nter_symbol(filde, cfg, action->input ^ _GOTO, true);
 				dprintf(filde, "]=" GOTO_STR "(%d)" COMMA,
 						action->state);
 			}

@@ -14,7 +14,8 @@ display_ll_useful_macro(int filde, cfg_t const* cfg) {
 	dprintf(filde, DEFINE(ERROR_SLOT, 0) NL);
 	dprintf(filde, DEFINE(START_SYMBOL,));
 	production_t* start_prod = BACK_VECTOR(cfg->productions);
-	display_nter_symbol(filde, cfg, start_prod->rhs_element->symbol_rhs->index);
+	display_nter_symbol(filde, cfg,
+			start_prod->rhs_element->symbol_rhs->index, true);
 	dprintf(filde, NL NL);
 }
 
@@ -32,7 +33,7 @@ display_ll_table(int filde, cfg_t const* cfg,
 			{ dprintf(filde, TAB); }
 		while (list) {
 			dprintf(filde, "[");
-			display_nter_symbol(filde, cfg, i);
+			display_nter_symbol(filde, cfg, i, true);
 			dprintf(filde, "][" TOKEN_PREFIX "%s]=", ((symbol_t*)
 				AT_VECTOR(cfg->terminal, list->input))->name);
 			display_nproduction_macro(filde, cfg, list->state);

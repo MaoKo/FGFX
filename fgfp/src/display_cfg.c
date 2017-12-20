@@ -23,11 +23,13 @@ display_location_token(int filde, vector_t const* path_token) {
 }
 
 void
-display_nter_symbol(int filde, cfg_t const* cfg, size_t index) {
+display_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 	vector_t const* nter = cfg->non_terminal;
 
 	symbol_t* symbol = (symbol_t*)AT_VECTOR(nter, index);
 	dprintf(filde, NTER_PREFIX);
+	if (sep)
+		{ dprintf(filde, SEP); }
 	for (size_t i = 1; i < (strlen(symbol->name) - 1); ++i) {
 		if (symbol->name[i] == '\'')
 			{ dprintf(filde, PRIME_STR); }
@@ -41,7 +43,7 @@ display_non_terminal_enum(int filde, cfg_t const* cfg) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
 		dprintf(filde, TAB);
-		display_nter_symbol(filde, cfg, i);
+		display_nter_symbol(filde, cfg, i, true);
 		dprintf(filde, COMMA NL);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
@@ -51,18 +53,16 @@ display_non_terminal_enum(int filde, cfg_t const* cfg) {
 
 void
 display_nproduction_macro(int filde, cfg_t const* cfg, size_t index) {
-	dprintf(filde, PROD_PREFIX);
+	dprintf(filde, PROD_PREFIX SEP);
 	production_t* prod = (production_t*)AT_VECTOR(cfg->productions, index);
-	display_nter_symbol(filde, cfg, prod->symbol_lhs->index);
+	display_nter_symbol(filde, cfg, prod->symbol_lhs->index, false);
 	list_rhs* list = prod->rhs_element;
 	while (list) {
-		dprintf(filde, "_");
-		if (IS_TERMINAL(list->symbol_rhs)) {
-			dprintf(filde, TOKEN_PREFIX "%s",
-				list->symbol_rhs->name);
-		}
+		dprintf(filde, SEP);
+		if (IS_TERMINAL(list->symbol_rhs))
+			{ dprintf(filde, TOKEN_PREFIX "%s", list->symbol_rhs->name); }
 		else
-			{ display_nter_symbol(filde, cfg, list->symbol_rhs->index); }
+			{ display_nter_symbol(filde, cfg, list->symbol_rhs->index, false); }
 		list = list->next;
 	}
 }
@@ -101,12 +101,12 @@ display_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
 		symbol_t* nter = AT_VECTOR(cfg->non_terminal, i);
 		dprintf(filde, TAB "[");
-		display_nter_symbol(filde, cfg, i);
+		display_nter_symbol(filde, cfg, i, true);
 		dprintf(filde, "] = " BEG_BLOCK SP);
 		int j;
 		while ((j = IT_NEXT(nter->follow)) != IT_NULL) {
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
-			dprintf(filde, TOKEN_PREFIX "%s" COMMA SP, terminal->name);
+			dprintf(filde, TOKEN_PREFIX SEP "%s" COMMA SP, terminal->name);
 		}
 		dprintf(filde, "-1" SP END_BLOCK COMMA NL);
 	}

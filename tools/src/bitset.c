@@ -7,24 +7,28 @@
 #include "utils.h"
 
 static int
-adjust_bitset(bitset_t* bs, unsigned char new_size) {
+adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	if (!bs || new_size <= bs->nwords)
 		{ return (0); }
-	int tail	= new_size - bs->nwords;
+	int oldsize	= _BYTE_SETTYPE(bs->nwords);
+
 	bs->nwords	= new_size;
 	bs->nbits	= new_size * _BITS_IN_WORD;
+
 	_SETTYPE* chunk	= NEW(_SETTYPE, _BYTE_SETTYPE(new_size));
+	memset(chunk, 0, _BYTE_SETTYPE(new_size));
+
 	if (!chunk)
 		{ return (-1); }
-	if (bs->map == bs->defmap) { 
+	if (bs->map == bs->defmap) {
 		bs->map	= chunk;
-		memcpy(bs->map, bs->defmap, _BYTE_SETTYPE(_DEFWORDS));
+		memcpy(bs->map, bs->defmap, oldsize);
 	}
 	else {
-		memcpy(chunk, bs->map, _BYTE_SETTYPE(_DEFWORDS));
-		bs->map	= chunk;
+		memcpy(chunk, bs->map, oldsize);
+		bs->map = chunk;
 	}
-	memset(bs->map + tail, 0, _BYTE_SETTYPE(bs->nwords) - tail);
+	// TODO: understand bug of memset
 	return (0);
 }
 
@@ -147,7 +151,7 @@ _next_bitset(bitset_t* bs) {
 	while (bs->siter < bs->nbits) {
 		if (OP_BITSET(bs, bs->siter, &))
 			{ return (bs->siter++); }
-		++bs->siter;
+		++(bs->siter);
 	}
 	return (IT_NULL);
 }
@@ -168,7 +172,7 @@ is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	if (!bset1 || !bset2)
 		{ return (!bset2); }
 	//The Empty set is the subset of every all set even the empty set
-	unsigned char max = MAX(bset1->nwords, bset2->nwords);
+	unsigned short max = MAX(bset1->nwords, bset2->nwords);
 	for (size_t i = 0; i < max; ++i) {
 		if ((~bset1->map[i]) & bset2->map[i])
 			{ return (false); }
@@ -186,7 +190,7 @@ bool
 is_disjoint_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	if (!bset1 || !bset2)
 		{ return (!(!bset1 && !bset2)); }
-	unsigned char max = MAX(bset1->nwords, bset2->nwords);
+	unsigned short max = MAX(bset1->nwords, bset2->nwords);
 	for (size_t i = 0; i < max; ++i) {
 		if (bset1->map[i] & bset2->map[i])
 			{ return (false); }

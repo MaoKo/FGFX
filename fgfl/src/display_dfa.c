@@ -25,13 +25,12 @@ display_token_enum(int filde, vector_t const* elst) {
 	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
 		if (entry->kind == GLOBAL || entry->kind == KEYWORD) {
-			dprintf(filde, TAB TOKEN_PREFIX
-					"%s" COMMA NL, entry->name);
+			dprintf(filde, TAB TOKEN_PREFIX SEP "%s" COMMA NL, entry->name);
 			++count;
 		}
 	}
-	dprintf(filde, TAB TOKEN_PREFIX"ERROR,\n");
-	dprintf(filde, TAB TOKEN_PREFIX"EOF,\n");
+	dprintf(filde, TAB TOKEN_PREFIX SEP "ERROR" COMMA NL);
+	dprintf(filde, TAB TOKEN_PREFIX SEP "EOF" COMMA NL);
 
 	dprintf(filde, END_BLOCK SEMI NL NL);
 	dprintf(filde, DEFINE(%s, %zu) NL NL, MACRO_TOKEN, count + 2);
@@ -79,7 +78,7 @@ display_final_table(int filde, vector_t const* final, char const* header) {
 	dprintf(filde, "_final_table[%s][2] = " BEG_BLOCK NL, "SIZE_FINAL_TAB");
 	for (size_t i = 0; i < count_final; ++i) {
 		dprintf(filde, TAB BEG_BLOCK SP "%ld" COMMA SP
-				TAB TOKEN_PREFIX "%s" SP END_BLOCK COMMA NL,
+				TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
 				(long)AT_VECTOR(final, i*2),
 				(char const*)AT_VECTOR(final, i*2+1));
 	}
@@ -107,8 +106,7 @@ display_skip_table(int filde, vector_t const* elst, char const* header) {
 		for (size_t i = 0; i < SIZE_VECTOR(skip_table); ++i) {
 			token_entry_t* entry = (token_entry_t*)
 					AT_VECTOR(skip_table, i);
-			dprintf(filde, TAB TOKEN_PREFIX 
-					"%s" COMMA NL, entry->name);
+			dprintf(filde, TAB TOKEN_PREFIX SEP "%s" COMMA NL, entry->name);
 		}
 		dprintf(filde, TAB "-1" COMMA NL END_BLOCK SEMI NL NL);
 	}

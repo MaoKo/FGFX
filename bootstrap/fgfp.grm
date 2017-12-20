@@ -1,81 +1,92 @@
-$EXTERN {
+$EXTERN
+{
     'fgfx.lex.h',
 };
 
-$PRODUCTION {
-    <FGFP>  ->  <section> <FGFP'> ;
-    <FGFP'> ->  <section> <FGFP'> | %empty% ;
-
-    <section>  ->  <extern_section>
-                |  <production_section>
-                |  <alias_section>
-                ;
-    
-    <extern_section>    ->  '$EXTERN' '{' <path_list> '}' ';' ;
-    <path_list>         ->  LITERAL <path_list'> 
-                         |  %empty%
-                         ;
-    <path_list'>        ->  ',' <path_list>
-                         |  %empty%
-                         ;
-
-    <alias_section>     ->  '$ALIAS' '{' <alias_list> '}' ';' ;
-    <alias_list>        ->  '(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
-                         |  %empty%
-                         ;
-    <alias_list'>       ->  ',' <alias_list>
-                         |  %empty%
-                         ;
-
-    <production_section> ->  '$PRODUCTION' '{' <production_list> '}' ';' ;
-    <production_list>    ->  <production> <production_list'>
-                          |  %empty%
-                          ;
-    <production_list'>   ->  <production> <production_list'>
-                          |  %empty%
-                          ;
-    
-    <production>  ->  NTER <follow_prod> ';' ;
-    <follow_prod> ->  '=' '$START' | '->' <lhs> ;
-    
-    <lhs>  ->  <opt_list> <lhs'> ;
-    <lhs'> ->  '|' <opt_list> <lhs'>
-            |  %empty%
-            ;
-    
-    <opt_list> ->  <symbol_list>
-                |  '%empty%'
-                |   %empty%
-                ;
-
-    <symbol_list>  ->  <symbol> <symbol_list'> ;
-    <symbol_list'> ->  <symbol> <symbol_list'>
-                    |  %empty%
-                    ;
+$PRODUCTION
+{
+	<FGFP>	->	<section> <FGFP'> ;
  
-    <symbol> -> GLOBAL_TOK
-              | NTER
-              | LITERAL
-              ;
+	<FGFP'>	->	<section> <FGFP'>
+			|	%empty%
+			;
+
+	<section>	->	<extern_section>
+				|	<production_section>
+				|	<alias_section>
+				;
     
-    <FGFP> = $START;
+	<extern_section>	->	'$EXTERN' '{' <path_list> '}' ';' ;
+	<path_list>			->	LITERAL <path_list'> 
+						|	%empty%
+						;
+
+	<path_list'>		->	',' <path_list>
+						|	%empty%
+						;
+
+	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';' ;
+	<alias_list>		->	'(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
+						|	%empty%
+						;
+
+	<alias_list'>		->	',' <alias_list>
+						|	%empty%
+						;
+
+	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
+	<production_list>		->	<production> <production_list'>
+							|	%empty%
+							;
+
+	<production_list'>	->	<production> <production_list'>
+						|	%empty%
+						;
+    
+	<production>	->	NTER <follow_prod> ';' ;
+	<follow_prod>	->	'=' '$START'
+					|	'->' <lhs>
+					;
+    
+	<lhs>	->	<opt_list> <lhs'> ;
+	<lhs'>	->	'|' <opt_list> <lhs'>
+			|	%empty%
+			;
+    
+	<opt_list>	->	<symbol_list>
+				|	'%empty%'
+				|	 %empty%
+				;
+
+	<symbol_list>	->	<symbol> <symbol_list'> ;
+	<symbol_list'>	->	<symbol> <symbol_list'>
+					|	%empty%
+ 					;
+ 
+	<symbol>	->	GLOBAL_TOK
+				|	NTER
+				|	LITERAL
+				;
+    
+	<FGFP>	=	$START;
 };
 
-$ALIAS {
-    (EXTERN     => '$EXTERN')       ,
-    (ALIAS      => '$ALIAS')        ,
-    (PRODUCTION => '$PRODUCTION')   ,
-    (START      => '$START')        ,
-    (COMMA      => ',')             ,
-    (SEMI       => ';')             ,
-    (LPAREN     => '(')             ,
-    (RPAREN     => ')')             ,
-    (LBRACE     => '{')             ,
-    (RBRACE     => '}')             ,
-    (EQUAL      => '=')             ,
-    (UNION      => '|')             ,
-    (EMPTY      => '%empty%')       ,
-    (ARROW      => '->')            ,
-    (BARROW     => '=>')            ,
+$ALIAS
+{
+	(EXTERN		=> '$EXTERN')		,
+	(ALIAS		=> '$ALIAS')		,
+	(PRODUCTION	=> '$PRODUCTION')	,
+	(START		=> '$START')		,
+	(COMMA		=> ',')				,
+	(SEMI		=> ';')				,
+	(LPAREN		=> '(')				,
+	(RPAREN		=> ')')				,
+	(LBRACE		=> '{')				,
+	(RBRACE		=> '}')				,
+	(EQUAL		=> '=')				,
+	(UNION		=> '|')				,
+	(EMPTY		=> '%empty%')		,
+	(ARROW		=> '->')			,
+	(BARROW		=> '=>')			,
 };
 

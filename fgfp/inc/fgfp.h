@@ -51,8 +51,13 @@ typedef struct {
 	size_t index;
 	production_t const* prod;
 	list_rhs const* dot_pos;
-	bitset_t* lookahead;
 	bool is_final;
+} lr0_item_t;
+
+typedef struct {
+	size_t index;
+	lr0_item_t* base_item;
+	bitset_t* lookahead;
 } lr1_item_t;
 
 typedef struct {
