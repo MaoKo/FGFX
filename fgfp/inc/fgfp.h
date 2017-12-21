@@ -49,8 +49,6 @@ typedef struct {
 } production_t;
 
 typedef struct {
-	size_t index;
-	size_t bucket;
 	production_t const* prod;
 	list_rhs const* dot_pos;
 	bool is_final;
@@ -64,9 +62,12 @@ typedef struct {
 
 typedef struct {
 	bitset_t* items;
-	trans_list_t* edges;
+	size_t hash_items;
+	trans_list_t* shift_lst;
+	trans_list_t* goto_lst;
 	trans_list_t* reduces;
 	bool accept;
+	trans_list_t** last_move;
 	bool first_reach;
 } lr1_state_t;
 

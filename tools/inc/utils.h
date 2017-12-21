@@ -35,6 +35,7 @@ size_t char_in_str(char const*, char);
 trans_list_t* new_trans_list(unsigned int, unsigned int);
 void append_trans_list(trans_list_t*, trans_list_t*);
 void del_trans_list(trans_list_t*);
+bool cmp_input_trans_list(trans_list_t const*, unsigned int);
 bool cmp_trans_list(trans_list_t const*, trans_list_t const*);
 trans_list_t const* contiguous_range(trans_list_t const*);
 size_t hash_str(char const*);

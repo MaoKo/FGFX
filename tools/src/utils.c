@@ -112,6 +112,16 @@ del_trans_list(trans_list_t* list) {
 }
 
 bool
+cmp_input_trans_list(trans_list_t const* list, unsigned int input) {
+	while (list) {
+		if (list->input == input)
+			{ return (true); }
+		list = list->next;
+	}
+	return (false);
+}
+
+bool
 cmp_trans_list(trans_list_t const* t1, trans_list_t const* t2) {
 	while (t1 && t2) {
 		if ((t1->input != t2->input) || (t1->state != t2->state))

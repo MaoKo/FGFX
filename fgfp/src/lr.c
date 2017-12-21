@@ -17,6 +17,7 @@ new_lr1_state(bitset_t* item) {
 		{ return (NULL); }
 	memset(state, 0, sizeof(lr1_state_t));
 	state->items = item;
+	state->hash_items = hash_bitset(item);
 	state->first_reach = true;
 	return (state);
 }
@@ -25,7 +26,8 @@ void
 del_lr1_state(lr1_state_t* state) {
 	if (state) {
 		del_bitset(state->items);
-		del_trans_list(state->edges);
+		del_trans_list(state->shift_lst);
+		del_trans_list(state->goto_lst);
 		del_trans_list(state->reduces);
 	}
 	FREE(state);
@@ -107,11 +109,10 @@ new_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
 	if (!item->dot_pos)
 		{ item->is_final = true; }
 
-	item->index = SIZE_VECTOR(record_lr0_item[hash]);
-	item->bucket = hash;
+//	item->index = SIZE_VECTOR(record_lr0_item[hash]);
+//	item->bucket = hash;
 
 	PUSH_BACK_VECTOR(record_lr0_item[hash], item);
-
 	return (item);
 }
 
@@ -159,26 +160,19 @@ static int
 check_exist_item(bitset_t* state_item, lr1_item_t* item, int kind) {
 	int back = IT_BACK(state_item);
 	IT_RESET(state_item);
-	int i, find = -1;
+	int find = -1;
+	int i;
 	while ((i = IT_NEXT(state_item)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
-		if (
-				((kind == LR1_ITEM) && !(cmp_lr1_item(crt_item, item)))
-				||
-				((kind == LR0_ITEM) && !(cmp_lr0_item(BASE_LR0(crt_item),
-													 BASE_LR0(item))))
-		) {
+		if ((kind == LR1_ITEM && !cmp_lr1_item(crt_item, item))
+				|| (kind == LR0_ITEM && !cmp_lr0_item(BASE_LR0(crt_item),
+													 BASE_LR0(item)))) {
 			find = i;
 			break;
 		}
 	}
 	IT_SET(state_item, back);
 	return (find);
-}
-
-static inline void
-merge_lr1_item(lr1_item_t* lr1, lr1_item_t* lr2) {
-	UNION_BITSET(lr1->lookahead, lr2->lookahead);
 }
 
 static void
@@ -206,24 +200,23 @@ include_new_item(cfg_t const* cfg,
 		if (!add_item)
 			{ return /* (ERROR) */ ; }
 		
-		int lr0_exist = -1;
-		if ((check_exist_item(state_item, add_item, LR1_ITEM) != -1)
-					|| ((lr0_exist = check_exist_item(state_item,
-					add_item, LR0_ITEM)) != -1)) {
-
-			if (lr0_exist != -1) {
-				lr1_item_t* new_it = (lr1_item_t*)
+		int lr0_exist = check_exist_item(state_item, add_item, LR0_ITEM);
+		if (lr0_exist != -1) {
+			lr1_item_t* new_it = (lr1_item_t*)
 							AT_VECTOR(record_lr1_item, lr0_exist);
-				merge_lr1_item(new_it, add_item);
+			if (cmp_lr1_item(add_item, new_it)) {
+				MERGE_LR1_ITEM(add_item, new_it);
+				OFF_BITSET(state_item, (size_t)lr0_exist);
 			}
-			del_lr1_item(add_item);
+			else {
+				del_lr1_item(add_item);
+				continue;
+			}
 		}
-		else {
-			int index = new_lr1_item_record(add_item);
-			if (index != ERROR) {
-				ADD_BITSET(state_item, (size_t)index);
-//				++include;
-			}
+		int index = new_lr1_item_record(add_item);
+		if (index != ERROR) {
+			ADD_BITSET(state_item, (size_t)index);
+//			++include;
 		}
 	}
 
@@ -295,26 +288,23 @@ move_dot_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 	
 	unsigned int input;
 	symbol_t* target = DOT(BASE_LR0(item))->symbol_rhs;
-	if (IS_TERMINAL(target))
-		{ input = SHIFT(GET_INDEX(target)); }
-	else
-		{ input = GOTO(GET_INDEX(target)); }
-
-	trans_list_t* action = state->edges;
-	bool find = false;
-	while (action) {
-		if (action->input == input) {
-			find = true;
-			break;
-		}
-		action = action->next;
+	if (IS_TERMINAL(target)) {
+		input = SHIFT(GET_INDEX(target));
+		state->last_move = &(state->shift_lst);
+	}
+	else {
+		input = GOTO(GET_INDEX(target));
+		state->last_move  = &(state->goto_lst);
 	}
 
+	bool find = cmp_input_trans_list(*(state->last_move), input);
 	if (!find) {
-		action = new_trans_list(input, 0);
-		action->next = state->edges;
-		state->edges = action;
+		trans_list_t* action = new_trans_list(input, 0);
+		action->next = *(state->last_move);
+		*(state->last_move) = action;
 	}
+	else
+		{ return (NULL_BITSET); }
 
 	int back = IT_BACK(state->items);
 	IT_RESET(state->items);
@@ -350,7 +340,7 @@ cmp_lr0_state(lr1_state_t* s1, bitset_t* b2) {
 
 int
 cmp_lr1_state(lr1_state_t* s1, bitset_t* b2) {
-	return (cmp_lr_state(s1, b2, LR1_ITEM));
+	return (!eq_bitset(s1->items, b2));
 }
 
 vector_t*
@@ -369,8 +359,8 @@ gen_lr1_states(cfg_t const* cfg) {
 	bool change;
 	do {
 		change = false;
-		if (SIZE_VECTOR(lr1_states) > 500)
-			{ break; }
+//		if (SIZE_VECTOR(lr1_states) > 1000)
+//			{ break; }
 		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
 			lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 			if (!state->first_reach)
@@ -381,9 +371,22 @@ gen_lr1_states(cfg_t const* cfg) {
 				bitset_t* next = move_dot_next(cfg, state, j);
 				if (next == NULL_BITSET)
 					{ continue; }
-				int index = get_index_vector(lr1_states, next, &cmp_lr1_state);
-				if (index == -1) {
-					index = SIZE_VECTOR(lr1_states);
+
+				size_t hash_test = hash_bitset(next);
+				size_t index;
+				for (index = 0; index < SIZE_VECTOR(lr1_states);
+						++index) {
+					lr1_state_t* test = (lr1_state_t*)
+									AT_VECTOR(lr1_states, index);
+					if (test->hash_items == hash_test
+							&& !cmp_lr1_state(test, next)) {
+						break;
+					}
+				}
+
+				//int index = get_index_vector(lr1_states, next, &cmp_lr1_state);
+				if (index == SIZE_VECTOR(lr1_states)) {
+					//index = SIZE_VECTOR(lr1_states);
 					PUSH_BACK_VECTOR(lr1_states, new_lr1_state(next));
 					change = true;
 				}
@@ -391,7 +394,7 @@ gen_lr1_states(cfg_t const* cfg) {
 					{ del_bitset(next); }
 
 				if (state->first_reach)
-					{ state->edges->state = index; }
+					{ (*(state->last_move))->state = index; }
 			}
 			IT_RESET(state->items);
 			state->first_reach = false;
@@ -404,7 +407,7 @@ gen_lr1_states(cfg_t const* cfg) {
 static int
 check_conflict(lr1_state_t* state, trans_list_t* reduce_list, int kind) {
 	trans_list_t* target_action = (kind == SHIFT_REDUCE)
-									? state->edges : state->reduces;
+									? state->shift_lst : state->reduces;
 	while (target_action) {
 		trans_list_t* reset_list = reduce_list;
 		while (reset_list) {
@@ -592,7 +595,7 @@ print_debug_report(cfg_t const* cfg, vector_t const* lr1_states) {
 		if (state->accept)
 			{ printf("(Accept): "); }
 		print_state(cfg, state->items);
-		trans_list_t* list = state->edges;
+		trans_list_t* list = state->shift_lst;
 		while (list) {
 			if (_SHIFT & list->input) {
 				printf("SHIFT(%s)", ((symbol_t*)

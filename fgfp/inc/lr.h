@@ -27,6 +27,8 @@ enum {
 #define BASE_LR0(item)	((item)->base_item)
 
 #define HASH_LR0_ITEM	25
+#define MERGE_LR1_ITEM(lr1, lr2)	(UNION_BITSET((lr1)->lookahead,\
+										(lr2)->lookahead))
 
 void del_lr1_state(lr1_state_t*);
 void del_record_item(void);
