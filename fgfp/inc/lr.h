@@ -24,19 +24,19 @@ enum {
 
 #define DOT(item)		((item)->dot_pos)
 #define PROD(item)		((item)->prod)
-#define BASE_LR0(item)	((item)->base_item)
+#define	CORE(item)		((item)->core)
 
 #define HASH_LR0_ITEM	25
 #define MERGE_LR1_ITEM(lr1, lr2)	(UNION_BITSET((lr1)->lookahead,\
 										(lr2)->lookahead))
 
 void del_lr1_state(lr1_state_t*);
-void del_record_item(void);
+void del_record(void);
 int new_item(production_t const*, list_rhs const*, bitset_t const*);
 bitset_t* closure(cfg_t const*, bitset_t*);
 bitset_t* goto_lr(cfg_t const*, bitset_t*, symbol_t const*);
-int cmp_lr0_state(lr1_state_t*, bitset_t*);
-int cmp_lr1_state(lr1_state_t*, bitset_t*);
+int cmp_lr0_state(bitset_t*, bitset_t*);
+int cmp_lr1_state(bitset_t*, bitset_t*);
 vector_t* gen_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG

@@ -149,9 +149,9 @@ _next_bitset(bitset_t* bs) {
 	if (!bs)
 		{ return (IT_NULL); }
 	while (bs->siter < bs->nbits) {
-		if (OP_BITSET(bs, bs->siter, &))
-			{ return (bs->siter++); }
-		++(bs->siter);
+		int next_val = (bs->siter)++;
+		if (OP_BITSET(bs, next_val, &))
+			{ return (next_val); }
 	}
 	return (IT_NULL);
 }

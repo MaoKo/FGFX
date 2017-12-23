@@ -120,6 +120,14 @@ foreach_vector(vector_t* vect, void (*foncteur)()) {
 }
 
 void
+init_vector(vector_t* vect, size_t size, void* (*constructor)(void)) {
+	if (!vect)
+		{ return; }
+	for (size_t i = 0; i < size; ++i)
+		{ PUSH_BACK_VECTOR(vect, (*constructor)()); }
+}
+
+void
 append_vector(vector_t* vect, vector_t const* src_vect) {
 	if (!vect || !src_vect)
 		{ return; }

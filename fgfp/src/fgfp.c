@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 	compute_reduce_op(cfg, lr1_states);
 	print_debug_report(cfg, lr1_states);
 
-	del_record_item();
+	del_record();
 	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);
 

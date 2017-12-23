@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include "fgfp.h"
 
+#define LHS(prod)	((prod)->symbol_lhs)
+#define RHS(prod)	((prod)->rhs_element)
+
 production_t* new_production(symbol_t*, size_t);
 void del_production(production_t*);
 int add_symbol_rhs(production_t*, symbol_t*);

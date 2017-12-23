@@ -32,14 +32,12 @@ display_action_table(int filde, cfg_t const* cfg, vector_t const* lr1_states) {
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 		dprintf(filde, "/* %3zu */" TAB BEG_BLOCK, i);
-		trans_list_t* action = state->edges;
+		trans_list_t* action = state->shift_lst;
 		while (action) {
-			if (_SHIFT & action->input) {
-				symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal,
+			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal,
 								action->input ^ _SHIFT);
-				dprintf(filde, "[" TOKEN_PREFIX SEP "%s]="
-						SHIFT_STR "(%d)" COMMA, ter->name, action->state);
-			}
+			dprintf(filde, "[" TOKEN_PREFIX SEP "%s]="
+					SHIFT_STR "(%d)" COMMA, ter->name, action->state);
 			action = action->next;
 		}
 			
@@ -68,14 +66,12 @@ display_goto_table(int filde, cfg_t const* cfg, vector_t const* lr1_states) {
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 		dprintf(filde, "/* %3zu */" TAB BEG_BLOCK, i);
-		trans_list_t* action = state->edges;
+		trans_list_t* action = state->goto_lst;
 		while (action) {
-			if (_GOTO & action->input) {
-				dprintf(filde, "[");
-				display_nter_symbol(filde, cfg, action->input ^ _GOTO, true);
-				dprintf(filde, "]=" GOTO_STR "(%d)" COMMA,
-						action->state);
-			}
+			dprintf(filde, "[");
+			display_nter_symbol(filde, cfg, action->input ^ _GOTO, true);
+			dprintf(filde, "]=" GOTO_STR "(%d)" COMMA, action->state);
+
 			action = action->next;
 		}
 		dprintf(filde, END_BLOCK COMMA NL);

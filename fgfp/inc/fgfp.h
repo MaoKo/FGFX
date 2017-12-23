@@ -15,19 +15,23 @@ typedef struct {
 	char const* name;
 	bool is_defined;
 	union {
-		// if TERMINAL
+		//TERMINAL
 		struct {
 			bool is_eof;
-			/* TODO: prec, left, right, ... */
+			/*	TODO:
+			 *	. unary	,
+			 *	. left	,
+			 *	. right	,
+			 */
 		};
-		// if NON_TERMINAL
+		//NON_TERMINAL
 		struct {
 			bool nullable;
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
 		};
-		// if ALIAS
+		//ALIAS
 		struct {
 			int terminal_alias;
 		};
@@ -52,13 +56,23 @@ typedef struct {
 	production_t const* prod;
 	list_rhs const* dot_pos;
 	bool is_final;
+	vector_t* non_kernel_lr0;
 } lr0_item_t;
 
 typedef struct {
 	size_t index;
-	lr0_item_t* base_item;
+	lr0_item_t* core;
 	bitset_t* lookahead;
+	vector_t* non_kernel_look;
 } lr1_item_t;
+
+typedef struct {
+	bitset_t* kernel_item;
+	symbol_t* rprefix;
+	bool ref_lr0;
+	vector_t* non_lr0_kernel_item;
+	bitset_t* final_state;
+} kernel_t;
 
 typedef struct {
 	bitset_t* items;
