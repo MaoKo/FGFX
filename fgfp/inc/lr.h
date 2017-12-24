@@ -26,7 +26,7 @@ enum {
 #define PROD(item)		((item)->prod)
 #define	CORE(item)		((item)->core)
 
-#define HASH_LR0_ITEM	25
+#define HASH_LR			50
 #define MERGE_LR1_ITEM(lr1, lr2)	(UNION_BITSET((lr1)->lookahead,\
 										(lr2)->lookahead))
 

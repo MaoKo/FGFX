@@ -7,8 +7,8 @@
 #include "utils.h"
 #include "vector.h"
 
-static vector_t* record_lr0_item[HASH_LR0_ITEM] = {};
-static vector_t* record_kernel = NULL;
+static vector_t* record_lr0_item[HASH_LR] = {};
+static vector_t* record_kernel[HASH_LR] = {};
 static vector_t* record_lr1_item = NULL;
 
 static lr1_state_t*
@@ -100,23 +100,26 @@ cmp_kernel_lr1(kernel_t* kernel, bitset_t* kernel_item) {
 }
 
 static kernel_t*
-new_kernel(bitset_t* kernel_item, symbol_t* rightmost) {
+new_kernel(bitset_t* kernel_item, symbol_t* rightmost, size_t hash_item) {
 	if (!kernel_item || !rightmost)
 		{ return (NULL); }
-	if (!record_kernel)
-		{ record_kernel = new_vector(); }
 
-	int index_ker_lr0 = get_index_vector(record_kernel,
+	if (!record_kernel[hash_item])
+		{ record_kernel[hash_item] = new_vector(); }
+
+	int index_ker_lr0 = get_index_vector(record_kernel[hash_item],
 							kernel_item, &cmp_kernel_lr0);
 	kernel_t* prev = NULL;
 
 	if (index_ker_lr0 != -1) {
-		prev = (kernel_t*)AT_VECTOR(record_kernel, index_ker_lr0);
-		int index_ker_lr1 = get_index_vector(record_kernel,
+		prev = (kernel_t*)AT_VECTOR(record_kernel[hash_item], index_ker_lr0);
+		int index_ker_lr1 = get_index_vector(record_kernel[hash_item],
 								kernel_item, &cmp_kernel_lr1);
+
 		if (index_ker_lr1 != -1) {
 			del_bitset(kernel_item);
-			return ((kernel_t*)AT_VECTOR(record_kernel, index_ker_lr1));
+			return ((kernel_t*)AT_VECTOR(record_kernel[hash_item],
+											index_ker_lr1));
 		}
 	}
 	kernel_t* new_kernel = NEW(kernel_t, 1);
@@ -132,7 +135,7 @@ new_kernel(bitset_t* kernel_item, symbol_t* rightmost) {
 		new_kernel->ref_lr0 = true;
 	}
 
-	PUSH_BACK_VECTOR(record_kernel, new_kernel);
+	PUSH_BACK_VECTOR(record_kernel[hash_item], new_kernel);
 	return (new_kernel);
 }
 
@@ -156,8 +159,14 @@ del_lr1_item(lr1_item_t* item) {
 
 static void
 del_record_kernel(void) {
-	foreach_vector(record_kernel, &del_kernel);
-	del_vector(record_kernel);
+	for (size_t i = 0; i < HASH_LR; ++i) {
+		if (!record_lr0_item[i])
+			{ continue; }
+		foreach_vector(record_kernel[i], &del_kernel);
+		del_vector(record_kernel[i]);
+
+		record_kernel[i] = NULL;
+	}
 }
 
 static void
@@ -165,11 +174,13 @@ del_record_item(void) {
 	foreach_vector(record_lr1_item, &del_lr1_item);
 	del_vector(record_lr1_item);
 
-	for (size_t i = 0; i < HASH_LR0_ITEM; ++i) {
+	for (size_t i = 0; i < HASH_LR; ++i) {
 		if (!record_lr0_item[i])
 			{ continue; }
 		foreach_vector(record_lr0_item[i], &free);
 		del_vector(record_lr0_item[i]);
+	
+		record_lr0_item[i] = NULL;
 	}
 }
 
@@ -183,7 +194,7 @@ hash_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
 	size_t hash = prod->index;
 	if (dot_pos)
 		{ hash += dot_pos->pos; }
-	return (hash % HASH_LR0_ITEM);
+	return (hash % HASH_LR);
 }
 
 static lr0_item_t*
@@ -264,6 +275,19 @@ new_lr1_item(production_t const* prod,
 	return (new_lr1_item_record(new_lr1_item_ptr(prod, dot_pos, lookahead)));
 }
 
+static int
+merge_lr1_item(lr1_item_t const* llr, lr1_item_t const* rlr) {
+	if (cmp_lr0_item(CORE(llr), CORE(rlr)))
+		{ return (ERROR); }
+	bitset_t* new_look = dup_bitset(llr->lookahead);
+	UNION_BITSET(new_look, rlr->lookahead);
+
+	int index = new_lr1_item(PROD(CORE(llr)), DOT(CORE(llr)), new_look);
+
+	del_bitset(new_look);
+	return (index);
+}
+
 static void
 closure_non_kernel_item(cfg_t const* cfg, kernel_t* kernel) {
 	if (kernel->non_lr0_kernel_item)
@@ -334,40 +358,42 @@ propagate_look_lr1(kernel_t* kernel) {
 	init_vector(vect_look, SIZE_VECTOR(kernel->non_lr0_kernel_item),
 				(void*(*)(void))&new_bitset);
 
+	bitset_t* kernel_look = new_bitset();
+
 	int i;
 	while ((i = IT_NEXT(kernel->kernel_item)) != IT_NULL) {
 		lr1_item_t* item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
-
 		bitset_t* target_first = compute_look(CORE(item), item->lookahead);
-		propagate_look_lr1_symbol(kernel, vect_look,
-									kernel->rprefix, target_first);
-		bool repeat;
-		do {
-			repeat = false;
-			for (size_t i = 0;
-					i < SIZE_VECTOR(kernel->non_lr0_kernel_item); ++i) {
-
-				bitset_t* crt_look = (bitset_t*)AT_VECTOR(vect_look, i);
-				lr0_item_t const* crt_item = (lr0_item_t const*)
-								AT_VECTOR(kernel->non_lr0_kernel_item, i);
-
-				if (crt_item->is_final)
-					{ continue; }
-
-				symbol_t* leftmost = DOT(crt_item)->symbol_rhs;
-				if (IS_NON_TERMINAL(leftmost)) {
-					bitset_t* new_look = compute_look(crt_item, crt_look);
-					if (propagate_look_lr1_symbol(kernel, vect_look,
-												leftmost, new_look))
-						{ repeat = true; }
-					del_bitset(new_look);
-				}
-			}
-		} while (repeat);
+		UNION_BITSET(kernel_look, target_first);
 		del_bitset(target_first);
 	}
 
+	propagate_look_lr1_symbol(kernel, vect_look, kernel->rprefix, kernel_look);
+	bool repeat;
+	do {
+		repeat = false;
+		for (size_t i = 0; i < SIZE_VECTOR(kernel->non_lr0_kernel_item); ++i) {
+			bitset_t* crt_look = (bitset_t*)AT_VECTOR(vect_look, i);
+			lr0_item_t const* crt_item = (lr0_item_t const*)
+							AT_VECTOR(kernel->non_lr0_kernel_item, i);
+
+			if (crt_item->is_final)
+				{ continue; }
+
+			symbol_t* leftmost = DOT(crt_item)->symbol_rhs;
+			if (IS_NON_TERMINAL(leftmost)) {
+				bitset_t* new_look = compute_look(crt_item, crt_look);
+				if (propagate_look_lr1_symbol(kernel, vect_look,
+													leftmost, new_look))
+					{ repeat = true; }
+				del_bitset(new_look);
+			}
+		}
+	} while (repeat);
+
+	del_bitset(kernel_look);
 	IT_RESET(kernel->kernel_item);
+
 	return (vect_look);
 }
 
@@ -409,17 +435,23 @@ split_specific(bitset_t* item_set, symbol_t* symbol) {
 	IT_RESET(item_set);
 	
 	bitset_t* cprefix = new_bitset();
+
+	size_t hash_lr0 = 0;
 	int i;
+
 	while ((i = IT_NEXT(item_set)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
 		if (CORE(crt_item)->is_final)
 			{ continue; }
 
-		if (DOT(CORE(crt_item))->symbol_rhs == symbol)
-			{ ADD_BITSET(cprefix, (size_t)i); }
+		if (DOT(CORE(crt_item))->symbol_rhs == symbol) {
+			hash_lr0 += hash_lr0_item(PROD(CORE(crt_item)),
+										DOT(CORE(crt_item)));
+			ADD_BITSET(cprefix, (size_t)i);
+		}
 	}
 	IT_SET(item_set, back);
-	return (new_kernel(cprefix, symbol));
+	return (new_kernel(cprefix, symbol, hash_lr0 % HASH_LR));
 }
 
 static vector_t*
@@ -458,18 +490,33 @@ closure(cfg_t const* cfg, bitset_t* item_set) {
 
 	for (size_t i = 0; i < SIZE_VECTOR(kernel_lst); ++i) {
 		kernel_t* crt_kernel = (kernel_t*)AT_VECTOR(kernel_lst, i);
-		UNION_BITSET(item_set, include_new_item(cfg, crt_kernel));
+		bitset_t* include_set = include_new_item(cfg, crt_kernel);
 
-#if 0
-		puts("========");
-		for (size_t i = 0;
-					i < SIZE_VECTOR(crt_kernel->non_lr0_kernel_item); ++i) {
-			lr0_item_t* lr0_item =
-					AT_VECTOR(crt_kernel->non_lr0_kernel_item, i);
-			print_lr0_item(lr0_item);
-			puts("");
+		int j;
+		while ((j = IT_NEXT(include_set)) != IT_NULL) {
+			lr1_item_t* inc_item = AT_VECTOR(record_lr1_item, j);
+			int index_lr0;
+
+			if ((index_lr0 = check_exist_lr0_item(item_set, inc_item)) != -1) {
+				lr1_item_t* old_item = AT_VECTOR(record_lr1_item, index_lr0);
+				if (is_subset_bitset(inc_item->lookahead, old_item->lookahead))
+					{ OFF_BITSET(item_set, (size_t)index_lr0); }
+				else if (is_subset_bitset(old_item->lookahead,
+												inc_item->lookahead))
+					{ OFF_BITSET(include_set, (size_t)j); }
+				else {
+					int new_index = merge_lr1_item(inc_item, old_item);
+
+					OFF_BITSET(item_set, (size_t)index_lr0);
+					OFF_BITSET(include_set, (size_t)j);
+
+					if (new_index != -1)
+						{ ADD_BITSET(include_set, (size_t)new_index); }
+				}
+			}
 		}
-#endif
+		IT_RESET(include_set);
+		UNION_BITSET(item_set, include_set);
 	}
 	del_vector(kernel_lst);
 	return (item_set);
@@ -557,7 +604,7 @@ gen_lr1_states(cfg_t const* cfg) {
 	do {
 		change = false;
 		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
-//			printf("SIZE %zu\n", SIZE_VECTOR(lr1_states));
+			printf("SIZE %zu\n", SIZE_VECTOR(lr1_states));
 
 			lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 			if (!state->first_reach)
@@ -609,102 +656,6 @@ gen_lr1_states(cfg_t const* cfg) {
 
 	return (lr1_states);
 }
-
-#if 0
-
-vector_t*
-gen_lr1_states(cfg_t const* cfg) {
-	if (!cfg)
-		{ return (NULL_VECT); }
-
-	size_t const size = 150;
-	static vector_t* hash_lr1_state[150] = {};
-
-	bitset_t* start_item = new_bitset();
-	production_t* start_prod = BACK_VECTOR(cfg->productions);
-
-	ADD_BITSET(start_item, (size_t)new_lr1_item(start_prod,
-					start_prod->rhs_element, NULL_BITSET));
-
-	lr1_state_t* start_state = new_lr1_state(closure(cfg, start_item));
-
-	int hash_index = (start_state->hash_items % size);
-	hash_lr1_state[hash_index] = new_vector();
-	PUSH_BACK_VECTOR(hash_lr1_state[hash_index], start_state);
-
-	vector_t* unseen_state = new_vector();
-	PUSH_BACK_VECTOR(unseen_state, start_state);
-
-//	bool change;
-	int pass = 0;
-//	do {
-//		change = false;
-//		if (SIZE_VECTOR(lr1_states) > 1000)
-//			{ break; }
-		while (!EMPTY_VECTOR(unseen_state)) {
-			printf("Current passe %d\n", ++pass);
-		//for (int i = SIZE_VECTOR(unseen_state) - 1; i >= 0; --i) {
-			lr1_state_t* state = //(lr1_state_t*)AT_VECTOR(unseen_state, i);
-									BACK_VECTOR(unseen_state);
-
-			POP_BACK_VECTOR(unseen_state);
-
-//			if (!state->first_reach)
-//				{ break; }
-
-			int j;
-			while ((j = IT_NEXT(state->items)) != IT_NULL) {
-				bitset_t* next = move_dot_next(cfg, state, j);
-				if (next == NULL_BITSET)
-					{ continue; }
-
-				size_t hash_test = hash_bitset(next) % size;
-				if (!hash_lr1_state[hash_test])
-					{ hash_lr1_state[hash_test] = new_vector(); }
-		
-				size_t index;
-				bool find = false;
-
-				for (index = 0;
-						index < SIZE_VECTOR(hash_lr1_state[hash_test]);
-						++index) {
-
-					lr1_state_t* test = (lr1_state_t*)
-								AT_VECTOR(hash_lr1_state[hash_test], index);
-					if (/* test->hash_items == hash_test
-							&& */ !cmp_lr1_state(test, next)) {
-						find = true;
-						break;
-					}
-				}
-
-				//int index = get_index_vector(lr1_states, next, &cmp_lr1_state);
-				if (!find) {
-					//index = SIZE_VECTOR(lr1_states);
-					lr1_state_t* inter_state = new_lr1_state(next);
-					PUSH_BACK_VECTOR(hash_lr1_state[hash_test],
-							inter_state);
-
-					PUSH_BACK_VECTOR(unseen_state, inter_state);
-//					change = true;
-				}
-				else
-					{ del_bitset(next); }
-
-//				if (state->first_reach)
-					{ (*(state->last_move))->state = index; }
-			}
-			IT_RESET(state->items);
-//			state->first_reach = false;
-		}
-//	} while (change);
-
-	puts("HERE");
-	return (NULL);
-//	return (lr1_states);
-}
-
-#endif
 
 static int
 check_conflict(lr1_state_t* state, trans_list_t* reduce_list, int kind) {
@@ -917,8 +868,6 @@ print_debug_report(cfg_t const* cfg, vector_t const* lr1_states) {
 		if (state->accept)
 			{ printf("(Accept): "); }
 		print_state(cfg, state->items);
-
-		continue;
 
 		print_move(cfg, state->shift_lst, _SHIFT);
 		print_move(cfg, state->goto_lst, _GOTO);

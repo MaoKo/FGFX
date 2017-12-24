@@ -26,6 +26,7 @@ adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	}
 	else {
 		memcpy(chunk, bs->map, oldsize);
+		FREE(bs->map);
 		bs->map = chunk;
 	}
 	// TODO: understand bug of memset
