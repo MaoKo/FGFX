@@ -93,6 +93,16 @@ new_trans_list(unsigned int input, unsigned int state) {
 	return (list);
 }
 
+size_t
+size_gen_list(gen_list_t const* list) {
+	size_t crt_size = 0;
+	while (list) {
+		++crt_size;
+		list = list->next;
+	}
+	return (crt_size);
+}
+
 void
 append_trans_list(trans_list_t* dst, trans_list_t* src) {
 	if (!dst)

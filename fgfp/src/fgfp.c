@@ -64,38 +64,51 @@ int main(int argc, char* argv[]) {
 	}
 #endif	
 
+/*
 	vector_t* lr1_states = gen_lr1_states(cfg);
 	compute_reduce_op(cfg, lr1_states);
 	print_debug_report(cfg, lr1_states);
+*/
 
+#if 0
+	size_t common = 0;
+	bitset_t* seen = new_bitset();
+
+	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
+		if (IS_PRESENT(seen, i))
+			{ continue; }
+
+		lr1_state_t* outer_state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
+//		printf("State equivalent with state %2zu :\n", i);
+
+		for (size_t j = i + 1; j < SIZE_VECTOR(lr1_states); ++j) {
+			lr1_state_t* inner_state = (lr1_state_t*)AT_VECTOR(lr1_states, j);
+
+			if (!cmp_lr0_state(outer_state->items, inner_state->items)) {
+//				printf("\t- state %2zu\n", j);
+				ADD_BITSET(seen , j);
+				++common;
+			}
+		}
+	}
+
+	del_bitset(seen);
+	printf("Common = %zu\n", common);
+
+#endif
+
+/*
 	del_record();
 	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);
+*/
 
-#if 0
-	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
-		lr1_state_t* outer_state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
-		printf("State equivalent with state %2zu :\n", i);
-		for (size_t j = i + 1; j < SIZE_VECTOR(lr1_states); ++j) {
-			lr1_state_t* inner_state = (lr1_state_t*)AT_VECTOR(lr1_states, j);
-			if (!cmp_lr0_state(outer_state, inner_state->items))
-				{ printf("\t- state %2zu\n", j); }
-		}
-	}
-#endif
-
-//	display_parsing_table(cfg, get_filename(argv[1]));
+	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0
 	print_non_terminal(cfg);
 	print_production(cfg);
-
-	puts("=== NULLABLE SYMBOL ===");
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
-		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
-		if (non_terminal->nullable)
-			{ printf("%s is nullable.\n", non_terminal->name); }
-	}
+	print_nullable(cfg);
 
 	puts("=== FIRST SET ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
@@ -130,6 +143,7 @@ int main(int argc, char* argv[]) {
 	}
 
 #endif	
+
 	del_cfg(cfg);
-	return (0);
+	return (EXIT_SUCCESS);
 }

@@ -36,7 +36,8 @@
 #define MACRO_NTER	"TOTAL_NTER"
 #define MACRO_TOKEN	"TOTAL_TOKEN"
 
-#define HEADER_SUF	"_H"
+#define HEADER_SUF	"H"
+#define SEP			"_"
 
 #define BYTE		8
 #define SHORT		16

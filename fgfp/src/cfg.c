@@ -389,7 +389,8 @@ detect_bad_symbol(cfg_t* cfg) {
 
 #ifdef PRINT_DEBUG
 
-void print_terminal(cfg_t const* cfg) {
+void
+print_terminal(cfg_t const* cfg) {
 	puts("=== TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -397,7 +398,8 @@ void print_terminal(cfg_t const* cfg) {
 	}
 }
 
-void print_non_terminal(cfg_t const* cfg) {
+void
+print_non_terminal(cfg_t const* cfg) {
 	puts("=== NON_TERMINAL ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
 		printf("%s\n", ((symbol_t*)
@@ -405,7 +407,8 @@ void print_non_terminal(cfg_t const* cfg) {
 	}
 }
 
-void print_production(cfg_t const* cfg) {
+void
+print_production(cfg_t const* cfg) {
 	puts("=== PRODUCTION ===");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = AT_VECTOR(cfg->productions, i);
@@ -418,6 +421,16 @@ void print_production(cfg_t const* cfg) {
 			list = list->next;
 		}
 		puts("");
+	}
+}
+
+void
+print_nullable(cfg_t const* cfg) {
+	puts("=== NULLABLE SYMBOL ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
+		if (non_terminal->nullable)
+			{ printf("%s is nullable.\n", non_terminal->name); }
 	}
 }
 

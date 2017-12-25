@@ -3,10 +3,9 @@
 
 #include "vector.h"
 
-#define IFNDEF_ONLY_TOKEN(x)	dprintf(x, "#ifndef ONLY_TOKEN\n\n")
-#define ENDIF_ONLY_TOKEN(x)	dprintf(x, "#endif /* ONLY_TOKEN */\n")
+#define IFNDEF_ONLY_TOKEN(x)	dprintf(x, "#ifndef _ONLY_TOKEN_" NL NL)
+#define ENDIF_ONLY_TOKEN(x)		dprintf(x, "#endif /* _ONLY_TOKEN_ */" NL)
 
-#define SEP					"_"
 #define TOKEN_PREFIX		"T"
 
 void display_state_table(int, vector_t const*, char const*);

@@ -10,7 +10,7 @@
 
 void display_action_enum(int);
 void display_lr_useful_macro(int);
-void display_action_table(int, cfg_t const*, vector_t const*);
-void display_goto_table(int, cfg_t const*, vector_t const*);
+void display_action_table(int, cfg_t const*, vector_t const*, char const*);
+void display_goto_table(int, cfg_t const*, vector_t const*, char const*);
 
 #endif /* DISPLAY_LR_H */

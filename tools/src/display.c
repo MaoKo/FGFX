@@ -16,7 +16,7 @@ min_size_type(size_t size) {
 
 void
 display_include_macro(int filde, char const* header) {
-	write(filde, "_", 1);
+	write(filde, SEP, 1);
 	while (*header) {
 		char c;
 		if (isalnum(*header))
@@ -26,7 +26,7 @@ display_include_macro(int filde, char const* header) {
 		write(filde, &c, 1);
 		++header;
 	}
-	dprintf(filde, HEADER_SUF);
+	dprintf(filde, SEP HEADER_SUF SEP);
 }
 
 void

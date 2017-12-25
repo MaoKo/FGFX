@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "cfg_production.h"
+
 #include "display_cfg.h"
 #include "lr.h"
 #include "display_lr.h"
@@ -14,12 +16,12 @@
 
 void
 display_location_token(int filde, vector_t const* path_token) {
-	dprintf(filde, DEFINE(ONLY_TOKEN,) NL);
+	dprintf(filde, DEFINE(_ONLY_TOKEN_,) NL);
 	for (size_t i = 0; i < SIZE_VECTOR(path_token); ++i) {
 		dprintf(filde, INCLUDE(%s) NL,
 			(char const*)AT_VECTOR(path_token, i));
 	}
-	dprintf(filde, UNDEF(ONLY_TOKEN) NL NL);
+	dprintf(filde, UNDEF(_ONLY_TOKEN_) NL NL);
 }
 
 void
@@ -28,8 +30,10 @@ display_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 
 	symbol_t* symbol = (symbol_t*)AT_VECTOR(nter, index);
 	dprintf(filde, NTER_PREFIX);
+
 	if (sep)
 		{ dprintf(filde, SEP); }
+
 	for (size_t i = 1; i < (strlen(symbol->name) - 1); ++i) {
 		if (symbol->name[i] == '\'')
 			{ dprintf(filde, PRIME_STR); }
@@ -48,14 +52,17 @@ display_non_terminal_enum(int filde, cfg_t const* cfg) {
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
 	dprintf(filde, DEFINE(%s, %zu) NL NL,
-			MACRO_NTER, SIZE_VECTOR(cfg->non_terminal) - 1);
+					MACRO_NTER, SIZE_VECTOR(cfg->non_terminal) - 1);
 }
 
 void
-display_nproduction_macro(int filde, cfg_t const* cfg, size_t index) {
-	dprintf(filde, PROD_PREFIX SEP);
+display_nproduction(int filde, cfg_t const* cfg, size_t index) {
+	dprintf(filde, PROD_PREFIX SEP LHS_STR SEP);
+
 	production_t* prod = (production_t*)AT_VECTOR(cfg->productions, index);
 	display_nter_symbol(filde, cfg, prod->symbol_lhs->index, false);
+
+	dprintf(filde, SEP RHS_STR);
 	list_rhs* list = prod->rhs_element;
 	while (list) {
 		dprintf(filde, SEP);
@@ -68,14 +75,49 @@ display_nproduction_macro(int filde, cfg_t const* cfg, size_t index) {
 }
 
 void
-display_production_macro(int filde, cfg_t const* cfg) {
-	dprintf(filde, "//Various macro representing production." NL);
+display_production_enum(int filde, cfg_t const* cfg) {
+	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
-		dprintf(filde, "#define" SP);
-		display_nproduction_macro(filde, cfg, i);
-		dprintf(filde, TAB "%zu" NL, i + 1);
+		dprintf(filde, TAB);
+		display_nproduction(filde, cfg, i);
+		dprintf(filde, COMMA NL);
 	}
-	dprintf(filde, NL NL);
+	dprintf(filde, END_BLOCK SEMI NL NL);
+	dprintf(filde, DEFINE(TOTAL_PROD, %zu) NL NL,
+										SIZE_VECTOR(cfg->productions));
+}
+
+void
+display_rhs_table(int filde, cfg_t const* cfg, char const* header) {
+	dprintf(filde, STATIC SP INT NL);
+	display_verbatim_file(filde, header);
+
+	dprintf(filde, "_rhs_prod_table[%s] = " BEG_BLOCK NL, "TOTAL_PROD");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		dprintf(filde, TAB "[");
+		display_nproduction(filde, cfg, i);
+		dprintf(filde, "] = %zu" COMMA NL,
+								size_gen_list((gen_list_t*)prod->rhs_element));
+	}
+	dprintf(filde, END_BLOCK SEMI NL NL);
+}
+
+void
+display_lhs_table(int filde, cfg_t const* cfg, char const* header) {
+	dprintf(filde, STATIC SP INT NL);
+	display_verbatim_file(filde, header);
+
+	dprintf(filde, "_lhs_prod_table[%s] = " BEG_BLOCK NL, "TOTAL_PROD");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		dprintf(filde, TAB "[");
+		display_nproduction(filde, cfg, i);
+		dprintf(filde, "] = ");
+		display_nter_symbol(filde, cfg, LHS(prod)->index, true);
+		dprintf(filde, COMMA NL);
+	}
+	dprintf(filde, END_BLOCK SEMI NL NL);
 }
 
 static size_t
@@ -124,23 +166,26 @@ display_parsing_table(cfg_t const* cfg, char const* base_file) {
 	display_location_token(filde, cfg->token_file);
 	display_non_terminal_enum(filde, cfg);	
 
-	display_production_macro(filde, cfg);
-	
+	display_production_enum(filde, cfg);
+
+	display_rhs_table(filde, cfg, header);	
+	display_lhs_table(filde, cfg, header);	
+
 	display_ll_useful_macro(filde, cfg);
 
-	vector_t* ll1_table = gen_ll1_table(cfg);
-	display_ll_table(filde, cfg, ll1_table, header);
-	del_vector(ll1_table);
+	if (is_ll1(cfg)) {
+		vector_t* ll1_table = gen_ll1_table(cfg);
+		display_ll_table(filde, cfg, ll1_table, header);
+		del_vector(ll1_table);
+	}
 
-	dprintf(filde, "#if 0" NL);
 	vector_t* lr1_states = gen_lr1_states(cfg);
 	compute_reduce_op(cfg, lr1_states);
 
 	display_action_enum(filde);
 	display_lr_useful_macro(filde);
-	display_action_table(filde, cfg, lr1_states);
-	display_goto_table(filde, cfg, lr1_states);
-	dprintf(filde, "#endif" NL);
+	display_action_table(filde, cfg, lr1_states, header);
+	display_goto_table(filde, cfg, lr1_states, header);
 
 	del_vector(lr1_states);
 

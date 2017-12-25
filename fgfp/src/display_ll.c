@@ -34,9 +34,9 @@ display_ll_table(int filde, cfg_t const* cfg,
 		while (list) {
 			dprintf(filde, "[");
 			display_nter_symbol(filde, cfg, i, true);
-			dprintf(filde, "][" TOKEN_PREFIX "%s]=", ((symbol_t*)
+			dprintf(filde, "][" TOKEN_PREFIX SEP "%s]=", ((symbol_t*)
 				AT_VECTOR(cfg->terminal, list->input))->name);
-			display_nproduction_macro(filde, cfg, list->state);
+			display_nproduction(filde, cfg, list->state);
 			dprintf(filde, COMMA SP);
 			list = list->next;
 		}

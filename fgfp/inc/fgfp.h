@@ -39,9 +39,9 @@ typedef struct {
 } symbol_t;
 
 typedef struct list_rhs {
-	size_t pos;
-	symbol_t* symbol_rhs;
 	struct list_rhs* next;
+	symbol_t* symbol_rhs;
+	size_t pos;
 } list_rhs;
 
 typedef struct {
@@ -69,8 +69,8 @@ typedef struct {
 typedef struct {
 	bitset_t* kernel_item;
 	symbol_t* rprefix;
-	bool ref_lr0;
 	vector_t* non_lr0_kernel_item;
+	bool ref_lr0;
 	bitset_t* final_state;
 } kernel_t;
 

@@ -1,6 +1,10 @@
-$EXTERN { 'arith.lex.h' };
+$EXTERN
+{
+	'arith.lex.h',
+};
 
-$PRODUCTION {
+$PRODUCTION 
+{
 <E>	->	<E> '+' <T>
 	 |	<E> '-' <T>
 	 |	<T>
