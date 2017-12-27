@@ -69,8 +69,8 @@ typedef struct {
 typedef struct {
 	bitset_t* kernel_item;
 	symbol_t* rprefix;
-	vector_t* non_lr0_kernel_item;
 	bool ref_lr0;
+	vector_t* non_lr0_kernel_item;
 	bitset_t* final_state;
 } kernel_t;
 
@@ -83,6 +83,7 @@ typedef struct {
 	bool accept;
 	trans_list_t** last_move;
 	bool first_reach;
+	bitset_t* equiv_state;
 } lr1_state_t;
 
 typedef struct {
