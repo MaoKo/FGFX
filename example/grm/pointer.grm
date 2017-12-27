@@ -2,11 +2,11 @@ $EXTERN { 'none.h', };
 
 $PRODUCTION
 {
-	<S> -> <L> '=' <R>
-		 | <R> ;
+	<S> -> <V> '=' <E>
+		 | <E> ;
 
-	<L> -> '*' <R> | id ;
-	<R> -> <L> ;
+	<E> -> <V> ;
+	<V> -> '*' <E> | x ;
 };
 
 $ALIAS

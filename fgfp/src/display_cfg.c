@@ -6,6 +6,7 @@
 
 #include "display_cfg.h"
 #include "lr.h"
+#include "lalr.h"
 #include "display_lr.h"
 #include "ll.h"
 #include "display_ll.h"
@@ -179,7 +180,7 @@ display_parsing_table(cfg_t const* cfg, char const* base_file) {
 		del_vector(ll1_table);
 	}
 
-	vector_t* lr1_states = gen_lr1_states(cfg);
+	vector_t* lr1_states = gen_lalr1_states(cfg);
 	compute_reduce_op(cfg, lr1_states);
 
 	display_action_enum(filde);

@@ -38,6 +38,7 @@ size_t count_back(char const*, int(*)(int));
 size_t char_in_str(char const*, char);
 trans_list_t* new_trans_list(unsigned int, unsigned int);
 size_t size_gen_list(gen_list_t const*);
+void redirect_trans_list(trans_list_t*, unsigned int, unsigned int);
 void append_trans_list(trans_list_t*, trans_list_t*);
 void del_trans_list(trans_list_t*);
 bool cmp_input_trans_list(trans_list_t const*, unsigned int);

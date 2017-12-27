@@ -15,6 +15,9 @@ adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	bs->nwords	= new_size;
 	bs->nbits	= new_size * _BITS_IN_WORD;
 
+	if (bs->invert)
+		{ bs->siter = bs->nbits - 1; }
+
 	_SETTYPE* chunk	= NEW(_SETTYPE, _BYTE_SETTYPE(new_size));
 	memset(chunk, 0, _BYTE_SETTYPE(new_size));
 
@@ -149,10 +152,19 @@ int
 _next_bitset(bitset_t* bs) {
 	if (!bs)
 		{ return (IT_NULL); }
-	while (bs->siter < bs->nbits) {
-		int next_val = (bs->siter)++;
-		if (OP_BITSET(bs, next_val, &))
-			{ return (next_val); }
+	if (bs->invert) {
+		while (bs->siter >= 0) {
+			int next_val = (bs->siter)--;
+			if (OP_BITSET(bs, next_val, &))
+				{ return (next_val); }
+		}
+	}
+	else {
+		while (bs->siter < (int)bs->nbits) {
+			int next_val = (bs->siter)++;
+			if (OP_BITSET(bs, next_val, &))
+				{ return (next_val); }
+		}
 	}
 	return (IT_NULL);
 }
@@ -228,6 +240,7 @@ count_elt_bitset(bitset_t const* bset) {
 }
 
 #ifdef PRINT_DEBUG
+
 void
 print_bitset(bitset_t* bs) {
 	printf("{");
@@ -240,5 +253,6 @@ print_bitset(bitset_t* bs) {
 	}
 	printf("}\n");
 }
+
 #endif /* PRINT_DEBUG */
 

@@ -104,6 +104,18 @@ size_gen_list(gen_list_t const* list) {
 }
 
 void
+redirect_trans_list(trans_list_t* list, unsigned int change,
+										unsigned int base) {
+	while (list) {
+		if (list->state == base)
+			{ list->state = change; }
+		else if (list->state > base)
+			{ --(list->state); }
+		list = list->next;
+	}
+}
+
+void
 append_trans_list(trans_list_t* dst, trans_list_t* src) {
 	if (!dst)
 		{ return; }

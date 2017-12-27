@@ -65,17 +65,19 @@ int main(int argc, char* argv[]) {
 	}
 #endif	
 
-	vector_t* lr1_states = gen_lr1_states(cfg);
-//	compute_reduce_op(cfg, lr1_states);
-//	print_debug_report(cfg, lr1_states);
+#if 0
+	vector_t* lr1_states = gen_lalr1_states(cfg);
 
-	mark_equiv_state(lr1_states);
-	
+	compute_reduce_op(cfg, lr1_states);
+	print_debug_report(cfg, lr1_states);
+
 	del_record();
+
 	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);
+#endif
 
-//	display_parsing_table(cfg, get_filename(argv[1]));
+	display_parsing_table(cfg, get_filename(argv[1]));
 
 #if 0
 	print_non_terminal(cfg);

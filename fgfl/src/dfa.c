@@ -134,19 +134,14 @@ gen_table(state_t* master, vector_t** trans, vector_t** final, vector_t* elst) {
 }
 
 #ifdef OPTIMIZE
+
 static void
-redirect_trans(vector_t* trans, long s1, long s2) {
+redirect_transition(vector_t* trans, long s1, long s2) {
 	del_trans_list(AT_VECTOR(trans, s2));
 	erase_vector(trans, s2);
 	for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
-		trans_list_t* t = (trans_list_t*)AT_VECTOR(trans, i);
-		while (t) {
-			if (t->state == s2)
-				{ t->state = s1; }
-			else if (t->state > s2)
-				{ --(t->state); }
-			t = t->next;
-		}
+		trans_list_t* list = (trans_list_t*)AT_VECTOR(trans, i);
+		redirect_trans_list(list, s1, s2);
 	}
 }
 
@@ -188,13 +183,14 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 		
 				if (final || nonfinal) {
 					repeat = true;
-					redirect_trans(trans, i, j);
+					redirect_transition(trans, i, j);
 					redirect_final(finalt, final, fs2, j);
 				}
 			}
 		}
 	} while (repeat);
 }
+
 #endif /* OPTIMIZE */
 
 void

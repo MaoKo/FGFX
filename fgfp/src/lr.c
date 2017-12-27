@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include <string.h>
 
 #include "lr.h"
@@ -316,13 +315,44 @@ static int
 merge_lr1_item(lr1_item_t const* llr, lr1_item_t const* rlr) {
 	if (cmp_lr0_item(CORE(llr), CORE(rlr)))
 		{ return (ERROR); }
+
 	bitset_t* new_look = dup_bitset(llr->lookahead);
 	UNION_BITSET(new_look, rlr->lookahead);
-
 	int index = new_lr1_item(PROD(CORE(llr)), DOT(CORE(llr)), new_look);
 
 	del_bitset(new_look);
 	return (index);
+}
+
+void
+merge_lr1_state(lr1_state_t* st1, lr1_state_t* st2) {
+	if (!st1 || !st2)
+		{ return; }
+
+	if (st1->hash_items != st2->hash_items
+			|| cmp_lr1_state(st1->items, st2->items))
+		{ return; }
+
+	bitset_t* new_item = new_bitset();
+
+	int i;
+	while ((i = IT_NEXT(st1->items)) != IT_NULL) {
+		lr1_item_t* st1_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
+		int j;
+		while ((j = IT_NEXT(st2->items)) != IT_NULL) {
+			lr1_item_t* st2_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, j);
+			if (!cmp_lr0_item(CORE(st1_item), CORE(st2_item))) {
+				ADD_BITSET(new_item, (size_t)
+										merge_lr1_item(st1_item, st2_item));
+				break;
+			}
+		}
+		IT_RESET(st2->items);
+	}
+	IT_RESET(st1->items);
+
+	del_bitset(st1->items);
+	st1->items = new_item;
 }
 
 static void
