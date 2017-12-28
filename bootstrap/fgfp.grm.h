@@ -1,9 +1,9 @@
-#ifndef _FGFP_GRM_H
-#define _FGFP_GRM_H
+#ifndef _FGFP_GRM_H_
+#define _FGFP_GRM_H_
 
-#define ONLY_TOKEN	
+#define _ONLY_TOKEN_	
 #include "fgfx.lex.h"
-#undef	ONLY_TOKEN
+#undef	_ONLY_TOKEN_
 
 enum {
 	N_FGFP,
@@ -30,74 +30,161 @@ enum {
 
 #define TOTAL_NTER	20
 
-//Various macro representing production.
-#define P_NFGFP_Nsection_NFGFP_PRIME	1
-#define P_NFGFP_PRIME_Nsection_NFGFP_PRIME	2
-#define P_NFGFP_PRIME	3
-#define P_Nsection_Nextern_section	4
-#define P_Nsection_Nproduction_section	5
-#define P_Nsection_Nalias_section	6
-#define P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI	7
-#define P_Npath_list_TLITERAL_Npath_list_PRIME	8
-#define P_Npath_list	9
-#define P_Npath_list_PRIME_TCOMMA_Npath_list	10
-#define P_Npath_list_PRIME	11
-#define P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI	12
-#define P_Nalias_list_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME	13
-#define P_Nalias_list	14
-#define P_Nalias_list_PRIME_TCOMMA_Nalias_list	15
-#define P_Nalias_list_PRIME	16
-#define P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI	17
-#define P_Nproduction_list_Nproduction_Nproduction_list_PRIME	18
-#define P_Nproduction_list	19
-#define P_Nproduction_list_PRIME_Nproduction_Nproduction_list_PRIME	20
-#define P_Nproduction_list_PRIME	21
-#define P_Nproduction_TNTER_Nfollow_prod_TSEMI	22
-#define P_Nfollow_prod_TEQUAL_TSTART	23
-#define P_Nfollow_prod_TARROW_Nlhs	24
-#define P_Nlhs_Nopt_list_Nlhs_PRIME	25
-#define P_Nlhs_PRIME_TUNION_Nopt_list_Nlhs_PRIME	26
-#define P_Nlhs_PRIME	27
-#define P_Nopt_list_Nsymbol_list	28
-#define P_Nopt_list_TEMPTY	29
-#define P_Nopt_list	30
-#define P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME	31
-#define P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME	32
-#define P_Nsymbol_list_PRIME	33
-#define P_Nsymbol_TGLOBAL_TOK	34
-#define P_Nsymbol_TNTER	35
-#define P_Nsymbol_TLITERAL	36
+enum {
+	P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME,
+	P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME,
+	P_LHS_NFGFP_PRIME_RHS,
+	P_LHS_Nsection_RHS_Nextern_section,
+	P_LHS_Nsection_RHS_Nproduction_section,
+	P_LHS_Nsection_RHS_Nalias_section,
+	P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI,
+	P_LHS_Npath_list_RHS_TLITERAL_Npath_list_PRIME,
+	P_LHS_Npath_list_RHS,
+	P_LHS_Npath_list_PRIME_RHS_TCOMMA_Npath_list,
+	P_LHS_Npath_list_PRIME_RHS,
+	P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI,
+	P_LHS_Nalias_list_RHS_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME,
+	P_LHS_Nalias_list_RHS,
+	P_LHS_Nalias_list_PRIME_RHS_TCOMMA_Nalias_list,
+	P_LHS_Nalias_list_PRIME_RHS,
+	P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI,
+	P_LHS_Nproduction_list_RHS_Nproduction_Nproduction_list_PRIME,
+	P_LHS_Nproduction_list_RHS,
+	P_LHS_Nproduction_list_PRIME_RHS_Nproduction_Nproduction_list_PRIME,
+	P_LHS_Nproduction_list_PRIME_RHS,
+	P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI,
+	P_LHS_Nfollow_prod_RHS_TEQUAL_TSTART,
+	P_LHS_Nfollow_prod_RHS_TARROW_Nlhs,
+	P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME,
+	P_LHS_Nlhs_PRIME_RHS_TUNION_Nopt_list_Nlhs_PRIME,
+	P_LHS_Nlhs_PRIME_RHS,
+	P_LHS_Nopt_list_RHS_Nsymbol_list,
+	P_LHS_Nopt_list_RHS_TEMPTY,
+	P_LHS_Nopt_list_RHS,
+	P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME,
+	P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME,
+	P_LHS_Nsymbol_list_PRIME_RHS,
+	P_LHS_Nsymbol_RHS_TGLOBAL_TOK,
+	P_LHS_Nsymbol_RHS_TNTER,
+	P_LHS_Nsymbol_RHS_TLITERAL,
+};
 
+#define TOTAL_PROD	37
+
+#if 0
+
+static int
+fgfp_rhs_prod_table[TOTAL_PROD] = {
+	[P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME] = 2,
+	[P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME] = 2,
+	[P_LHS_NFGFP_PRIME_RHS] = 0,
+	[P_LHS_Nsection_RHS_Nextern_section] = 1,
+	[P_LHS_Nsection_RHS_Nproduction_section] = 1,
+	[P_LHS_Nsection_RHS_Nalias_section] = 1,
+	[P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI] = 5,
+	[P_LHS_Npath_list_RHS_TLITERAL_Npath_list_PRIME] = 2,
+	[P_LHS_Npath_list_RHS] = 0,
+	[P_LHS_Npath_list_PRIME_RHS_TCOMMA_Npath_list] = 2,
+	[P_LHS_Npath_list_PRIME_RHS] = 0,
+	[P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI] = 5,
+	[P_LHS_Nalias_list_RHS_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME] = 6,
+	[P_LHS_Nalias_list_RHS] = 0,
+	[P_LHS_Nalias_list_PRIME_RHS_TCOMMA_Nalias_list] = 2,
+	[P_LHS_Nalias_list_PRIME_RHS] = 0,
+	[P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI] = 5,
+	[P_LHS_Nproduction_list_RHS_Nproduction_Nproduction_list_PRIME] = 2,
+	[P_LHS_Nproduction_list_RHS] = 0,
+	[P_LHS_Nproduction_list_PRIME_RHS_Nproduction_Nproduction_list_PRIME] = 2,
+	[P_LHS_Nproduction_list_PRIME_RHS] = 0,
+	[P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI] = 3,
+	[P_LHS_Nfollow_prod_RHS_TEQUAL_TSTART] = 2,
+	[P_LHS_Nfollow_prod_RHS_TARROW_Nlhs] = 2,
+	[P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME] = 2,
+	[P_LHS_Nlhs_PRIME_RHS_TUNION_Nopt_list_Nlhs_PRIME] = 3,
+	[P_LHS_Nlhs_PRIME_RHS] = 0,
+	[P_LHS_Nopt_list_RHS_Nsymbol_list] = 1,
+	[P_LHS_Nopt_list_RHS_TEMPTY] = 1,
+	[P_LHS_Nopt_list_RHS] = 0,
+	[P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME] = 2,
+	[P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME] = 2,
+	[P_LHS_Nsymbol_list_PRIME_RHS] = 0,
+	[P_LHS_Nsymbol_RHS_TGLOBAL_TOK] = 1,
+	[P_LHS_Nsymbol_RHS_TNTER] = 1,
+	[P_LHS_Nsymbol_RHS_TLITERAL] = 1,
+};
+
+static int
+fgfp_lhs_prod_table[TOTAL_PROD] = {
+	[P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME] = N_FGFP,
+	[P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME] = N_FGFP_PRIME,
+	[P_LHS_NFGFP_PRIME_RHS] = N_FGFP_PRIME,
+	[P_LHS_Nsection_RHS_Nextern_section] = N_section,
+	[P_LHS_Nsection_RHS_Nproduction_section] = N_section,
+	[P_LHS_Nsection_RHS_Nalias_section] = N_section,
+	[P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI] = N_extern_section,
+	[P_LHS_Npath_list_RHS_TLITERAL_Npath_list_PRIME] = N_path_list,
+	[P_LHS_Npath_list_RHS] = N_path_list,
+	[P_LHS_Npath_list_PRIME_RHS_TCOMMA_Npath_list] = N_path_list_PRIME,
+	[P_LHS_Npath_list_PRIME_RHS] = N_path_list_PRIME,
+	[P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI] = N_alias_section,
+	[P_LHS_Nalias_list_RHS_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME] = N_alias_list,
+	[P_LHS_Nalias_list_RHS] = N_alias_list,
+	[P_LHS_Nalias_list_PRIME_RHS_TCOMMA_Nalias_list] = N_alias_list_PRIME,
+	[P_LHS_Nalias_list_PRIME_RHS] = N_alias_list_PRIME,
+	[P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI] = N_production_section,
+	[P_LHS_Nproduction_list_RHS_Nproduction_Nproduction_list_PRIME] = N_production_list,
+	[P_LHS_Nproduction_list_RHS] = N_production_list,
+	[P_LHS_Nproduction_list_PRIME_RHS_Nproduction_Nproduction_list_PRIME] = N_production_list_PRIME,
+	[P_LHS_Nproduction_list_PRIME_RHS] = N_production_list_PRIME,
+	[P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI] = N_production,
+	[P_LHS_Nfollow_prod_RHS_TEQUAL_TSTART] = N_follow_prod,
+	[P_LHS_Nfollow_prod_RHS_TARROW_Nlhs] = N_follow_prod,
+	[P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME] = N_lhs,
+	[P_LHS_Nlhs_PRIME_RHS_TUNION_Nopt_list_Nlhs_PRIME] = N_lhs_PRIME,
+	[P_LHS_Nlhs_PRIME_RHS] = N_lhs_PRIME,
+	[P_LHS_Nopt_list_RHS_Nsymbol_list] = N_opt_list,
+	[P_LHS_Nopt_list_RHS_TEMPTY] = N_opt_list,
+	[P_LHS_Nopt_list_RHS] = N_opt_list,
+	[P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME] = N_symbol_list,
+	[P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME] = N_symbol_list_PRIME,
+	[P_LHS_Nsymbol_list_PRIME_RHS] = N_symbol_list_PRIME,
+	[P_LHS_Nsymbol_RHS_TGLOBAL_TOK] = N_symbol,
+	[P_LHS_Nsymbol_RHS_TNTER] = N_symbol,
+	[P_LHS_Nsymbol_RHS_TLITERAL] = N_symbol,
+};
+
+#endif
 
 #define ERROR_SLOT	0
 #define START_SYMBOL	N_FGFP
 
 static int
 fgfp_ll_table[TOTAL_NTER][TOTAL_TOKEN] = {
-	[N_FGFP][TPRODUCTION]=P_NFGFP_Nsection_NFGFP_PRIME, [N_FGFP][TALIAS]=P_NFGFP_Nsection_NFGFP_PRIME, [N_FGFP][TEXTERN]=P_NFGFP_Nsection_NFGFP_PRIME, 
-	[N_section][TALIAS]=P_Nsection_Nalias_section, [N_section][TPRODUCTION]=P_Nsection_Nproduction_section, [N_section][TEXTERN]=P_Nsection_Nextern_section, 
-	[N_FGFP_PRIME][TEOF]=P_NFGFP_PRIME, [N_FGFP_PRIME][TPRODUCTION]=P_NFGFP_PRIME_Nsection_NFGFP_PRIME, [N_FGFP_PRIME][TALIAS]=P_NFGFP_PRIME_Nsection_NFGFP_PRIME, [N_FGFP_PRIME][TEXTERN]=P_NFGFP_PRIME_Nsection_NFGFP_PRIME, 
-	[N_extern_section][TEXTERN]=P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI, 
-	[N_production_section][TPRODUCTION]=P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI, 
-	[N_alias_section][TALIAS]=P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI, 
-	[N_path_list][TRBRACE]=P_Npath_list, [N_path_list][TLITERAL]=P_Npath_list_TLITERAL_Npath_list_PRIME, 
-	[N_path_list_PRIME][TRBRACE]=P_Npath_list_PRIME, [N_path_list_PRIME][TCOMMA]=P_Npath_list_PRIME_TCOMMA_Npath_list, 
-	[N_alias_list][TRBRACE]=P_Nalias_list, [N_alias_list][TLPAREN]=P_Nalias_list_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME, 
-	[N_alias_list_PRIME][TRBRACE]=P_Nalias_list_PRIME, [N_alias_list_PRIME][TCOMMA]=P_Nalias_list_PRIME_TCOMMA_Nalias_list, 
-	[N_production_list][TRBRACE]=P_Nproduction_list, [N_production_list][TNTER]=P_Nproduction_list_Nproduction_Nproduction_list_PRIME, 
-	[N_production][TNTER]=P_Nproduction_TNTER_Nfollow_prod_TSEMI, 
-	[N_production_list_PRIME][TRBRACE]=P_Nproduction_list_PRIME, [N_production_list_PRIME][TNTER]=P_Nproduction_list_PRIME_Nproduction_Nproduction_list_PRIME, 
-	[N_follow_prod][TARROW]=P_Nfollow_prod_TARROW_Nlhs, [N_follow_prod][TEQUAL]=P_Nfollow_prod_TEQUAL_TSTART, 
-	[N_lhs][TSEMI]=P_Nlhs_Nopt_list_Nlhs_PRIME, [N_lhs][TEMPTY]=P_Nlhs_Nopt_list_Nlhs_PRIME, [N_lhs][TUNION]=P_Nlhs_Nopt_list_Nlhs_PRIME, [N_lhs][TNTER]=P_Nlhs_Nopt_list_Nlhs_PRIME, [N_lhs][TGLOBAL_TOK]=P_Nlhs_Nopt_list_Nlhs_PRIME, [N_lhs][TLITERAL]=P_Nlhs_Nopt_list_Nlhs_PRIME, 
-	[N_opt_list][TUNION]=P_Nopt_list, [N_opt_list][TSEMI]=P_Nopt_list, [N_opt_list][TEMPTY]=P_Nopt_list_TEMPTY, [N_opt_list][TNTER]=P_Nopt_list_Nsymbol_list, [N_opt_list][TGLOBAL_TOK]=P_Nopt_list_Nsymbol_list, [N_opt_list][TLITERAL]=P_Nopt_list_Nsymbol_list, 
-	[N_lhs_PRIME][TSEMI]=P_Nlhs_PRIME, [N_lhs_PRIME][TUNION]=P_Nlhs_PRIME_TUNION_Nopt_list_Nlhs_PRIME, 
-	[N_symbol_list][TNTER]=P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list][TGLOBAL_TOK]=P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list][TLITERAL]=P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME, 
-	[N_symbol][TLITERAL]=P_Nsymbol_TLITERAL, [N_symbol][TNTER]=P_Nsymbol_TNTER, [N_symbol][TGLOBAL_TOK]=P_Nsymbol_TGLOBAL_TOK, 
-	[N_symbol_list_PRIME][TUNION]=P_Nsymbol_list_PRIME, [N_symbol_list_PRIME][TSEMI]=P_Nsymbol_list_PRIME, [N_symbol_list_PRIME][TNTER]=P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list_PRIME][TGLOBAL_TOK]=P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list_PRIME][TLITERAL]=P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME, 
+	[N_FGFP][T_PRODUCTION]=P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME, [N_FGFP][T_ALIAS]=P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME, [N_FGFP][T_EXTERN]=P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME, 
+	[N_section][T_ALIAS]=P_LHS_Nsection_RHS_Nalias_section, [N_section][T_PRODUCTION]=P_LHS_Nsection_RHS_Nproduction_section, [N_section][T_EXTERN]=P_LHS_Nsection_RHS_Nextern_section, 
+	[N_FGFP_PRIME][T_EOF]=P_LHS_NFGFP_PRIME_RHS, [N_FGFP_PRIME][T_PRODUCTION]=P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME, [N_FGFP_PRIME][T_ALIAS]=P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME, [N_FGFP_PRIME][T_EXTERN]=P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME, 
+	[N_extern_section][T_EXTERN]=P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI, 
+	[N_production_section][T_PRODUCTION]=P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI, 
+	[N_alias_section][T_ALIAS]=P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI, 
+	[N_path_list][T_RBRACE]=P_LHS_Npath_list_RHS, [N_path_list][T_LITERAL]=P_LHS_Npath_list_RHS_TLITERAL_Npath_list_PRIME, 
+	[N_path_list_PRIME][T_RBRACE]=P_LHS_Npath_list_PRIME_RHS, [N_path_list_PRIME][T_COMMA]=P_LHS_Npath_list_PRIME_RHS_TCOMMA_Npath_list, 
+	[N_alias_list][T_RBRACE]=P_LHS_Nalias_list_RHS, [N_alias_list][T_LPAREN]=P_LHS_Nalias_list_RHS_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME, 
+	[N_alias_list_PRIME][T_RBRACE]=P_LHS_Nalias_list_PRIME_RHS, [N_alias_list_PRIME][T_COMMA]=P_LHS_Nalias_list_PRIME_RHS_TCOMMA_Nalias_list, 
+	[N_production_list][T_RBRACE]=P_LHS_Nproduction_list_RHS, [N_production_list][T_NTER]=P_LHS_Nproduction_list_RHS_Nproduction_Nproduction_list_PRIME, 
+	[N_production][T_NTER]=P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI, 
+	[N_production_list_PRIME][T_RBRACE]=P_LHS_Nproduction_list_PRIME_RHS, [N_production_list_PRIME][T_NTER]=P_LHS_Nproduction_list_PRIME_RHS_Nproduction_Nproduction_list_PRIME, 
+	[N_follow_prod][T_ARROW]=P_LHS_Nfollow_prod_RHS_TARROW_Nlhs, [N_follow_prod][T_EQUAL]=P_LHS_Nfollow_prod_RHS_TEQUAL_TSTART, 
+	[N_lhs][T_SEMI]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, [N_lhs][T_EMPTY]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, [N_lhs][T_UNION]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, [N_lhs][T_NTER]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, [N_lhs][T_GLOBAL_TOK]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, [N_lhs][T_LITERAL]=P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME, 
+	[N_opt_list][T_UNION]=P_LHS_Nopt_list_RHS, [N_opt_list][T_SEMI]=P_LHS_Nopt_list_RHS, [N_opt_list][T_EMPTY]=P_LHS_Nopt_list_RHS_TEMPTY, [N_opt_list][T_NTER]=P_LHS_Nopt_list_RHS_Nsymbol_list, [N_opt_list][T_GLOBAL_TOK]=P_LHS_Nopt_list_RHS_Nsymbol_list, [N_opt_list][T_LITERAL]=P_LHS_Nopt_list_RHS_Nsymbol_list, 
+	[N_lhs_PRIME][T_SEMI]=P_LHS_Nlhs_PRIME_RHS, [N_lhs_PRIME][T_UNION]=P_LHS_Nlhs_PRIME_RHS_TUNION_Nopt_list_Nlhs_PRIME, 
+	[N_symbol_list][T_NTER]=P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list][T_GLOBAL_TOK]=P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list][T_LITERAL]=P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME, 
+	[N_symbol][T_LITERAL]=P_LHS_Nsymbol_RHS_TLITERAL, [N_symbol][T_NTER]=P_LHS_Nsymbol_RHS_TNTER, [N_symbol][T_GLOBAL_TOK]=P_LHS_Nsymbol_RHS_TGLOBAL_TOK, 
+	[N_symbol_list_PRIME][T_UNION]=P_LHS_Nsymbol_list_PRIME_RHS, [N_symbol_list_PRIME][T_SEMI]=P_LHS_Nsymbol_list_PRIME_RHS, [N_symbol_list_PRIME][T_NTER]=P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list_PRIME][T_GLOBAL_TOK]=P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME, [N_symbol_list_PRIME][T_LITERAL]=P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME, 
 };
 
 #if 0
-enum{
+
+enum {
 	_SHIFT	= 0x1000,
 	_REDUCE	= 0x2000,
 	_GOTO	= 0x4000,
@@ -111,136 +198,137 @@ enum{
 #define LR_START_STATE	0
 
 static int
-lr_action_table[61][TOTAL_TOKEN] = {
-/*   0 */	{[TALIAS]=SHIFT(8),[TPRODUCTION]=SHIFT(7),[TEXTERN]=SHIFT(6),},
+fgfp_lr_action_table[61][TOTAL_TOKEN] = {
+/*   0 */	{[T_PRODUCTION]=SHIFT(8), [T_ALIAS]=SHIFT(7), [T_EXTERN]=SHIFT(6)},
 /*   1 */	{[T_EOF]=ACCEPT,},
-/*   2 */	{[TALIAS]=SHIFT(8),[TPRODUCTION]=SHIFT(7),[TEXTERN]=SHIFT(6),[TEOF]=REDUCE(P_NFGFP_PRIME),},
-/*   3 */	{[TEOF]=REDUCE(P_Nsection_Nextern_section),[TPRODUCTION]=REDUCE(P_Nsection_Nextern_section),[TALIAS]=REDUCE(P_Nsection_Nextern_section),[TEXTERN]=REDUCE(P_Nsection_Nextern_section),},
-/*   4 */	{[TEOF]=REDUCE(P_Nsection_Nproduction_section),[TPRODUCTION]=REDUCE(P_Nsection_Nproduction_section),[TALIAS]=REDUCE(P_Nsection_Nproduction_section),[TEXTERN]=REDUCE(P_Nsection_Nproduction_section),},
-/*   5 */	{[TEOF]=REDUCE(P_Nsection_Nalias_section),[TPRODUCTION]=REDUCE(P_Nsection_Nalias_section),[TALIAS]=REDUCE(P_Nsection_Nalias_section),[TEXTERN]=REDUCE(P_Nsection_Nalias_section),},
-/*   6 */	{[TLBRACE]=SHIFT(11),},
-/*   7 */	{[TLBRACE]=SHIFT(10),},
-/*   8 */	{[TLBRACE]=SHIFT(9),},
-/*   9 */	{[TLPAREN]=SHIFT(21),[TRBRACE]=REDUCE(P_Nalias_list),},
-/*  10 */	{[TNTER]=SHIFT(19),[TRBRACE]=REDUCE(P_Nproduction_list),},
-/*  11 */	{[TLITERAL]=SHIFT(16),[TRBRACE]=REDUCE(P_Npath_list),},
-/*  12 */	{[TEOF]=REDUCE(P_NFGFP_Nsection_NFGFP_PRIME),},
-/*  13 */	{[TALIAS]=SHIFT(8),[TPRODUCTION]=SHIFT(7),[TEXTERN]=SHIFT(6),[TEOF]=REDUCE(P_NFGFP_PRIME),},
-/*  14 */	{[TEOF]=REDUCE(P_NFGFP_PRIME_Nsection_NFGFP_PRIME),},
-/*  15 */	{[TRBRACE]=SHIFT(32),},
-/*  16 */	{[TCOMMA]=SHIFT(31),[TRBRACE]=REDUCE(P_Npath_list_PRIME),},
-/*  17 */	{[TRBRACE]=SHIFT(29),},
-/*  18 */	{[TNTER]=SHIFT(19),[TRBRACE]=REDUCE(P_Nproduction_list_PRIME),},
-/*  19 */	{[TARROW]=SHIFT(26),[TEQUAL]=SHIFT(25),},
-/*  20 */	{[TRBRACE]=SHIFT(23),},
-/*  21 */	{[TGLOBAL_TOK]=SHIFT(22),},
-/*  22 */	{[TBARROW]=SHIFT(48),},
-/*  23 */	{[TSEMI]=SHIFT(47),},
-/*  24 */	{[TSEMI]=SHIFT(46),},
-/*  25 */	{[TSTART]=SHIFT(45),},
-/*  26 */	{[TLITERAL]=SHIFT(44),[TNTER]=SHIFT(43),[TGLOBAL_TOK]=SHIFT(42),[TEMPTY]=SHIFT(40),[TUNION]=REDUCE(P_Nopt_list),[TSEMI]=REDUCE(P_Nopt_list),},
-/*  27 */	{[TRBRACE]=REDUCE(P_Nproduction_list_Nproduction_Nproduction_list_PRIME),},
-/*  28 */	{[TNTER]=SHIFT(19),[TRBRACE]=REDUCE(P_Nproduction_list_PRIME),},
-/*  29 */	{[TSEMI]=SHIFT(35),},
-/*  30 */	{[TRBRACE]=REDUCE(P_Npath_list_TLITERAL_Npath_list_PRIME),},
-/*  31 */	{[TLITERAL]=SHIFT(16),[TRBRACE]=REDUCE(P_Npath_list),},
-/*  32 */	{[TSEMI]=SHIFT(33),},
-/*  33 */	{[TEOF]=REDUCE(P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI),[TPRODUCTION]=REDUCE(P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI),[TALIAS]=REDUCE(P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI),[TEXTERN]=REDUCE(P_Nextern_section_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI),},
-/*  34 */	{[TRBRACE]=REDUCE(P_Npath_list_PRIME_TCOMMA_Npath_list),},
-/*  35 */	{[TEOF]=REDUCE(P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI),[TPRODUCTION]=REDUCE(P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI),[TALIAS]=REDUCE(P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI),[TEXTERN]=REDUCE(P_Nproduction_section_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI),},
-/*  36 */	{[TRBRACE]=REDUCE(P_Nproduction_list_PRIME_Nproduction_Nproduction_list_PRIME),},
-/*  37 */	{[TSEMI]=REDUCE(P_Nfollow_prod_TARROW_Nlhs),},
-/*  38 */	{[TUNION]=SHIFT(53),[TSEMI]=REDUCE(P_Nlhs_PRIME),},
-/*  39 */	{[TUNION]=REDUCE(P_Nopt_list_Nsymbol_list),[TSEMI]=REDUCE(P_Nopt_list_Nsymbol_list),},
-/*  40 */	{[TUNION]=REDUCE(P_Nopt_list_TEMPTY),[TSEMI]=REDUCE(P_Nopt_list_TEMPTY),},
-/*  41 */	{[TLITERAL]=SHIFT(44),[TNTER]=SHIFT(43),[TGLOBAL_TOK]=SHIFT(42),[TUNION]=REDUCE(P_Nsymbol_list_PRIME),[TSEMI]=REDUCE(P_Nsymbol_list_PRIME),},
-/*  42 */	{[TUNION]=REDUCE(P_Nsymbol_TGLOBAL_TOK),[TSEMI]=REDUCE(P_Nsymbol_TGLOBAL_TOK),[TNTER]=REDUCE(P_Nsymbol_TGLOBAL_TOK),[TGLOBAL_TOK]=REDUCE(P_Nsymbol_TGLOBAL_TOK),[TLITERAL]=REDUCE(P_Nsymbol_TGLOBAL_TOK),},
-/*  43 */	{[TUNION]=REDUCE(P_Nsymbol_TNTER),[TSEMI]=REDUCE(P_Nsymbol_TNTER),[TNTER]=REDUCE(P_Nsymbol_TNTER),[TGLOBAL_TOK]=REDUCE(P_Nsymbol_TNTER),[TLITERAL]=REDUCE(P_Nsymbol_TNTER),},
-/*  44 */	{[TUNION]=REDUCE(P_Nsymbol_TLITERAL),[TSEMI]=REDUCE(P_Nsymbol_TLITERAL),[TNTER]=REDUCE(P_Nsymbol_TLITERAL),[TGLOBAL_TOK]=REDUCE(P_Nsymbol_TLITERAL),[TLITERAL]=REDUCE(P_Nsymbol_TLITERAL),},
-/*  45 */	{[TSEMI]=REDUCE(P_Nfollow_prod_TEQUAL_TSTART),},
-/*  46 */	{[TRBRACE]=REDUCE(P_Nproduction_TNTER_Nfollow_prod_TSEMI),[TNTER]=REDUCE(P_Nproduction_TNTER_Nfollow_prod_TSEMI),},
-/*  47 */	{[TEOF]=REDUCE(P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI),[TPRODUCTION]=REDUCE(P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI),[TALIAS]=REDUCE(P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI),[TEXTERN]=REDUCE(P_Nalias_section_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI),},
-/*  48 */	{[TLITERAL]=SHIFT(49),},
-/*  49 */	{[TRPAREN]=SHIFT(56),},
-/*  50 */	{[TUNION]=REDUCE(P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME),[TSEMI]=REDUCE(P_Nsymbol_list_Nsymbol_Nsymbol_list_PRIME),},
-/*  51 */	{[TLITERAL]=SHIFT(44),[TNTER]=SHIFT(43),[TGLOBAL_TOK]=SHIFT(42),[TUNION]=REDUCE(P_Nsymbol_list_PRIME),[TSEMI]=REDUCE(P_Nsymbol_list_PRIME),},
-/*  52 */	{[TSEMI]=REDUCE(P_Nlhs_Nopt_list_Nlhs_PRIME),},
-/*  53 */	{[TLITERAL]=SHIFT(44),[TNTER]=SHIFT(43),[TGLOBAL_TOK]=SHIFT(42),[TEMPTY]=SHIFT(40),[TUNION]=REDUCE(P_Nopt_list),[TSEMI]=REDUCE(P_Nopt_list),},
-/*  54 */	{[TUNION]=SHIFT(53),[TSEMI]=REDUCE(P_Nlhs_PRIME),},
-/*  55 */	{[TUNION]=REDUCE(P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME),[TSEMI]=REDUCE(P_Nsymbol_list_PRIME_Nsymbol_Nsymbol_list_PRIME),},
-/*  56 */	{[TCOMMA]=SHIFT(58),[TRBRACE]=REDUCE(P_Nalias_list_PRIME),},
-/*  57 */	{[TRBRACE]=REDUCE(P_Nalias_list_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME),},
-/*  58 */	{[TLPAREN]=SHIFT(21),[TRBRACE]=REDUCE(P_Nalias_list),},
-/*  59 */	{[TSEMI]=REDUCE(P_Nlhs_PRIME_TUNION_Nopt_list_Nlhs_PRIME),},
-/*  60 */	{[TRBRACE]=REDUCE(P_Nalias_list_PRIME_TCOMMA_Nalias_list),},
+/*   2 */	{[T_PRODUCTION]=SHIFT(8), [T_ALIAS]=SHIFT(7), [T_EXTERN]=SHIFT(6), [T_EOF]=REDUCE(P_LHS_NFGFP_PRIME_RHS)},
+/*   3 */	{[T_EOF]=REDUCE(P_LHS_Nsection_RHS_Nextern_section), [T_PRODUCTION]=REDUCE(P_LHS_Nsection_RHS_Nextern_section), [T_ALIAS]=REDUCE(P_LHS_Nsection_RHS_Nextern_section), [T_EXTERN]=REDUCE(P_LHS_Nsection_RHS_Nextern_section)},
+/*   4 */	{[T_EOF]=REDUCE(P_LHS_Nsection_RHS_Nproduction_section), [T_PRODUCTION]=REDUCE(P_LHS_Nsection_RHS_Nproduction_section), [T_ALIAS]=REDUCE(P_LHS_Nsection_RHS_Nproduction_section), [T_EXTERN]=REDUCE(P_LHS_Nsection_RHS_Nproduction_section)},
+/*   5 */	{[T_EOF]=REDUCE(P_LHS_Nsection_RHS_Nalias_section), [T_PRODUCTION]=REDUCE(P_LHS_Nsection_RHS_Nalias_section), [T_ALIAS]=REDUCE(P_LHS_Nsection_RHS_Nalias_section), [T_EXTERN]=REDUCE(P_LHS_Nsection_RHS_Nalias_section)},
+/*   6 */	{[T_LBRACE]=SHIFT(11)},
+/*   7 */	{[T_LBRACE]=SHIFT(10)},
+/*   8 */	{[T_LBRACE]=SHIFT(9)},
+/*   9 */	{[T_NTER]=SHIFT(21), [T_RBRACE]=REDUCE(P_LHS_Nproduction_list_RHS)},
+/*  10 */	{[T_LPAREN]=SHIFT(18), [T_RBRACE]=REDUCE(P_LHS_Nalias_list_RHS)},
+/*  11 */	{[T_LITERAL]=SHIFT(16), [T_RBRACE]=REDUCE(P_LHS_Npath_list_RHS)},
+/*  12 */	{[T_EOF]=REDUCE(P_LHS_NFGFP_RHS_Nsection_NFGFP_PRIME)},
+/*  13 */	{[T_PRODUCTION]=SHIFT(8), [T_ALIAS]=SHIFT(7), [T_EXTERN]=SHIFT(6), [T_EOF]=REDUCE(P_LHS_NFGFP_PRIME_RHS)},
+/*  14 */	{[T_EOF]=REDUCE(P_LHS_NFGFP_PRIME_RHS_Nsection_NFGFP_PRIME)},
+/*  15 */	{[T_RBRACE]=SHIFT(32)},
+/*  16 */	{[T_COMMA]=SHIFT(31), [T_RBRACE]=REDUCE(P_LHS_Npath_list_PRIME_RHS)},
+/*  17 */	{[T_RBRACE]=SHIFT(29)},
+/*  18 */	{[T_GLOBAL_TOK]=SHIFT(28)},
+/*  19 */	{[T_RBRACE]=SHIFT(27)},
+/*  20 */	{[T_NTER]=SHIFT(21), [T_RBRACE]=REDUCE(P_LHS_Nproduction_list_PRIME_RHS)},
+/*  21 */	{[T_ARROW]=SHIFT(24), [T_EQUAL]=SHIFT(23)},
+/*  22 */	{[T_SEMI]=SHIFT(48)},
+/*  23 */	{[T_START]=SHIFT(47)},
+/*  24 */	{[T_LITERAL]=SHIFT(46), [T_NTER]=SHIFT(45), [T_GLOBAL_TOK]=SHIFT(44), [T_EMPTY]=SHIFT(42), [T_UNION]=REDUCE(P_LHS_Nopt_list_RHS), [T_SEMI]=REDUCE(P_LHS_Nopt_list_RHS)},
+/*  25 */	{[T_RBRACE]=REDUCE(P_LHS_Nproduction_list_RHS_Nproduction_Nproduction_list_PRIME)},
+/*  26 */	{[T_NTER]=SHIFT(21), [T_RBRACE]=REDUCE(P_LHS_Nproduction_list_PRIME_RHS)},
+/*  27 */	{[T_SEMI]=SHIFT(37)},
+/*  28 */	{[T_BARROW]=SHIFT(36)},
+/*  29 */	{[T_SEMI]=SHIFT(35)},
+/*  30 */	{[T_RBRACE]=REDUCE(P_LHS_Npath_list_RHS_TLITERAL_Npath_list_PRIME)},
+/*  31 */	{[T_LITERAL]=SHIFT(16), [T_RBRACE]=REDUCE(P_LHS_Npath_list_RHS)},
+/*  32 */	{[T_SEMI]=SHIFT(33)},
+/*  33 */	{[T_EOF]=REDUCE(P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI), [T_PRODUCTION]=REDUCE(P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI), [T_ALIAS]=REDUCE(P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI), [T_EXTERN]=REDUCE(P_LHS_Nextern_section_RHS_TEXTERN_TLBRACE_Npath_list_TRBRACE_TSEMI)},
+/*  34 */	{[T_RBRACE]=REDUCE(P_LHS_Npath_list_PRIME_RHS_TCOMMA_Npath_list)},
+/*  35 */	{[T_EOF]=REDUCE(P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI), [T_PRODUCTION]=REDUCE(P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI), [T_ALIAS]=REDUCE(P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI), [T_EXTERN]=REDUCE(P_LHS_Nalias_section_RHS_TALIAS_TLBRACE_Nalias_list_TRBRACE_TSEMI)},
+/*  36 */	{[T_LITERAL]=SHIFT(53)},
+/*  37 */	{[T_EOF]=REDUCE(P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI), [T_PRODUCTION]=REDUCE(P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI), [T_ALIAS]=REDUCE(P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI), [T_EXTERN]=REDUCE(P_LHS_Nproduction_section_RHS_TPRODUCTION_TLBRACE_Nproduction_list_TRBRACE_TSEMI)},
+/*  38 */	{[T_RBRACE]=REDUCE(P_LHS_Nproduction_list_PRIME_RHS_Nproduction_Nproduction_list_PRIME)},
+/*  39 */	{[T_SEMI]=REDUCE(P_LHS_Nfollow_prod_RHS_TARROW_Nlhs)},
+/*  40 */	{[T_UNION]=SHIFT(52), [T_SEMI]=REDUCE(P_LHS_Nlhs_PRIME_RHS)},
+/*  41 */	{[T_UNION]=REDUCE(P_LHS_Nopt_list_RHS_Nsymbol_list), [T_SEMI]=REDUCE(P_LHS_Nopt_list_RHS_Nsymbol_list)},
+/*  42 */	{[T_UNION]=REDUCE(P_LHS_Nopt_list_RHS_TEMPTY), [T_SEMI]=REDUCE(P_LHS_Nopt_list_RHS_TEMPTY)},
+/*  43 */	{[T_LITERAL]=SHIFT(46), [T_NTER]=SHIFT(45), [T_GLOBAL_TOK]=SHIFT(44), [T_UNION]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS), [T_SEMI]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS)},
+/*  44 */	{[T_UNION]=REDUCE(P_LHS_Nsymbol_RHS_TGLOBAL_TOK), [T_SEMI]=REDUCE(P_LHS_Nsymbol_RHS_TGLOBAL_TOK), [T_NTER]=REDUCE(P_LHS_Nsymbol_RHS_TGLOBAL_TOK), [T_GLOBAL_TOK]=REDUCE(P_LHS_Nsymbol_RHS_TGLOBAL_TOK), [T_LITERAL]=REDUCE(P_LHS_Nsymbol_RHS_TGLOBAL_TOK)},
+/*  45 */	{[T_UNION]=REDUCE(P_LHS_Nsymbol_RHS_TNTER), [T_SEMI]=REDUCE(P_LHS_Nsymbol_RHS_TNTER), [T_NTER]=REDUCE(P_LHS_Nsymbol_RHS_TNTER), [T_GLOBAL_TOK]=REDUCE(P_LHS_Nsymbol_RHS_TNTER), [T_LITERAL]=REDUCE(P_LHS_Nsymbol_RHS_TNTER)},
+/*  46 */	{[T_UNION]=REDUCE(P_LHS_Nsymbol_RHS_TLITERAL), [T_SEMI]=REDUCE(P_LHS_Nsymbol_RHS_TLITERAL), [T_NTER]=REDUCE(P_LHS_Nsymbol_RHS_TLITERAL), [T_GLOBAL_TOK]=REDUCE(P_LHS_Nsymbol_RHS_TLITERAL), [T_LITERAL]=REDUCE(P_LHS_Nsymbol_RHS_TLITERAL)},
+/*  47 */	{[T_SEMI]=REDUCE(P_LHS_Nfollow_prod_RHS_TEQUAL_TSTART)},
+/*  48 */	{[T_RBRACE]=REDUCE(P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI), [T_NTER]=REDUCE(P_LHS_Nproduction_RHS_TNTER_Nfollow_prod_TSEMI)},
+/*  49 */	{[T_UNION]=REDUCE(P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME), [T_SEMI]=REDUCE(P_LHS_Nsymbol_list_RHS_Nsymbol_Nsymbol_list_PRIME)},
+/*  50 */	{[T_LITERAL]=SHIFT(46), [T_NTER]=SHIFT(45), [T_GLOBAL_TOK]=SHIFT(44), [T_UNION]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS), [T_SEMI]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS)},
+/*  51 */	{[T_SEMI]=REDUCE(P_LHS_Nlhs_RHS_Nopt_list_Nlhs_PRIME)},
+/*  52 */	{[T_LITERAL]=SHIFT(46), [T_NTER]=SHIFT(45), [T_GLOBAL_TOK]=SHIFT(44), [T_EMPTY]=SHIFT(42), [T_UNION]=REDUCE(P_LHS_Nopt_list_RHS), [T_SEMI]=REDUCE(P_LHS_Nopt_list_RHS)},
+/*  53 */	{[T_RPAREN]=SHIFT(54)},
+/*  54 */	{[T_COMMA]=SHIFT(59), [T_RBRACE]=REDUCE(P_LHS_Nalias_list_PRIME_RHS)},
+/*  55 */	{[T_UNION]=SHIFT(52), [T_SEMI]=REDUCE(P_LHS_Nlhs_PRIME_RHS)},
+/*  56 */	{[T_UNION]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME), [T_SEMI]=REDUCE(P_LHS_Nsymbol_list_PRIME_RHS_Nsymbol_Nsymbol_list_PRIME)},
+/*  57 */	{[T_SEMI]=REDUCE(P_LHS_Nlhs_PRIME_RHS_TUNION_Nopt_list_Nlhs_PRIME)},
+/*  58 */	{[T_RBRACE]=REDUCE(P_LHS_Nalias_list_RHS_TLPAREN_TGLOBAL_TOK_TBARROW_TLITERAL_TRPAREN_Nalias_list_PRIME)},
+/*  59 */	{[T_LPAREN]=SHIFT(18), [T_RBRACE]=REDUCE(P_LHS_Nalias_list_RHS)},
+/*  60 */	{[T_RBRACE]=REDUCE(P_LHS_Nalias_list_PRIME_RHS_TCOMMA_Nalias_list)},
 };
 
 static int
-lr_goto_table[61][TOTAL_TOKEN] = {
-/*   0 */	{[N_alias_section]=GOTO(5),[N_production_section]=GOTO(4),[N_extern_section]=GOTO(3),[N_section]=GOTO(2),[N_FGFP]=GOTO(1),},
+fgfp_lr_goto_table[61][TOTAL_NTER] = {
+/*   0 */	{[N_alias_section]=GOTO(5), [N_production_section]=GOTO(4), [N_extern_section]=GOTO(3), [N_section]=GOTO(2), [N_FGFP]=GOTO(1)},
 /*   1 */	{},
-/*   2 */	{[N_section]=GOTO(13),[N_FGFP_PRIME]=GOTO(12),[N_alias_section]=GOTO(5),[N_production_section]=GOTO(4),[N_extern_section]=GOTO(3),},
+/*   2 */	{[N_section]=GOTO(13), [N_FGFP_PRIME]=GOTO(12), [N_alias_section]=GOTO(5), [N_production_section]=GOTO(4), [N_extern_section]=GOTO(3)},
 /*   3 */	{},
 /*   4 */	{},
 /*   5 */	{},
 /*   6 */	{},
 /*   7 */	{},
 /*   8 */	{},
-/*   9 */	{[N_alias_list]=GOTO(20),},
-/*  10 */	{[N_production]=GOTO(18),[N_production_list]=GOTO(17),},
-/*  11 */	{[N_path_list]=GOTO(15),},
+/*   9 */	{[N_production]=GOTO(20), [N_production_list]=GOTO(19)},
+/*  10 */	{[N_alias_list]=GOTO(17)},
+/*  11 */	{[N_path_list]=GOTO(15)},
 /*  12 */	{},
-/*  13 */	{[N_FGFP_PRIME]=GOTO(14),[N_section]=GOTO(13),[N_alias_section]=GOTO(5),[N_production_section]=GOTO(4),[N_extern_section]=GOTO(3),},
+/*  13 */	{[N_FGFP_PRIME]=GOTO(14), [N_section]=GOTO(13), [N_alias_section]=GOTO(5), [N_production_section]=GOTO(4), [N_extern_section]=GOTO(3)},
 /*  14 */	{},
 /*  15 */	{},
-/*  16 */	{[N_path_list_PRIME]=GOTO(30),},
+/*  16 */	{[N_path_list_PRIME]=GOTO(30)},
 /*  17 */	{},
-/*  18 */	{[N_production]=GOTO(28),[N_production_list_PRIME]=GOTO(27),},
-/*  19 */	{[N_follow_prod]=GOTO(24),},
-/*  20 */	{},
-/*  21 */	{},
+/*  18 */	{},
+/*  19 */	{},
+/*  20 */	{[N_production]=GOTO(26), [N_production_list_PRIME]=GOTO(25)},
+/*  21 */	{[N_follow_prod]=GOTO(22)},
 /*  22 */	{},
 /*  23 */	{},
-/*  24 */	{},
+/*  24 */	{[N_symbol]=GOTO(43), [N_symbol_list]=GOTO(41), [N_opt_list]=GOTO(40), [N_lhs]=GOTO(39)},
 /*  25 */	{},
-/*  26 */	{[N_symbol]=GOTO(41),[N_symbol_list]=GOTO(39),[N_opt_list]=GOTO(38),[N_lhs]=GOTO(37),},
+/*  26 */	{[N_production_list_PRIME]=GOTO(38), [N_production]=GOTO(26)},
 /*  27 */	{},
-/*  28 */	{[N_production_list_PRIME]=GOTO(36),[N_production]=GOTO(28),},
+/*  28 */	{},
 /*  29 */	{},
 /*  30 */	{},
-/*  31 */	{[N_path_list]=GOTO(34),},
+/*  31 */	{[N_path_list]=GOTO(34)},
 /*  32 */	{},
 /*  33 */	{},
 /*  34 */	{},
 /*  35 */	{},
 /*  36 */	{},
 /*  37 */	{},
-/*  38 */	{[N_lhs_PRIME]=GOTO(52),},
+/*  38 */	{},
 /*  39 */	{},
-/*  40 */	{},
-/*  41 */	{[N_symbol]=GOTO(51),[N_symbol_list_PRIME]=GOTO(50),},
+/*  40 */	{[N_lhs_PRIME]=GOTO(51)},
+/*  41 */	{},
 /*  42 */	{},
-/*  43 */	{},
+/*  43 */	{[N_symbol]=GOTO(50), [N_symbol_list_PRIME]=GOTO(49)},
 /*  44 */	{},
 /*  45 */	{},
 /*  46 */	{},
 /*  47 */	{},
 /*  48 */	{},
 /*  49 */	{},
-/*  50 */	{},
-/*  51 */	{[N_symbol_list_PRIME]=GOTO(55),[N_symbol]=GOTO(51),},
-/*  52 */	{},
-/*  53 */	{[N_opt_list]=GOTO(54),[N_symbol]=GOTO(41),[N_symbol_list]=GOTO(39),},
-/*  54 */	{[N_lhs_PRIME]=GOTO(59),},
-/*  55 */	{},
-/*  56 */	{[N_alias_list_PRIME]=GOTO(57),},
+/*  50 */	{[N_symbol_list_PRIME]=GOTO(56), [N_symbol]=GOTO(50)},
+/*  51 */	{},
+/*  52 */	{[N_opt_list]=GOTO(55), [N_symbol]=GOTO(43), [N_symbol_list]=GOTO(41)},
+/*  53 */	{},
+/*  54 */	{[N_alias_list_PRIME]=GOTO(58)},
+/*  55 */	{[N_lhs_PRIME]=GOTO(57)},
+/*  56 */	{},
 /*  57 */	{},
-/*  58 */	{[N_alias_list]=GOTO(60),},
-/*  59 */	{},
+/*  58 */	{},
+/*  59 */	{[N_alias_list]=GOTO(60)},
 /*  60 */	{},
 };
 
 #endif
+
 static int
 fgfp_sync_token[TOTAL_NTER][6] = {
 	[N_FGFP] = { T_EOF, -1 },
@@ -265,4 +353,4 @@ fgfp_sync_token[TOTAL_NTER][6] = {
 	[N_symbol_list_PRIME] = { T_SEMI, T_UNION, -1 },
 };
 
-#endif /* _FGFP_GRM_H */
+#endif /* _FGFP_GRM_H_ */

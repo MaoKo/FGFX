@@ -16,8 +16,8 @@ typedef uint64_t				_SETTYPE;
 #define _ROUND(bit)				((_DIV_WSIZE(bit) >> 3) << 4)
 
 //Iterator Bitset
-#define IT_INVERT(bs)			((bs)->invert = true,\
-										(bs)->siter = (bs)->nbits - 1)
+#define IT_INVERT(bs)			((!((bs)->invert) ? (bs)->invert = true\
+									: ((bs)->invert = false)), IT_RESET(bs))
 
 #define IT_NEXT(bs)				(_next_bitset(bs))
 #define IT_BACK(bs)				((bs)->siter)

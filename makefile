@@ -15,6 +15,8 @@ FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
 include fgfp/makefile
 FGFP_OBJ	:=	$(addprefix fgfp/,$(FGFP_OBJ))
 
+ALL_OBJ		:=	$(TOOL_OBJ) $(FGFL_OBJ) $(FGFP_OBJ)
+
 EFGFL		:=	efgfl
 EFGFP		:=	efgfp
 
@@ -30,9 +32,7 @@ $(EFGFP): $(TOOLS_OBJ) $(FGFP_OBJ)
 	$(CC) -c $< -o $@ $(CC_FLAGS) $(CC_MACRO)
 
 clean:
-	@rm -rf $(TOOLS_OBJ)
-	@rm -rf $(FGFL_OBJ)
-	@rm -rf $(FGFP_OBJ)
+	@rm -rf $(ALL_OBJ)
 
 mrproper: clean
 	@rm -rf $(EFGFL)
