@@ -15,7 +15,7 @@ FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
 include fgfp/makefile
 FGFP_OBJ	:=	$(addprefix fgfp/,$(FGFP_OBJ))
 
-ALL_OBJ		:=	$(TOOL_OBJ) $(FGFL_OBJ) $(FGFP_OBJ)
+ALL_OBJ		:=	$(TOOLS_OBJ) $(FGFL_OBJ) $(FGFP_OBJ)
 
 EFGFL		:=	efgfl
 EFGFP		:=	efgfp
