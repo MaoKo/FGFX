@@ -142,6 +142,7 @@ augment_grammar(cfg_t* cfg) {
 static int cfg_path_list(cfg_t*);
 static int cfg_alias_list(cfg_t*);
 static int cfg_production_list(cfg_t*);
+static int cfg_precedence_list(cfg_t*);
 
 static int cfg_production(cfg_t*);
 static int cfg_rhs(cfg_t*, symbol_t* lhs);
@@ -159,6 +160,8 @@ cfg_entry_section(cfg_t* cfg, int kind) {
 					break;
 		case T_PRODUCTION:	section_ptr = &cfg_production_list;
 					break;
+		case T_PRECEDENCE:	section_ptr = &cfg_precedence_list;
+					break; 
 	}
 	if (!section_ptr) {
 		/* ERROR */
@@ -252,6 +255,58 @@ cfg_alias_list(cfg_t* cfg) {
 		return (ERROR);
 	}
 	return (DONE);
+}
+
+static int
+cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
+	while (peek_token(cfg->lex) == T_GLOBAL_TOK) {
+		advance_token(cfg->lex);
+
+		symbol_t* prec_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+		prec_ter->precedence = prec_depth;
+		switch (kind_prec) {
+			case T_LEFT: prec_ter->left = true; break;
+			case T_RIGHT: prec_ter->right = true; break;
+			case T_NONASSOC:
+					prec_ter->right = true;
+					prec_ter->left = true;
+					break;
+		}
+		if (peek_token(cfg->lex) != T_COMMA
+				&& peek_token(cfg->lex) != T_RPAREN)
+			{ return (ERROR); }
+	
+		if (peek_token(cfg->lex) == T_COMMA)
+			{ advance_token(cfg->lex); }
+	}
+	advance_token(cfg->lex);
+	return (DONE);
+}
+
+int
+cfg_precedence_list(cfg_t* cfg) {
+	size_t prec_depth = NOT_PREC + 1;
+	while (1) {
+		if (peek_token(cfg->lex) == T_RBRACE)
+			{ return (DONE); }
+		int kind_prec = advance_token(cfg->lex);
+		switch (kind_prec) {
+			case T_LEFT: case T_RIGHT: case T_NONASSOC: break;
+			default: return (ERROR);
+		}
+		if (advance_token(cfg->lex) == T_LPAREN) {
+			if (peek_token(cfg->lex) != T_GLOBAL_TOK) {
+				/* ERROR */
+				return (ERROR);
+			}
+			if (cfg_precedence_atom(cfg, kind_prec, prec_depth++) == ERROR)
+				{ return (ERROR); }
+			if (peek_token(cfg->lex) == T_COMMA)
+				{ advance_token(cfg->lex); }
+		}
+		else
+			{ return (ERROR); }
+	}
 }
 
 int

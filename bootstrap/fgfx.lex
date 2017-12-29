@@ -1,9 +1,11 @@
-$SKIP {
+$SKIP
+{
     SPACE       =  / [ \t\n]+                              / ;
     COMMENT     =  / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
 };
 
-$TOKEN {
+$TOKEN
+{
     @LETTER     =  / [a-zA-Z_]                             / ;
     @DIGIT      =  / [0-9]                                 / ;
     @IDENT      =  / {LETTER}({LETTER}|{DIGIT})*           / ;
@@ -31,8 +33,11 @@ $TOKEN {
     RPAREN      =  / \)                                    / ;
 };
 
-$KEYWORD {
+$KEYWORD
+{
     SKIP, TOKEN, KEYWORD, IGCASE,
-    EXTERN, PRODUCTION, ALIAS, START, PRECEDENCE, EMPTY,
+    EXTERN, PRODUCTION, ALIAS, START,
+	PRECEDENCE, EMPTY, LEFT, RIGHT,
+	NONASSOC, MIMIC,
 };
 

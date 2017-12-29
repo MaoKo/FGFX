@@ -116,6 +116,10 @@ advance_token(lexer_t* lex) {
 			{ (void*)T_PRODUCTION,	"$PRODUCTION" },
 			{ (void*)T_PRECEDENCE,	"$PRECEDENCE" },
 			{ (void*)T_EMPTY,		"$EMPTY" },
+			{ (void*)T_LEFT,		"$LEFT" },
+			{ (void*)T_RIGHT,		"$RIGHT" },
+			{ (void*)T_NONASSOC,	"$NONASSOC" },
+			{ (void*)T_MIMIC,		"$MIMIC" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

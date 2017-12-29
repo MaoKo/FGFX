@@ -34,11 +34,15 @@ enum {
 	T_START,
 	T_PRECEDENCE,
 	T_EMPTY,
+	T_LEFT,
+	T_RIGHT,
+	T_NONASSOC,
+	T_MIMIC,
 	T_ERROR,
 	T_EOF,
 };
 
-#define TOTAL_TOKEN	30
+#define TOTAL_TOKEN	34
 
 #ifndef _ONLY_TOKEN_
 

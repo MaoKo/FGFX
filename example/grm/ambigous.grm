@@ -1,0 +1,34 @@
+$EXTERN
+{
+	'none.h',
+};
+
+
+$PRECEDENCE
+{
+	$LEFT	(PLUS, MINUS)	,
+	$LEFT	(MUL, DIV)		,
+};
+
+
+$PRODUCTION
+{
+	<E>	->	<E> '+' <E>
+		 |	<E> '-' <E>
+		 |	<E> '*' <E>
+		 |	<E> '/' <E>
+
+//		 |	'+' <E>		( $MIMIC => UNARY )
+//		 |	'-' <E>		( $MIMIC => UNARY )
+
+		 |	ID
+		 ;
+};
+
+$ALIAS
+{
+	(PLUS	=>	'+'),
+	(MINUS	=>	'-'),
+	(MUL	=>	'*'),
+	(DIV	=>	'/'),
+};

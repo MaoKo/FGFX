@@ -6,7 +6,6 @@ $EXTERN
 $PRODUCTION
 {
 	<FGFP>	->	<section> <FGFP'> ;
- 
 	<FGFP'>	->	<section> <FGFP'>
 			|	$EMPTY
 			;
@@ -36,7 +35,25 @@ $PRODUCTION
 						;
 
 	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
-	<prec_list>			->	;
+	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')' <prec_list'>
+						 |	$EMPTY
+						 ;
+
+	<prec_list'>		->	',' <prec_list>
+						 |	$EMPTY
+						 ;
+
+	<prec_atom_list>	->	<prec_atom> <prec_atom_list'> ;
+	<prec_atom_list'>	->	$EMPTY ; // ',' <prec_atom_list> ;
+
+	<prec_atom>			->	/* LITERAL
+						 |	*/ GLOBAL_TOK
+						 ;
+
+	<prec_dir>			->	'$LEFT'
+						 |	'$RIGHT'
+						 |	'$NONASSOC'
+						 ;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
 	<production_list>		->	<production> <production_list'>
@@ -84,6 +101,10 @@ $ALIAS
 	(START		=> '$START')		,
 	(PRECEDENCE	=> '$PRECEDENCE')	,
 	(EMPTY		=> '$EMPTY')		,
+	(LEFT		=> '$LEFT')			,
+	(RIGHT		=> '$RIGHT')		,
+	(NONASSOC	=> '$NONASSOC')		,
+	(MIMIC		=> '$MIMIC')		,
 	(COMMA		=> ',')				,
 	(SEMI		=> ';')				,
 	(LPAREN		=> '(')				,
