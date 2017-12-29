@@ -79,8 +79,10 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 
 	if (kind == LITERAL)
 		{ symbol->terminal_alias = -1; }
-	else if (kind == TERMINAL)
-		{ symbol->is_defined = true; }
+	else if (kind == TERMINAL) {
+		symbol->is_defined = true;
+		symbol->precedence = NOT_PREC;
+	}
 	else {
 		symbol->prod_lst = new_bitset();
 		if (!symbol->prod_lst)
@@ -215,8 +217,12 @@ cfg_alias_list(cfg_t* cfg) {
 			/* ERROR */
 			return (ERROR);
 		}
-		size_t index_alias = add_symbol_cfg(cfg,
-				TERMINAL, C_LEXEME(cfg->lex))->index;
+
+		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+		size_t index_alias = alias_ter->index;
+
+//		alias_ter->is_defined = false;
+
 		if (advance_token(cfg->lex) != T_BARROW
 				|| advance_token(cfg->lex) != T_LITERAL) {
 			/* ERROR */
@@ -259,7 +265,8 @@ cfg_production_list(cfg_t* cfg) {
 
 static int
 follow_prod(cfg_t* cfg) {
-	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL, C_LEXEME(cfg->lex));
+	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL,
+													C_LEXEME(cfg->lex));
 	if (peek_token(cfg->lex) == T_ARROW) {
 		advance_token(cfg->lex);
 		symbol_lhs->is_defined = true;
@@ -413,7 +420,7 @@ print_production(cfg_t const* cfg) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = AT_VECTOR(cfg->productions, i);
 		printf("%s -> ", prod->symbol_lhs->name);
-		list_rhs* list = prod->rhs_element;
+		list_rhs_t* list = prod->rhs_element;
 		while (list) {
 			printf("%s", list->symbol_rhs->name);
 			if (list->next)

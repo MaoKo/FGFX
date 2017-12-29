@@ -15,7 +15,7 @@ static vector_t* record_kernel[HASH_LR] = {};
 static vector_t* record_lr1_item = NULL;
 
 static inline int
-hash_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
+hash_lr0_item(production_t const* prod, list_rhs_t const* dot_pos) {
 	size_t hash = prod->index;
 	if (dot_pos)
 		{ hash += dot_pos->pos; }
@@ -234,7 +234,7 @@ void del_record(void) {
 }
 
 static lr0_item_t*
-new_lr0_item(production_t const* prod, list_rhs const* dot_pos) {
+new_lr0_item(production_t const* prod, list_rhs_t const* dot_pos) {
 	if (!prod)
 		{ return (NULL); }
 
@@ -281,7 +281,7 @@ new_lr1_item_lr0(lr0_item_t* lr0_item, bitset_t const* lookahead) {
 
 static inline lr1_item_t*
 new_lr1_item_ptr(production_t const* prod,
-					list_rhs const* dot_pos, bitset_t const* lookahead) {
+					list_rhs_t const* dot_pos, bitset_t const* lookahead) {
 	lr0_item_t* lr0_item = new_lr0_item(prod, dot_pos);
 	if (!lr0_item)
 		{ return (NULL); }
@@ -307,7 +307,7 @@ new_lr1_item_record(lr1_item_t* item) {
 
 int
 new_lr1_item(production_t const* prod,
-					list_rhs const* dot_pos, bitset_t const* lookahead) {
+					list_rhs_t const* dot_pos, bitset_t const* lookahead) {
 	return (new_lr1_item_record(new_lr1_item_ptr(prod, dot_pos, lookahead)));
 }
 
@@ -393,7 +393,7 @@ closure_non_kernel_item(cfg_t const* cfg, kernel_t* kernel) {
 
 static bitset_t*
 compute_look(lr0_item_t const* item, bitset_t* before) {
-	bitset_t* target_first = first_list_rhs(DOT(item)->next);
+	bitset_t* target_first = first_list_rhs_t(DOT(item)->next);
 	if (target_first == NULL_BITSET)
 		{ target_first = dup_bitset(before); }
 	else if (list_is_nullable(DOT(item)->next))
@@ -752,17 +752,48 @@ gen_lr1_states(cfg_t const* cfg) {
 }
 
 static bool
-check_conflict(lr1_state_t* state, trans_list_t** reduce_list, int kind) {
+check_conflict(cfg_t const* cfg, lr1_state_t* state,
+									trans_list_t** reduce_list, int kind) {
+
 	trans_list_t* target_action = (kind == SHIFT_REDUCE)
 									? state->shift_lst : state->reduces;
+	bool several = false;
 	while (target_action) {
 		trans_list_t* reset_list = (*reduce_list);
 		while (reset_list) {
 			if ((kind == SHIFT_REDUCE)
 					&& ((_SHIFT ^ target_action->input) == reset_list->input)) {
-				// Favor of shifting
-				del_node_trans_list(reduce_list, reset_list);
-				return (true);
+
+				symbol_t* last_sym = last_symbol_in_prod(
+									(production_t*)AT_VECTOR(cfg->productions,
+												_REDUCE ^ reset_list->state));
+
+				symbol_t* shift_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
+												reset_list->input);
+
+				if (last_sym->precedence != NOT_PREC
+						&& shift_sym->precedence != NOT_PREC) {
+					if (last_sym->precedence > shift_sym->precedence) {
+						del_node_trans_list(&state->shift_lst,
+													target_action);
+					}
+					else if (last_sym->precedence < shift_sym->precedence)
+						{ del_node_trans_list(reduce_list, reset_list); }
+					else {
+						if (shift_sym->left) {
+							del_node_trans_list(&state->shift_lst,
+														target_action);
+						}
+						if (shift_sym->right) 
+							{ del_node_trans_list(reduce_list, reset_list); }
+					}
+					return (check_conflict(cfg, state, reduce_list, kind));
+				}
+				else {
+					// Favor of shifting
+					del_node_trans_list(reduce_list, reset_list);
+					several = true; break;
+				}
 			}
 			else if ((kind == REDUCE_REDUCE)
 					&& (target_action->input == reset_list->input)) {
@@ -783,44 +814,16 @@ check_conflict(lr1_state_t* state, trans_list_t** reduce_list, int kind) {
 		}
 		target_action = target_action->next;
 	}
-	return (false);
+	return (several);
 }
 
-#if 0
-
 static void
-add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
-					lr1_item_t* item, size_t index) {
-	trans_list_t* edge = state->edges;
-	while (edge) {
-		if (_SHIFT & edge->input) {
-			fprintf(stderr, "Shift/Reduce (state %zu).\n", index);
-			return;
-		}
-		edge = edge->next;
-	}
-	if (state->reduces) {
-		fprintf(stderr, "Reduce/Reduce (state %zu).\n", index);
-		return;
-	}
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
-		symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, i);
-		if (IS_LITERAL(ter))
-			{ continue; }
-		trans_list_t* new_reduce = new_trans_list(i,
-						REDUCE(item->prod->index));
-		new_reduce->next = state->reduces;
-		state->reduces = new_reduce;
-	}
-}
+detect_error(cfg_t const* cfg, lr1_state_t* state,
+							trans_list_t* reduce_list, size_t index) {
 
-#endif
-
-static void
-detect_error(lr1_state_t* state, trans_list_t* reduce_list, size_t index) {
-	if (check_conflict(state, &reduce_list, SHIFT_REDUCE))
+	if (check_conflict(cfg, state, &reduce_list, SHIFT_REDUCE))
 		{ fprintf(stderr, "Shift/Reduce (state %zu).\n", index); }
-	if (check_conflict(state, &reduce_list, REDUCE_REDUCE))
+	if (check_conflict(cfg, state, &reduce_list, REDUCE_REDUCE))
 		{ fprintf(stderr, "Reduce/Reduce (state %zu).\n", index); }
 
 	if (!state->reduces)
@@ -830,7 +833,7 @@ detect_error(lr1_state_t* state, trans_list_t* reduce_list, size_t index) {
 }
 
 static void
-add_reduce(lr1_state_t* state, lr1_item_t* item,
+add_reduce(cfg_t const* cfg, lr1_state_t* state, lr1_item_t* item,
 										bitset_t* src_symbol, size_t index) {
 	int i;
 	trans_list_t* reduce_list = NULL;
@@ -842,18 +845,34 @@ add_reduce(lr1_state_t* state, lr1_item_t* item,
 	}
 
 	IT_RESET(src_symbol);		
-	detect_error(state, reduce_list, index);
+	detect_error(cfg, state, reduce_list, index);
 }
 
 static inline void
-add_reduce_slr(lr1_state_t* state, lr1_item_t* item, size_t index) {
+add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
+								lr1_item_t* item, size_t index) {
+	bitset_t* all_terminal = new_bitset();
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
+		symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, i);
+		if (IS_LITERAL(ter))
+			{ continue; }
+		ADD_BITSET(all_terminal, i);
+	}
+	add_reduce(cfg, state, item, all_terminal, index);
+	del_bitset(all_terminal);
+}
+
+static inline void
+add_reduce_slr(cfg_t const* cfg, lr1_state_t* state,
+								lr1_item_t* item, size_t index) {
 	symbol_t* symbol_lhs = PROD(CORE(item))->symbol_lhs;
-	return (add_reduce(state, item, symbol_lhs->follow, index));
+	add_reduce(cfg, state, item, symbol_lhs->follow, index);
 }
 
 static inline void
-add_reduce_lr1(lr1_state_t* state, lr1_item_t* item, size_t index) {
-	return (add_reduce(state, item, item->lookahead, index));
+add_reduce_lr1(cfg_t const* cfg, lr1_state_t* state,
+								lr1_item_t* item, size_t index) {
+	add_reduce(cfg, state, item, item->lookahead, index);
 }
 
 void 
@@ -867,7 +886,7 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 		while ((j = IT_NEXT(state->items)) != IT_NULL) {
 			lr1_item_t* item = (lr1_item_t*)AT_VECTOR(record_lr1_item, j);
 			if (CORE(item)->is_final)
-				{ add_reduce_lr1(state, item, i); }
+				{ add_reduce_lr1(cfg, state, item, i); }
 		}
 		IT_RESET(state->items);
 	}
@@ -878,7 +897,7 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 void
 print_lr0_item(lr0_item_t* lr0_item) {
 	printf("%s -> ", PROD(lr0_item)->symbol_lhs->name);
-	list_rhs* list = PROD(lr0_item)->rhs_element;
+	list_rhs_t* list = PROD(lr0_item)->rhs_element;
 	while (list) {
 		if (list == DOT(lr0_item))
 			{ printf(". "); }

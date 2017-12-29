@@ -70,7 +70,7 @@ follow_non_terminal(symbol_t* non_ter, symbol_t const* nter_right) {
 
 static int
 follow_symbol_rhs(production_t const* prod, symbol_t* non_ter,
-						list_rhs const* list) {
+						list_rhs_t const* list) {
 	while (list) {
 		if (IS_TERMINAL(list->symbol_rhs)) {
 			return (follow_terminal(non_ter,
@@ -98,7 +98,7 @@ follow_symbol(symbol_t* non_ter, cfg_t* cfg) {
 	bool change = false;
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = AT_VECTOR(cfg->productions, i);
-		list_rhs const* list = prod->rhs_element;
+		list_rhs_t const* list = prod->rhs_element;
 		while ((list = match_symbol_production(list, non_ter))) {
 			list = list->next;
 			if (follow_symbol_rhs(prod, non_ter, list))

@@ -7,7 +7,7 @@ $PRODUCTION
 {
 	<FGFL>		->	<section> <FGFL'> ;
  
-	<FGFL'>		->	<section> <FGFL'> | %empty% ;
+	<FGFL'>		->	<section> <FGFL'> | $EMPTY ;
 
 	<section>	->	<skip_section>
 				|	<token_section>
@@ -19,7 +19,7 @@ $PRODUCTION
 	<keyword_section>	->	'$KEYWORD'	'{' <keyword_list> '}' ';' ;
 
 	<regex_list>	->	<atom_FGFL> <regex_assign> ';' <regex_list>
-					|	%empty%
+					|	$EMPTY
 					;
 
 	<regex_assign>	->	'=' REGEX
@@ -27,11 +27,11 @@ $PRODUCTION
 					;
 
 	<keyword_list>	->	<atom_FGFL> <keyword_list'>
-					|	%empty%
+					|	$EMPTY
 					;
 
 	<keyword_list'>	->	',' <keyword_list>
-					|	%empty%
+					|	$EMPTY
 					;
 
 	<atom_FGFL>	->	GLOBAL_TOK

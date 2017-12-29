@@ -53,8 +53,8 @@ display_action_table(int filde, cfg_t const* cfg,
 		action = state->reduces;
 		while (action) {
 			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, action->input);
-			dprintf(filde, "[" TOKEN_PREFIX SEP "%s]=" REDUCE_STR "(",
-																	ter->name);
+			dprintf(filde, "[" TOKEN_PREFIX SEP "%s]="
+												REDUCE_STR "(", ter->name);
 			display_nproduction(filde, cfg, action->state ^ _REDUCE);		
 			dprintf(filde, ")");
 	

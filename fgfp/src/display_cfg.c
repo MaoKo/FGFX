@@ -64,7 +64,7 @@ display_nproduction(int filde, cfg_t const* cfg, size_t index) {
 	display_nter_symbol(filde, cfg, prod->symbol_lhs->index, false);
 
 	dprintf(filde, SEP RHS_STR);
-	list_rhs* list = prod->rhs_element;
+	list_rhs_t* list = prod->rhs_element;
 	while (list) {
 		dprintf(filde, SEP);
 		if (IS_TERMINAL(list->symbol_rhs))

@@ -8,41 +8,46 @@ $PRODUCTION
 	<FGFP>	->	<section> <FGFP'> ;
  
 	<FGFP'>	->	<section> <FGFP'>
-			|	%empty%
+			|	$EMPTY
 			;
 
 	<section>	->	<extern_section>
 				|	<production_section>
 				|	<alias_section>
+				|	<prec_section>
 				;
     
 	<extern_section>	->	'$EXTERN' '{' <path_list> '}' ';' ;
 	<path_list>			->	LITERAL <path_list'> 
-						|	%empty%
+						|	$EMPTY
 						;
 
 	<path_list'>		->	',' <path_list>
-						|	%empty%
+						|	$EMPTY
 						;
 
 	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';' ;
 	<alias_list>		->	'(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
-						|	%empty%
+						|	$EMPTY
 						;
 
 	<alias_list'>		->	',' <alias_list>
-						|	%empty%
+						|	$EMPTY
 						;
+
+	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
+	<prec_list>			->	;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
 	<production_list>		->	<production> <production_list'>
-							|	%empty%
+							|	$EMPTY
 							;
 
 	<production_list'>	->	<production> <production_list'>
-						|	%empty%
+						|	$EMPTY
 						;
     
+
 	<production>	->	NTER <follow_prod> ';' ;
 	<follow_prod>	->	'=' '$START'
 					|	'->' <lhs>
@@ -50,17 +55,17 @@ $PRODUCTION
     
 	<lhs>	->	<opt_list> <lhs'> ;
 	<lhs'>	->	'|' <opt_list> <lhs'>
-			|	%empty%
+			|	$EMPTY
 			;
     
 	<opt_list>	->	<symbol_list>
-				|	'%empty%'
-				|	 %empty%
+				|	'$EMPTY'
+				|	 $EMPTY
 				;
 
 	<symbol_list>	->	<symbol> <symbol_list'> ;
 	<symbol_list'>	->	<symbol> <symbol_list'>
-					|	%empty%
+					|	$EMPTY
  					;
  
 	<symbol>	->	GLOBAL_TOK
@@ -77,6 +82,8 @@ $ALIAS
 	(ALIAS		=> '$ALIAS')		,
 	(PRODUCTION	=> '$PRODUCTION')	,
 	(START		=> '$START')		,
+	(PRECEDENCE	=> '$PRECEDENCE')	,
+	(EMPTY		=> '$EMPTY')		,
 	(COMMA		=> ',')				,
 	(SEMI		=> ';')				,
 	(LPAREN		=> '(')				,
@@ -85,8 +92,6 @@ $ALIAS
 	(RBRACE		=> '}')				,
 	(EQUAL		=> '=')				,
 	(UNION		=> '|')				,
-	(EMPTY		=> '%empty%')		,
 	(ARROW		=> '->')			,
 	(BARROW		=> '=>')			,
 };
-

@@ -3,9 +3,9 @@
 
 #include "fgfp.h"
 
-#define ONLY_TOKEN
+#define _ONLY_TOKEN_
 #include "fgfx.lex.h"
-#undef ONLY_TOKEN
+#undef	_ONLY_TOKEN_
 
 #define TERMINAL				T_GLOBAL_TOK
 #define NON_TERMINAL			T_NTER
@@ -16,6 +16,7 @@
 #define IS_LITERAL(symbol)		((symbol)->kind == LITERAL)
 #define IS_EOF(symbol)			((symbol)->is_eof)
 #define GET_INDEX(symbol)		((symbol)->index)
+#define NOT_PREC				(-1)
 
 #define SET_START(cfg, index)	((cfg)->goal = index)
 

@@ -10,9 +10,9 @@
 #include "nfa.h"
 #include "buffer.h"
 
-#define ONLY_TOKEN
+#define	_ONLY_TOKEN_
 #include "fgfx.lex.h"
-#undef ONLY_TOKEN
+#undef	_ONLY_TOKEN_
 
 static void
 del_token_entry(token_entry_t* entry) {

@@ -20,9 +20,9 @@ new_production(symbol_t* lhs, size_t index) {
 void
 del_production(production_t* prod) {
 	if (prod) {
-		list_rhs* it_list = prod->rhs_element;
+		list_rhs_t* it_list = prod->rhs_element;
 		while (it_list) {
-			list_rhs* next = it_list->next;
+			list_rhs_t* next = it_list->next;
 			FREE(it_list);
 			it_list = next;
 		}
@@ -33,18 +33,18 @@ del_production(production_t* prod) {
 
 int
 add_symbol_rhs(production_t* prod, symbol_t* symbol) {
-	list_rhs* new_list = NEW(list_rhs, 1);
+	list_rhs_t* new_list = NEW(list_rhs_t, 1);
 	if (!new_list)
 		{ return (ERROR); }
 
-	memset(new_list, 0, sizeof(list_rhs));
+	memset(new_list, 0, sizeof(list_rhs_t));
 	new_list->pos = 1;
 	new_list->symbol_rhs = symbol;
 
 	if (!prod->rhs_element)
 		{ prod->rhs_element = new_list; }
 	else {
-		list_rhs* crt_rhs = prod->rhs_element;
+		list_rhs_t* crt_rhs = prod->rhs_element;
 		while (crt_rhs->next) {
 			crt_rhs = crt_rhs->next;
 			++(new_list->pos);
@@ -54,6 +54,20 @@ add_symbol_rhs(production_t* prod, symbol_t* symbol) {
 	return (DONE);
 }
 
+symbol_t*
+last_symbol_in_prod(production_t const* prod) {
+	if (!prod)
+		{ return (NULL); }
+	symbol_t* last_ter = NULL;
+	list_rhs_t* list = prod->rhs_element;
+	while (list) {	
+		if (IS_TERMINAL(list->symbol_rhs))
+			{ last_ter = list->symbol_rhs; }
+		list = list->next;
+	}
+	return (last_ter);
+}
+
 int
 preprocess_literal(cfg_t const* cfg) {
 	if (!cfg)
@@ -61,7 +75,7 @@ preprocess_literal(cfg_t const* cfg) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)
 					AT_VECTOR(cfg->productions, i);
-		list_rhs* list = prod->rhs_element;
+		list_rhs_t* list = prod->rhs_element;
 		while (list) {
 			if (list->symbol_rhs->kind == LITERAL) {
 				list->symbol_rhs = (symbol_t*)
@@ -75,7 +89,7 @@ preprocess_literal(cfg_t const* cfg) {
 }
 
 bool
-list_is_nullable(list_rhs const* list) {
+list_is_nullable(list_rhs_t const* list) {
 	if (!list)
 		{ return (true); }
 	while (list) {
@@ -96,7 +110,7 @@ production_is_nullable(production_t const* prod) {
 }
 
 bitset_t*
-first_list_rhs(list_rhs const* list) {
+first_list_rhs_t(list_rhs_t const* list) {
 	if (!list)
 		{ return (NULL_BITSET); }
 	bitset_t* select_set = new_bitset();
@@ -119,11 +133,11 @@ bitset_t*
 first_production(production_t const* prod) {
 	if (!prod)
 		{ return (NULL_BITSET); }
-	return (first_list_rhs(prod->rhs_element));
+	return (first_list_rhs_t(prod->rhs_element));
 }
 
-list_rhs const*
-match_symbol_production(list_rhs const* list, symbol_t const* symbol) {
+list_rhs_t const*
+match_symbol_production(list_rhs_t const* list, symbol_t const* symbol) {
 	if (!list)
 		{ return (NULL); }
 	while (list) {
@@ -164,7 +178,7 @@ unreachable_production(cfg_t const* cfg) {
 	while (!EMPTY_VECTOR(stack_prod)) {
 		production_t* crt_prod = (production_t*)BACK_VECTOR(stack_prod);
 		POP_BACK_VECTOR(stack_prod);
-		list_rhs* list = crt_prod->rhs_element;
+		list_rhs_t* list = crt_prod->rhs_element;
 		while (list) {
 			crt_symbol = list->symbol_rhs;
 			if (IS_NON_TERMINAL(crt_symbol)

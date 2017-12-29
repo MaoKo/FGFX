@@ -106,14 +106,16 @@ advance_token(lexer_t* lex) {
 	}
 	else if (found_token == T_DIRECTIVE) {
 		static void* directive_tab[][2] = {
-			{ (void*)T_SKIP,	"$SKIP" },
-			{ (void*)T_TOKEN,	"$TOKEN" },
-			{ (void*)T_KEYWORD,	"$KEYWORD" },
-			{ (void*)T_IGCASE,	"$IGCASE" },
-			{ (void*)T_EXTERN,	"$EXTERN" },
-			{ (void*)T_START,	"$START" },
-			{ (void*)T_ALIAS,	"$ALIAS" },
+			{ (void*)T_SKIP,		"$SKIP" },
+			{ (void*)T_TOKEN,		"$TOKEN" },
+			{ (void*)T_KEYWORD,		"$KEYWORD" },
+			{ (void*)T_IGCASE,		"$IGCASE" },
+			{ (void*)T_EXTERN,		"$EXTERN" },
+			{ (void*)T_START,		"$START" },
+			{ (void*)T_ALIAS,		"$ALIAS" },
 			{ (void*)T_PRODUCTION,	"$PRODUCTION" },
+			{ (void*)T_PRECEDENCE,	"$PRECEDENCE" },
+			{ (void*)T_EMPTY,		"$EMPTY" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

@@ -9,13 +9,13 @@ $PRODUCTION
 
 	<E'>	->	'+' <T> <E'>
 		 |	'-' <T> <E'>
-		 |	%empty%
+		 |	$EMPTY
 		 ;
 
 	<T>	->	<F> <T'> ;
 	<T'>	->	'*' <F> <T'>
 		 |	'/' <F> <T'>
-		 |	%empty%
+		 |	$EMPTY
 		 ;
 
 	<F>	->	'(' <E> ')'

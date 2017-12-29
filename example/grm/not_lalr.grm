@@ -10,5 +10,5 @@ $PRODUCTION
 	<X> -> <E> RPAREN | <F> RBRACK ;
 	<E> -> <A> ;
 	<F> -> <A> ;
-	<A> -> /* epsilon */ ;
+	<A> -> $EMPTY ;
 };

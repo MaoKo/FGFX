@@ -17,7 +17,6 @@ $TOKEN {
     NTER        =  / <{IDENT}'?>                           / ;
     ARROW       =  / ->                                    / ;
     UNION       =  / \|                                    / ;
-    EMPTY       =  / %empty%                               / ;
     LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
     
     /* Both FGFL & FGFP */
@@ -34,6 +33,6 @@ $TOKEN {
 
 $KEYWORD {
     SKIP, TOKEN, KEYWORD, IGCASE,
-    EXTERN, PRODUCTION, ALIAS, START,
+    EXTERN, PRODUCTION, ALIAS, START, PRECEDENCE, EMPTY,
 };
 

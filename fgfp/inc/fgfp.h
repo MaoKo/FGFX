@@ -15,46 +15,45 @@ typedef struct {
 	char const* name;
 	bool is_defined;
 	union {
-		//TERMINAL
+		// if TERMINAL
 		struct {
 			bool is_eof;
-			/*	TODO:
-			 *	. unary	,
-			 *	. left	,
-			 *	. right	,
-			 */
+			int precedence;
+			bool left;
+			bool right;
+			bool nonassoc;
 		};
-		//NON_TERMINAL
+		// if NON_TERMINAL
 		struct {
 			bool nullable;
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
 		};
-		//ALIAS
+		// if ALIAS
 		struct {
 			int terminal_alias;
 		};
 	};
 } symbol_t;
 
-typedef struct list_rhs {
-	struct list_rhs* next;
+typedef struct list_rhs_t {
+	struct list_rhs_t* next;
 	symbol_t* symbol_rhs;
 	size_t pos;
-} list_rhs;
+} list_rhs_t;
 
 typedef struct {
 	size_t index;
 	symbol_t* symbol_lhs;
-	list_rhs* rhs_element;
+	list_rhs_t* rhs_element;
 	bitset_t* select_set;
 	bool can_get_rid;
 } production_t;
 
 typedef struct {
 	production_t const* prod;
-	list_rhs const* dot_pos;
+	list_rhs_t const* dot_pos;
 	bool is_final;
 	vector_t* non_kernel_lr0;
 } lr0_item_t;
