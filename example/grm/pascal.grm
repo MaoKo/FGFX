@@ -1,10 +1,14 @@
-$EXTERN { 'none.h',};
+$EXTERN
+{
+	'pascal.lex.h',
+};
 
 $PRODUCTION
 {
-<file>    -> <program>
-        | <module>
-        ;
+
+<file>	->	<program>
+         |	<module>
+         ;
 
 <program> -> <program_heading> <semicolon> <block> DOT
         ;

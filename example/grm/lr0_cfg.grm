@@ -1,6 +1,6 @@
 $EXTERN
 {
-	'none.h',
+	'lr0_arith.lex.h',
 };
 
 $PRODUCTION

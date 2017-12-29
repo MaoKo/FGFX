@@ -1,6 +1,6 @@
 $EXTERN
 {
-	'EXAMPLE',
+	'else.lex.h',
 };
 
 $PRODUCTION

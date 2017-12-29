@@ -1,4 +1,4 @@
-$EXTERN		{ 'nothing.h' };
+$EXTERN		{ 'test.lex.h' };
 $PRODUCTION
 {
 	<T>	-> x | x b ;

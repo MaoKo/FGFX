@@ -1,4 +1,7 @@
-$EXTERN { 'none.h', };
+$EXTERN
+{
+	'pointer.lex.h',
+};
 
 $PRODUCTION
 {
