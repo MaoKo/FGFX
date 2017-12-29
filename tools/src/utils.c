@@ -125,6 +125,26 @@ append_trans_list(trans_list_t* dst, trans_list_t* src) {
 }
 
 void
+del_node_trans_list(trans_list_t** list, trans_list_t const* tnode) {
+	if (!list || !*list || !tnode)
+		{ return; }
+
+	if ((*list) == tnode)
+		{ (*list) = tnode->next; }
+	else {
+		trans_list_t* base = *list;
+		while (base) {
+			if (base->next == tnode) {
+				base->next = tnode->next;
+				break;
+			}
+			base = base->next;
+		}
+	}
+	FREE(tnode);
+}
+
+void
 del_trans_list(trans_list_t* list) {
 	while (list) {
 		trans_list_t* next = list->next;

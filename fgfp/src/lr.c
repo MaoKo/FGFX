@@ -330,7 +330,7 @@ merge_lr1_state(lr1_state_t* st1, lr1_state_t* st2) {
 		{ return; }
 
 	if (st1->hash_items != st2->hash_items
-			|| cmp_lr1_state(st1->items, st2->items))
+			|| cmp_lr0_state(st1->items, st2->items))
 		{ return; }
 
 	bitset_t* new_item = new_bitset();
@@ -711,17 +711,19 @@ gen_lr1_states(cfg_t const* cfg) {
 				size_t hash_test = hash_lr1_item(next);
 				size_t index;
 
+				bool find = false;
 				for (index = 0; index < SIZE_VECTOR(lr1_states);
 						++index) {
 					lr1_state_t* test = (lr1_state_t*)
 									AT_VECTOR(lr1_states, index);
 					if (test->hash_items == hash_test
 							&& !cmp_lr1_state(test->items, next)) {
+						find = true;
 						break;
 					}
 				}
 
-				if (index == SIZE_VECTOR(lr1_states)) {
+				if (!find) {
 					PUSH_BACK_VECTOR(lr1_states, new_lr1_state(next));
 					change = true;
 				}
@@ -749,19 +751,28 @@ gen_lr1_states(cfg_t const* cfg) {
 	return (lr1_states);
 }
 
-static int
+static bool
 check_conflict(lr1_state_t* state, trans_list_t* reduce_list, int kind) {
 	trans_list_t* target_action = (kind == SHIFT_REDUCE)
 									? state->shift_lst : state->reduces;
 	while (target_action) {
 		trans_list_t* reset_list = reduce_list;
 		while (reset_list) {
-			if ((kind == SHIFT_REDUCE) && (_SHIFT & target_action->input)
-					&& ((_SHIFT ^ target_action->input) == reset_list->input))
-				{ return (true); }
+			if ((kind == SHIFT_REDUCE)
+					&& ((_SHIFT ^ target_action->input) == reset_list->input)) {
+				// Favor of shifting
+				del_node_trans_list(&reduce_list, reset_list);
+				return (true);
+			}
 			else if ((kind == REDUCE_REDUCE)
-					&& (target_action->input == reset_list->input))
-				{ return (true); }
+					&& (target_action->input == reset_list->input)) {
+				// Favor of reducing by the rule that appear earlier
+				trans_list_t const* tnode = target_action;
+				if (tnode->state > reset_list->state)
+					{ tnode = reset_list; }
+				del_node_trans_list(&reduce_list, tnode);
+				return (true);
+			}
 			reset_list = reset_list->next;
 		}
 		target_action = target_action->next;
@@ -799,36 +810,25 @@ add_reduce_lr0(cfg_t const* cfg, lr1_state_t* state,
 
 #endif
 
-static int
+static void
 detect_error(lr1_state_t* state, trans_list_t* reduce_list, size_t index) {
-	bool fail = false;
-	if (check_conflict(state, reduce_list, SHIFT_REDUCE)) {
-			fprintf(stderr, "Shift/Reduce (state %zu).\n", index);
-			fail = true;
-	}
-	if (check_conflict(state, reduce_list, REDUCE_REDUCE)) {
-		fprintf(stderr, "Reduce/Reduce (state %zu).\n", index);
-		fail = true;
-	}
-
-	if (fail) {
-		del_trans_list(reduce_list);
-		return (ERROR);
-	}
+	if (check_conflict(state, reduce_list, SHIFT_REDUCE))
+		{ fprintf(stderr, "Shift/Reduce (state %zu).\n", index); }
+	if (check_conflict(state, reduce_list, REDUCE_REDUCE))
+		{ fprintf(stderr, "Reduce/Reduce (state %zu).\n", index); }
 
 	if (!state->reduces)
 		{ state->reduces = reduce_list; }
 	else
 		{ append_trans_list(state->reduces, reduce_list); }
-	return (DONE);
 }
 
 static void
 add_reduce_slr(lr1_state_t* state, lr1_item_t* item, size_t index) {
 	symbol_t* symbol_lhs = PROD(CORE(item))->symbol_lhs;
-
 	int i;
 	trans_list_t* reduce_list = NULL;
+
 	while ((i = IT_NEXT(symbol_lhs->follow)) != IT_NULL) {
 		trans_list_t* next = new_trans_list(i,
 									REDUCE(PROD(CORE(item))->index));
@@ -858,6 +858,7 @@ compute_reduce_op(cfg_t const* cfg, vector_t* lr1_states) {
 	(void)add_reduce_slr;
 	if (!cfg || !lr1_states)
 		{ return; }
+
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
 		int j;

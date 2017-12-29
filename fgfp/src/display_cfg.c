@@ -188,6 +188,7 @@ display_parsing_table(cfg_t const* cfg, char const* base_file) {
 	display_action_table(filde, cfg, lr1_states, header);
 	display_goto_table(filde, cfg, lr1_states, header);
 
+	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);
 
 	display_synchronizing_token(filde, cfg, header);

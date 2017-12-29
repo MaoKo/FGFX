@@ -49,6 +49,8 @@ gen_lalr1_states(cfg_t const* cfg) {
 		lr1_state_t* st2 = AT_VECTOR(lr1_states, (size_t)i);
 
 		merge_lr1_state(st1, st2);
+
+		del_lr1_state(st2);
 		erase_vector(lr1_states, i);
 
 		for (size_t j = 0; j < SIZE_VECTOR(lr1_states); ++j) {

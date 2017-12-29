@@ -1,0 +1,21 @@
+$EXTERN
+{
+	'EXAMPLE',
+};
+
+$PRODUCTION
+{
+	<S> ->	'if' <E> 'then' <S>
+		 |	'if' <E> 'then' <S> 'else' <S>
+		 |	OTHER
+		 ;
+
+	<E> ->	NUM ;
+};
+
+$ALIAS
+{
+	(IF		=> 'if'),
+	(THEN	=> 'then'),
+	(ELSE	=> 'else'),
+};
