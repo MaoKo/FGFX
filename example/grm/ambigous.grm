@@ -1,6 +1,6 @@
 $EXTERN
 {
-	'none.h',
+	'ambigous.lex.h',
 };
 
 
@@ -8,6 +8,7 @@ $PRECEDENCE
 {
 	$LEFT	(PLUS, MINUS)	,
 	$LEFT	(MUL, DIV)		,
+	$LEFT	(UNARY)			,
 };
 
 
@@ -17,10 +18,8 @@ $PRODUCTION
 		 |	<E> '-' <E>
 		 |	<E> '*' <E>
 		 |	<E> '/' <E>
-
-//		 |	'+' <E>		( $MIMIC => UNARY )
-//		 |	'-' <E>		( $MIMIC => UNARY )
-
+		 |	PLUS  <E>	( $MIMIC UNARY )
+		 |	MINUS <E>	( $MIMIC UNARY )
 		 |	ID
 		 ;
 };

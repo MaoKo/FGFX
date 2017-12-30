@@ -43,13 +43,9 @@ $PRODUCTION
 						 |	$EMPTY
 						 ;
 
-	<prec_atom_list>	->	<prec_atom> <prec_atom_list'> ;
-	<prec_atom_list'>	->	$EMPTY ; // ',' <prec_atom_list> ;
+	<prec_atom_list>	->	<prec_atom> ;
 
-	<prec_atom>			->	/* LITERAL
-						 |	*/ GLOBAL_TOK
-						 ;
-
+	<prec_atom>			->	GLOBAL_TOK ;
 	<prec_dir>			->	'$LEFT'
 						 |	'$RIGHT'
 						 |	'$NONASSOC'
@@ -67,11 +63,11 @@ $PRODUCTION
 
 	<production>	->	NTER <follow_prod> ';' ;
 	<follow_prod>	->	'=' '$START'
-					|	'->' <lhs>
+					|	'->' <rhs>
 					;
     
-	<lhs>	->	<opt_list> <lhs'> ;
-	<lhs'>	->	'|' <opt_list> <lhs'>
+	<rhs>	->	<opt_list> <mimic> <rhs'> ;
+	<rhs'>	->	'|' <opt_list> <mimic> <rhs'>
 			|	$EMPTY
 			;
     
@@ -85,6 +81,8 @@ $PRODUCTION
 					|	$EMPTY
  					;
  
+	<mimic>		->	'(' '$MIMIC' GLOBAL_TOK ')' ;
+
 	<symbol>	->	GLOBAL_TOK
 				|	NTER
 				|	LITERAL

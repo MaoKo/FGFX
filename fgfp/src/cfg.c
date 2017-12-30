@@ -146,6 +146,7 @@ static int cfg_precedence_list(cfg_t*);
 
 static int cfg_production(cfg_t*);
 static int cfg_rhs(cfg_t*, symbol_t* lhs);
+static int cfg_mimic(cfg_t*, production_t*);
 static int cfg_opt_list(cfg_t*, production_t*);
 static int cfg_list(cfg_t*, production_t*);
 static int cfg_atom(cfg_t*, production_t*);
@@ -186,9 +187,8 @@ cfg_section(cfg_t* cfg) {
 			{ return (ERROR); }
 		empty = false;
 	}
-	if (empty) {
-		/* WARNING */
-	}
+	if (empty)
+		{ /* WARNING */ }
 	return (DONE);
 }
 
@@ -321,7 +321,7 @@ cfg_production_list(cfg_t* cfg) {
 static int
 follow_prod(cfg_t* cfg) {
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL,
-													C_LEXEME(cfg->lex));
+												C_LEXEME(cfg->lex));
 	if (peek_token(cfg->lex) == T_ARROW) {
 		advance_token(cfg->lex);
 		symbol_lhs->is_defined = true;
@@ -332,8 +332,7 @@ follow_prod(cfg_t* cfg) {
 	}
 	else if (advance_token(cfg->lex) == T_EQUAL) {
 		if (advance_token(cfg->lex) != T_START) {
-			fprintf(stderr, "Must $START follow %s = .\n",
-				symbol_lhs->name);
+			fprintf(stderr, "Must $START follow %s = .\n", symbol_lhs->name);
 			return (ERROR);
 		}
 		cfg->goal = symbol_lhs->index;
@@ -361,7 +360,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 	production_t* prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 	if (!prod)
 		{ return (ERROR); }
-	if (cfg_opt_list(cfg, prod) == ERROR) {
+	if ((cfg_opt_list(cfg, prod) == ERROR)
+								|| (cfg_mimic(cfg, prod) == ERROR)) {
 		del_production(prod);
 		return (ERROR);
 	}
@@ -374,7 +374,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 		if (!prod)
 			{ return (ERROR); }
-		if (cfg_opt_list(cfg, prod) == ERROR) {
+		if (cfg_opt_list(cfg, prod) == ERROR
+									|| cfg_mimic(cfg, prod) == ERROR) {
 			del_production(prod);
 			return (ERROR);
 		}
@@ -386,12 +387,33 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 }
 
 int
+cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
+	if (peek_token(cfg->lex) != T_LPAREN)
+		{ return (DONE); }
+	advance_token(cfg->lex);
+	if (advance_token(cfg->lex) != T_MIMIC
+			|| advance_token(cfg->lex) != T_GLOBAL_TOK)
+		{ return (ERROR); }
+
+	crt_prod->mimic_sym = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+
+	if (advance_token(cfg->lex) != T_RPAREN)
+		{ return (ERROR); }
+
+	if (!last_symbol_in_prod(crt_prod)) {
+		fprintf(stderr, "Warning production %zu contain no terminal.\n",
+													GET_INDEX(crt_prod) + 1);
+	}
+	return (DONE);
+}
+
+int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
-	else if (!in_first(cfg->lex, T_UNION, T_SEMI, -1)) {
+	else if (!in_first(cfg->lex, T_LPAREN, T_UNION, T_SEMI, -1)) {
 		/* ERROR */
 		return (ERROR);
 	}
@@ -414,7 +436,7 @@ cfg_list(cfg_t* cfg, production_t* prod) {
 int
 cfg_atom(cfg_t* cfg, production_t* prod) {
 	symbol_t* atom_symbol = add_symbol_cfg(cfg,
-				advance_token(cfg->lex), C_LEXEME(cfg->lex));
+					advance_token(cfg->lex), C_LEXEME(cfg->lex));
 	if ((atom_symbol->kind == LITERAL)
 			&& (atom_symbol->terminal_alias != -1)) {
 		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,

@@ -764,9 +764,15 @@ check_conflict(cfg_t const* cfg, lr1_state_t* state,
 			if ((kind == SHIFT_REDUCE)
 					&& ((_SHIFT ^ target_action->input) == reset_list->input)) {
 
-				symbol_t* last_sym = last_symbol_in_prod(
-									(production_t*)AT_VECTOR(cfg->productions,
-												_REDUCE ^ reset_list->state));
+				production_t* crt_prod = (production_t*)
+												AT_VECTOR(cfg->productions,
+												_REDUCE ^ reset_list->state);
+	
+				symbol_t* last_sym = last_symbol_in_prod(crt_prod);
+				if (crt_prod->mimic_sym)
+					{ last_sym = crt_prod->mimic_sym; }
+				else
+					{ last_sym = last_symbol_in_prod(crt_prod); }
 
 				symbol_t* shift_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
 												reset_list->input);

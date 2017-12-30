@@ -21,19 +21,19 @@ int main(int argc, char* argv[]) {
 	cfg_t* cfg = parse_cfg(filde);
 
 	if (!cfg)
-		{ exit(1); }
+		{ exit(EXIT_FAILURE); }
 
 	if (!SIZE_VECTOR(cfg->token_file)) {
 		fprintf(stderr, "At most one location "
 				"of token must be defined.\n");
 		del_cfg(cfg);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	augment_grammar(cfg);
 	if (detect_bad_symbol(cfg)) {
 		del_cfg(cfg);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (unreachable_production(cfg)) {
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 			fprintf(stderr, "Non terminal %s derive no string at all.\n",
 				symbol->name);
 			del_cfg(cfg);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

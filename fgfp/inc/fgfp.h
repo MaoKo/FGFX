@@ -49,6 +49,7 @@ typedef struct {
 	list_rhs_t* rhs_element;
 	bitset_t* select_set;
 	bool can_get_rid;
+	symbol_t* mimic_sym;
 } production_t;
 
 typedef struct {
