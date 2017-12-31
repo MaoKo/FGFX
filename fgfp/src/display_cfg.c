@@ -177,6 +177,7 @@ display_parsing_table(cfg_t const* cfg, char const* base_file) {
 	if (is_ll1(cfg)) {
 		vector_t* ll1_table = gen_ll1_table(cfg);
 		display_ll_table(filde, cfg, ll1_table, header);
+		foreach_vector(ll1_table, &del_trans_list);
 		del_vector(ll1_table);
 	}
 

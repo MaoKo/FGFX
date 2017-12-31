@@ -9,22 +9,24 @@ $PRODUCTION
 		 |	<E> '-' <E>
 		 |	<E> '*' <E>
 		 |	<E> '/' <E>
-		 |	PLUS  <E>	( $MIMIC UNARY )
-		 |	MINUS <E>	( $MIMIC UNARY )
+		 |	'+' <E>			( $MIMIC 'unary' )
+		 |	'-' <E>			( $MIMIC 'unary' )
 		 |	ID
 		 ;
 };
 
 $PRECEDENCE
 {
-	$LEFT	( '+', '-' )	,
-	$LEFT	( '*', '/' )	,
-	$LEFT	( UNARY )		,
+	$LEFT	( '+', '-'	,),
+	$LEFT	( '*', '/'	,),
+	$LEFT	( 'unary'	,),
 };
-
 
 $ALIAS
 {
-	(PLUS	=>	'+'), (MINUS	=>	'-'),
-	(MUL	=>	'*'), (DIV		=>	'/'),
+	(PLUS	=>	'+'),
+	(MINUS	=>	'-'),
+	(MUL	=>	'*'),
+	(DIV	=>	'/'),
+	(UNARY	=>	'unary'),
 };

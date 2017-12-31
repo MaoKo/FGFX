@@ -85,7 +85,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	int fail = 0;
 	if (!symbol->name)
 		{ fail = 1; }
-
+	
 	if (kind == LITERAL) 
 		{ symbol->terminal_alias = -1; }
 	else {
@@ -260,6 +260,7 @@ cfg_alias_list(cfg_t* cfg) {
 
 		literal->is_defined = true;
 		literal->terminal_alias = index_alias;
+
 		if (literal->prec)
 			{ alias_ter->prec = literal->prec; }
 
@@ -434,14 +435,19 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 	if (peek_token(cfg->lex) != T_LPAREN)
 		{ return (DONE); }
 	advance_token(cfg->lex);
-	if (advance_token(cfg->lex) != T_MIMIC
-			|| advance_token(cfg->lex) != T_GLOBAL_TOK)
+	if (advance_token(cfg->lex) != T_MIMIC)
 		{ return (ERROR); }
 
-	crt_prod->mimic_sym = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+	int allow_kind = advance_token(cfg->lex);
+	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL))
+		{ return (ERROR); }
+
+	crt_prod->mimic_sym = add_symbol_cfg(cfg, allow_kind, C_LEXEME(cfg->lex));
+	crt_prod->mimic_sym->is_used = true;
 
 	if (advance_token(cfg->lex) != T_RPAREN)
 		{ return (ERROR); }
+
 	return (DONE);
 }
 
@@ -494,13 +500,13 @@ unused_symbol(vector_t const* symbol_tab) {
 		symbol_t* symbol = (symbol_t*)AT_VECTOR(symbol_tab, i);
 		if (!symbol->is_defined) {
 			fprintf(stderr, "%s %s used but not defined.\n",
-				((IS_NON_TERMINAL(symbol))
-					? "Non Terminal" : "Literal"), symbol->name);
+								((IS_NON_TERMINAL(symbol))
+								? "Non Terminal" : "Literal"), symbol->name);
 			unused = ERROR;
 		}
 		else if (!symbol->is_used) {
 			fprintf(stderr, "Warning %s defined but not used.\n",
-															symbol->name);
+								symbol->name);
 		}
 	}
 	return (unused);
@@ -510,9 +516,9 @@ int
 detect_bad_symbol(cfg_t* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
-	int exit_status = unused_symbol(cfg->non_terminal)
-			|| unused_symbol(cfg->terminal);
-	return (exit_status);
+	int exit_status = (unused_symbol(cfg->non_terminal) == ERROR)
+			|| (unused_symbol(cfg->terminal) == ERROR );
+	return ((exit_status) ? ERROR : DONE);
 }
 
 int

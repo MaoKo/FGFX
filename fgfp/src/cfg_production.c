@@ -74,6 +74,10 @@ preprocess_literal(cfg_t const* cfg) {
 		{ return (ERROR); }
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		if (prod->mimic_sym && (prod->mimic_sym->kind == LITERAL)) {
+			prod->mimic_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
+											prod->mimic_sym->terminal_alias);
+		}
 		list_rhs_t* list = prod->rhs_element;
 		while (list) {
 			if (list->symbol_rhs->kind == LITERAL) {

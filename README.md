@@ -19,7 +19,10 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
 	.	Allow forward reference in FGFL
+	.	No output in FGFL when the file is empty
 	.	Allow optional elements in FGFP with [ ... ]
 	.	Allow list elements in FGFP with { ... }
+	.	Allow several alias for the same terminal
+	.	Improve the algorithm for constructing the LALR parsing table
 	.	Learn MarkDown :)
 
