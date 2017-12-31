@@ -5,8 +5,7 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFP>	->	<section> <FGFP'> ;
-	<FGFP'>	->	<section> <FGFP'>
+	<FGFP>	->	<section> <FGFP>
 			|	$EMPTY
 			;
 
@@ -44,7 +43,12 @@ $PRODUCTION
 						;
 
 	<prec_atom_list>	->	<prec_atom> <prec_atom_list'> ;
-	<prec_atom_list'>	->	$EMPTY ;
+	<prec_atom_list'>	->	',' <prec_atom_list''>
+						|	$EMPTY
+						;
+	<prec_atom_list''>	->	<prec_atom> <prec_atom_list'>
+						|	$EMPTY
+						;
 
 	<prec_atom>			->	GLOBAL_TOK
 						|	LITERAL

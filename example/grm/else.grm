@@ -13,6 +13,11 @@ $PRODUCTION
 	<E> ->	NUM ;
 };
 
+$PRECEDENCE
+{
+	$RIGHT	( 'else', 'then' ),
+};
+
 $ALIAS
 {
 	(IF		=> 'if'),

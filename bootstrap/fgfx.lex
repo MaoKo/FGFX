@@ -16,7 +16,7 @@ $TOKEN
     REGEX       =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
     
     /* FGFP */
-    NTER        =  / <{IDENT}'?>                           / ;
+    NTER        =  / <{IDENT}('{1,3})?>                    / ;
     ARROW       =  / ->                                    / ;
     UNION       =  / \|                                    / ;
     LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
