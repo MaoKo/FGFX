@@ -77,12 +77,10 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	if (!symbol->name)
 		{ fail = 1; }
 
-	if (kind == LITERAL)
+	if (kind == LITERAL) 
 		{ symbol->terminal_alias = -1; }
-	else if (kind == TERMINAL) {
-		symbol->is_defined = true;
-		symbol->precedence = NOT_PREC;
-	}
+	else if (kind == TERMINAL)
+		{ symbol->is_defined = true; }
 	else {
 		symbol->prod_lst = new_bitset();
 		if (!symbol->prod_lst)
@@ -93,6 +91,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 		free_symbol(symbol);
 		return (NULL);
 	}
+
 /*
 	if (kind == NON_TERMINAL)
 		{ *strchr(sym->name, '>') = EOS; }
@@ -103,6 +102,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	//else
 	//	{ FREE(sym); }
 */
+
 	symbol->index = SIZE_VECTOR(dest);
 	PUSH_BACK_VECTOR(dest, symbol);
 	return (symbol);
@@ -221,26 +221,32 @@ cfg_alias_list(cfg_t* cfg) {
 			return (ERROR);
 		}
 
-		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL,
+													C_LEXEME(cfg->lex));
 		size_t index_alias = alias_ter->index;
-
 //		alias_ter->is_defined = false;
 
-		if (advance_token(cfg->lex) != T_BARROW
-				|| advance_token(cfg->lex) != T_LITERAL) {
+		if ((advance_token(cfg->lex) != T_BARROW)
+				|| (advance_token(cfg->lex) != T_LITERAL)) {
 			/* ERROR */
 			return (ERROR);
 		}
-		symbol_t* literal = add_symbol_cfg(cfg,
-					LITERAL, C_LEXEME(cfg->lex));
+		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(cfg->lex));
 		if (literal->terminal_alias != -1) {
 			/* ERROR */
-			fprintf(stderr, "Redefinning literal %s.\n",
-					C_LEXEME(cfg->lex));
+			fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(cfg->lex));
 			return (ERROR);
 		}
+		else if (alias_ter->prec && (alias_ter->prec != literal->prec)) {
+			fprintf(stderr, "Several precedence for the terminal %s.\n",
+								alias_ter->name);
+			return (ERROR);
+		}
+
 		literal->is_defined = true;
 		literal->terminal_alias = index_alias;
+		alias_ter->prec = literal->prec;
+
 		if (advance_token(cfg->lex) != T_RPAREN) {
 			/* ERROR */
 			return (ERROR);
@@ -259,25 +265,47 @@ cfg_alias_list(cfg_t* cfg) {
 
 static int
 cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
-	while (peek_token(cfg->lex) == T_GLOBAL_TOK) {
-		advance_token(cfg->lex);
+	size_t allow_kind = peek_token(cfg->lex);
 
-		symbol_t* prec_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
-		prec_ter->precedence = prec_depth;
+	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL)) {
+		/* ERROR */
+		return (ERROR);
+	}
+
+	while ((allow_kind == T_GLOBAL_TOK) || (allow_kind == T_LITERAL)) {
+		advance_token(cfg->lex);
+		symbol_t* prec_ter = add_symbol_cfg(cfg, allow_kind,
+													C_LEXEME(cfg->lex));
+		prec_ter->is_used = true;
+		if (prec_ter->prec) {
+			fprintf(stderr, "Precedence already define for the symbol %s.\n",
+							prec_ter->name);
+			return (ERROR);
+		}
+
+		precedence_t* prec = NEW(precedence_t, 1);
+		if (!prec)
+			{ return (ERROR); }
+
+		prec->precedence = prec_depth;
 		switch (kind_prec) {
-			case T_LEFT: prec_ter->left = true; break;
-			case T_RIGHT: prec_ter->right = true; break;
+			case T_LEFT: prec->left = true; break;
+			case T_RIGHT: prec->right = true; break;
 			case T_NONASSOC:
-					prec_ter->right = true;
-					prec_ter->left = true;
+					prec->right = true;
+					prec->left = true;
 					break;
 		}
+
+		prec_ter->prec = prec;
 		if (peek_token(cfg->lex) != T_COMMA
-				&& peek_token(cfg->lex) != T_RPAREN)
+								&& peek_token(cfg->lex) != T_RPAREN)
 			{ return (ERROR); }
 	
 		if (peek_token(cfg->lex) == T_COMMA)
 			{ advance_token(cfg->lex); }
+
+		allow_kind = peek_token(cfg->lex);
 	}
 	advance_token(cfg->lex);
 	return (DONE);
@@ -295,10 +323,6 @@ cfg_precedence_list(cfg_t* cfg) {
 			default: return (ERROR);
 		}
 		if (advance_token(cfg->lex) == T_LPAREN) {
-			if (peek_token(cfg->lex) != T_GLOBAL_TOK) {
-				/* ERROR */
-				return (ERROR);
-			}
 			if (cfg_precedence_atom(cfg, kind_prec, prec_depth++) == ERROR)
 				{ return (ERROR); }
 			if (peek_token(cfg->lex) == T_COMMA)

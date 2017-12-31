@@ -10,18 +10,29 @@
 #include "lexer.h"
 
 typedef struct {
+	int precedence;
+	bool left;
+	bool right;
+} precedence_t;
+
+typedef struct {
 	size_t index;
 	int kind;
 	char const* name;
 	bool is_defined;
+	bool is_used;
 	union {
-		// if TERMINAL
+		// if TERMINAL && ALIAS
 		struct {
-			bool is_eof;
-			int precedence;
-			bool left;
-			bool right;
-			bool nonassoc;
+			union {
+				// if TERMINAL
+				struct
+					{ bool is_eof; };
+				// if ALIAS
+				struct
+					{ int terminal_alias; };
+			};
+			precedence_t* prec;
 		};
 		// if NON_TERMINAL
 		struct {
@@ -29,10 +40,6 @@ typedef struct {
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
-		};
-		// if ALIAS
-		struct {
-			int terminal_alias;
 		};
 	};
 } symbol_t;

@@ -18,6 +18,10 @@
 #define GET_INDEX(symbol)		((symbol)->index)
 #define NOT_PREC				(-1)
 
+#define PRECEDENCE(sym)			((sym)->prec->precedence)
+#define RIGHT(sym)				((sym)->prec->right)
+#define LEFT(sym)				((sym)->prec->left)
+
 #define SET_START(cfg, index)	((cfg)->goal = index)
 
 cfg_t* new_cfg(int);

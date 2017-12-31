@@ -3,15 +3,6 @@ $EXTERN
 	'ambigous.lex.h',
 };
 
-
-$PRECEDENCE
-{
-	$LEFT	(PLUS, MINUS)	,
-	$LEFT	(MUL, DIV)		,
-	$LEFT	(UNARY)			,
-};
-
-
 $PRODUCTION
 {
 	<E>	->	<E> '+' <E>
@@ -24,10 +15,16 @@ $PRODUCTION
 		 ;
 };
 
+$PRECEDENCE
+{
+	$LEFT	( '+', '-' )	,
+	$LEFT	( '*', '/' )	,
+	$LEFT	( UNARY )		,
+};
+
+
 $ALIAS
 {
-	(PLUS	=>	'+'),
-	(MINUS	=>	'-'),
-	(MUL	=>	'*'),
-	(DIV	=>	'/'),
+	(PLUS	=>	'+'), (MINUS	=>	'-'),
+	(MUL	=>	'*'), (DIV		=>	'/'),
 };

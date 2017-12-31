@@ -6,7 +6,6 @@ $EXTERN
 $PRODUCTION
 {
 	<FGFL>		->	<section> <FGFL'> ;
- 
 	<FGFL'>		->	<section> <FGFL'> | $EMPTY ;
 
 	<section>	->	<skip_section>

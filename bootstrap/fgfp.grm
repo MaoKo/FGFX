@@ -36,20 +36,24 @@ $PRODUCTION
 
 	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
 	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')' <prec_list'>
-						 |	$EMPTY
-						 ;
+						|	$EMPTY
+						;
 
 	<prec_list'>		->	',' <prec_list>
-						 |	$EMPTY
-						 ;
+						|	$EMPTY
+						;
 
-	<prec_atom_list>	->	<prec_atom> ;
+	<prec_atom_list>	->	<prec_atom> <prec_atom_list'> ;
+	<prec_atom_list'>	->	$EMPTY ;
 
-	<prec_atom>			->	GLOBAL_TOK ;
+	<prec_atom>			->	GLOBAL_TOK
+						|	LITERAL
+						;
+
 	<prec_dir>			->	'$LEFT'
-						 |	'$RIGHT'
-						 |	'$NONASSOC'
-						 ;
+						|	'$RIGHT'
+						|	'$NONASSOC'
+						;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
 	<production_list>		->	<production> <production_list'>
@@ -81,7 +85,7 @@ $PRODUCTION
 					|	$EMPTY
  					;
  
-	<mimic>		->	'(' '$MIMIC' GLOBAL_TOK ')' ;
+	<mimic>		->	'(' '$MIMIC' <prec_atom> ')' ;
 
 	<symbol>	->	GLOBAL_TOK
 				|	NTER

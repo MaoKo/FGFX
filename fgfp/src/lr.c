@@ -777,20 +777,20 @@ check_conflict(cfg_t const* cfg, lr1_state_t* state,
 				symbol_t* shift_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
 												reset_list->input);
 
-				if (last_sym->precedence != NOT_PREC
-						&& shift_sym->precedence != NOT_PREC) {
-					if (last_sym->precedence > shift_sym->precedence) {
+				if (PRECEDENCE(last_sym) != NOT_PREC
+						&& PRECEDENCE(shift_sym) != NOT_PREC) {
+					if (PRECEDENCE(last_sym) > PRECEDENCE(shift_sym)) {
 						del_node_trans_list(&state->shift_lst,
 													target_action);
 					}
-					else if (last_sym->precedence < shift_sym->precedence)
+					else if (PRECEDENCE(last_sym) < PRECEDENCE(shift_sym))
 						{ del_node_trans_list(reduce_list, reset_list); }
 					else {
-						if (shift_sym->left) {
+						if (LEFT(shift_sym)) {
 							del_node_trans_list(&state->shift_lst,
 														target_action);
 						}
-						if (shift_sym->right) 
+						if (RIGHT(shift_sym)) 
 							{ del_node_trans_list(reduce_list, reset_list); }
 					}
 					return (check_conflict(cfg, state, reduce_list, kind));
