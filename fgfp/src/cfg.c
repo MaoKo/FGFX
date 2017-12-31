@@ -10,14 +10,18 @@
 cfg_t*
 new_cfg(int filde) {
 	cfg_t* cfg = NEW(cfg_t, 1);
+
 	if (!cfg)
 		{ return (NULL); }
 	memset(cfg, 0, sizeof(cfg_t));
+
+	cfg->miss_prod = true;
 	cfg->productions = new_vector();
 	cfg->non_terminal = new_vector();
 	cfg->terminal = new_vector();
 	cfg->token_file = new_vector();
 	cfg->lex = new_lexer(filde);
+
 	return (cfg);
 }
 
@@ -30,6 +34,10 @@ free_symbol(symbol_t* sym) {
 			del_bitset(sym->follow);
 			del_bitset(sym->prod_lst);
 		}
+		else if ((sym->kind == TERMINAL) && (sym->prec))
+			{ FREE(sym->prec); }
+		else if ((sym->kind == LITERAL) && (!sym->is_defined) && (sym->prec))
+			{ FREE(sym->prec); }
 	}
 	FREE(sym);
 }
@@ -80,13 +88,15 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 
 	if (kind == LITERAL) 
 		{ symbol->terminal_alias = -1; }
-	else if (kind == TERMINAL)
-		{ symbol->is_defined = true; }
 	else {
-		symbol->prod_lst = new_bitset();
 		symbol->is_used = true;
-		if (!symbol->prod_lst)
-			{ fail = 1; }
+		if (kind == TERMINAL)
+			{ symbol->is_defined = true; }
+		else {
+			symbol->prod_lst = new_bitset();
+			if (!symbol->prod_lst)
+				{ fail = 1; }
+		}
 	}
 
 	if (fail) {
@@ -135,7 +145,6 @@ augment_grammar(cfg_t* cfg) {
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
 
-	eof_symbol->is_used = true;
 	eof_symbol->is_eof = true;
 
 	add_symbol_rhs(prod, eof_symbol);
@@ -195,7 +204,7 @@ cfg_section(cfg_t* cfg) {
 		empty = false;
 	}
 	if (empty)
-		{ /* WARNING */ }
+		{ fprintf(stderr, "Warning: empty file.\n"); }
 	return (DONE);
 }
 
@@ -231,8 +240,6 @@ cfg_alias_list(cfg_t* cfg) {
 		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL,
 												C_LEXEME(cfg->lex));
 		size_t index_alias = alias_ter->index;
-		alias_ter->is_used = true;
-
 		if ((advance_token(cfg->lex) != T_BARROW)
 				|| (advance_token(cfg->lex) != T_LITERAL)) {
 			/* ERROR */
@@ -244,7 +251,8 @@ cfg_alias_list(cfg_t* cfg) {
 			fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(cfg->lex));
 			return (ERROR);
 		}
-		else if (alias_ter->prec && (alias_ter->prec != literal->prec)) {
+		else if ((alias_ter->prec && literal->prec)
+					&& (alias_ter->prec != literal->prec)) {
 			fprintf(stderr, "Several precedence for the terminal %s.\n",
 								alias_ter->name);
 			return (ERROR);
@@ -252,7 +260,8 @@ cfg_alias_list(cfg_t* cfg) {
 
 		literal->is_defined = true;
 		literal->terminal_alias = index_alias;
-		alias_ter->prec = literal->prec;
+		if (literal->prec)
+			{ alias_ter->prec = literal->prec; }
 
 		if (advance_token(cfg->lex) != T_RPAREN) {
 			/* ERROR */
@@ -283,10 +292,9 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 		advance_token(cfg->lex);
 		symbol_t* prec_ter = add_symbol_cfg(cfg, allow_kind,
 													C_LEXEME(cfg->lex));
-		prec_ter->is_used = true;
 		if (prec_ter->prec) {
 			fprintf(stderr, "Precedence already define for the symbol %s.\n",
-							prec_ter->name);
+								prec_ter->name);
 			return (ERROR);
 		}
 
@@ -294,7 +302,9 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 		if (!prec)
 			{ return (ERROR); }
 
+		memset(prec, 0, sizeof(precedence_t));
 		prec->precedence = prec_depth;
+
 		switch (kind_prec) {
 			case T_LEFT: prec->left = true; break;
 			case T_RIGHT: prec->right = true; break;
@@ -354,7 +364,9 @@ follow_prod(cfg_t* cfg) {
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL,
 												C_LEXEME(cfg->lex));
 	if (peek_token(cfg->lex) == T_ARROW) {
+		cfg->miss_prod = false;
 		advance_token(cfg->lex);
+
 		symbol_lhs->is_defined = true;
 		if (cfg_rhs(cfg, symbol_lhs) == ERROR) {
 			/* ERROR */
@@ -463,8 +475,8 @@ int
 cfg_atom(cfg_t* cfg, production_t* prod) {
 	symbol_t* atom_symbol = add_symbol_cfg(cfg,
 					advance_token(cfg->lex), C_LEXEME(cfg->lex));
-	atom_symbol->is_used = true;
 
+	atom_symbol->is_used = true;
 	if ((atom_symbol->kind == LITERAL)
 			&& (atom_symbol->terminal_alias != -1)) {
 		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
@@ -505,15 +517,19 @@ detect_bad_symbol(cfg_t* cfg) {
 
 int
 cfg_sanity_check(cfg_t* cfg) {
-	if (!SIZE_VECTOR(cfg->token_file)) {
+	if (!cfg)
+		{ return (ERROR); }
+
+	if (cfg->miss_prod) {
+		fprintf(stderr, "No production encounter at all.\n");
+		return (ERROR);
+	}
+	else if (!SIZE_VECTOR(cfg->token_file)) {
 		fprintf(stderr, "At most one location of token must be defined.\n");
-		del_cfg(cfg);
 		return (ERROR);
 	}
-	else if (detect_bad_symbol(cfg) == ERROR) {
-		del_cfg(cfg);
-		return (ERROR);
-	}
+	else if (detect_bad_symbol(cfg) == ERROR)
+		{ return (ERROR); }
 	else if (unreachable_production(cfg) == ERROR)
 		{ fprintf(stderr, "Some unreachable nonterminal has been remove.\n"); }
 

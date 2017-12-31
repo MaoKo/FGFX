@@ -100,6 +100,7 @@ typedef struct {
 	vector_t* token_file;
 	lexer_t* lex;
 	size_t goal;
+	bool miss_prod;
 } cfg_t;
 
 #endif /* FGFP_H */

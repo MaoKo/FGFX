@@ -45,13 +45,16 @@ cmp_token_entry(token_entry_t* entry, char const* str) {
 static int
 add_entry_lexeme(token_spec_t* spec, int kind) {
 	int offset = (kind == LOCAL);
+
 	int i = get_index_vector(spec->entry_lst,
 			C_LEXEME(spec->lex) + offset, &cmp_token_entry);
+
 	if (i != -1)
 		{ return (i); }
 	token_entry_t* entry = NEW(token_entry_t, 1);
 	if (!entry)
 		{ return (ERROR); }
+
 	memset(entry, 0, sizeof(token_entry_t));
 	entry->kind = kind;
 	switch (entry->kind) {
@@ -114,8 +117,7 @@ regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 			{ entry->skip = true; }
 		advance_token(spec->lex);
 		if (advance_token(spec->lex) != T_REGEX) {
-			fprintf(stderr, 
-				"Error (%d): No found regex after %s = .\n",
+			fprintf(stderr, "Error (%d): No found regex after %s = .\n",
 				CURRENT_LINE(spec->lex), entry->name);
 			return (ERROR);
 		}
@@ -123,13 +125,12 @@ regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 		size_t save_space = 0;
 
 		char* last_escape = strrchr(C_LEXEME(spec->lex), '\\');
-		if (last_escape && last_escape[-1] != '\\'
+		if ((last_escape && last_escape[-1] != '\\')
 				&& is_tab_or_space(last_escape[1]))
 			{ save_space = 1; }
 
 		// Get rid of trailing space and tab
-		unget_c_buffer(LAST_LEXEME(spec->lex),
-			count_back(C_LEXEME(spec->lex),
+		unget_c_buffer(LAST_LEXEME(spec->lex), count_back(C_LEXEME(spec->lex),
 			&is_tab_or_space) - save_space);
 
 		size_t front_space = count_front(C_LEXEME(spec->lex) + 1,
@@ -278,7 +279,7 @@ parse_token_entry(token_spec_t* spec) {
 		empty = false;
 	}
 	if (empty)
-		{ fprintf(stderr, "Warning file empty.\n"); }
+		{ fprintf(stderr, "Warning: file empty.\n"); }
 	return (DONE);
 }
 

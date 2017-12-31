@@ -752,53 +752,79 @@ gen_lr1_states(cfg_t const* cfg) {
 }
 
 static bool
+handle_accept_conflict(cfg_t const* cfg, trans_list_t** reduce_list) {
+	bool reach_end = false;
+	bool once = false;
+
+	while (!reach_end) {
+		trans_list_t* reset_list = (*reduce_list);
+		while (reset_list) {
+			symbol_t* shift_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
+												reset_list->input);
+			if (shift_sym->is_eof) {
+				del_node_trans_list(reduce_list, reset_list);
+				once = true;
+				break;
+			}
+
+			reset_list = reset_list->next;
+		}
+		if (!reset_list)
+			{ reach_end = true; }
+	}
+	return (once);
+}
+
+bool
 check_conflict(cfg_t const* cfg, lr1_state_t* state,
 									trans_list_t** reduce_list, int kind) {
 
 	trans_list_t* target_action = (kind == SHIFT_REDUCE)
-									? state->shift_lst : state->reduces;
+								? state->shift_lst : state->reduces;
 	bool several = false;
+	if (state->accept)
+		{ several = handle_accept_conflict(cfg, reduce_list); }
+
 	while (target_action) {
 		trans_list_t* reset_list = (*reduce_list);
 		while (reset_list) {
-			if ((kind == SHIFT_REDUCE)
-					&& ((_SHIFT ^ target_action->input) == reset_list->input)) {
-
-				production_t* crt_prod = (production_t*)
-												AT_VECTOR(cfg->productions,
-												_REDUCE ^ reset_list->state);
-	
-				symbol_t* last_sym = last_symbol_in_prod(crt_prod);
-				if (crt_prod->mimic_sym)
-					{ last_sym = crt_prod->mimic_sym; }
-				else
-					{ last_sym = last_symbol_in_prod(crt_prod); }
-
+			if (kind == SHIFT_REDUCE) {
 				symbol_t* shift_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
 												reset_list->input);
 
-				if (PRECEDENCE(last_sym) != NOT_PREC
-						&& PRECEDENCE(shift_sym) != NOT_PREC) {
-					if (PRECEDENCE(last_sym) > PRECEDENCE(shift_sym)) {
-						del_node_trans_list(&state->shift_lst,
-													target_action);
-					}
-					else if (PRECEDENCE(last_sym) < PRECEDENCE(shift_sym))
-						{ del_node_trans_list(reduce_list, reset_list); }
-					else {
-						if (LEFT(shift_sym)) {
+				if ((_SHIFT ^ target_action->input) == reset_list->input) {
+					production_t* crt_prod = (production_t*)
+												AT_VECTOR(cfg->productions,
+												_REDUCE ^ reset_list->state);
+					symbol_t* last_sym;
+					if (crt_prod->mimic_sym)
+						{ last_sym = crt_prod->mimic_sym; }
+					else
+						{ last_sym = last_symbol_in_prod(crt_prod); }
+
+					if (last_sym && PRECEDENCE(last_sym) != NOT_PREC
+							&& PRECEDENCE(shift_sym) != NOT_PREC) {
+						if (PRECEDENCE(last_sym) > PRECEDENCE(shift_sym)) {
 							del_node_trans_list(&state->shift_lst,
-														target_action);
+															target_action);
 						}
-						if (RIGHT(shift_sym)) 
+						else if (PRECEDENCE(last_sym) < PRECEDENCE(shift_sym))
 							{ del_node_trans_list(reduce_list, reset_list); }
+						else {
+							if (LEFT(shift_sym)) {
+								del_node_trans_list(&state->shift_lst,
+															target_action);
+							}
+							if (RIGHT(shift_sym)) 
+							{ del_node_trans_list(reduce_list, reset_list); }
+						}
+						return (check_conflict(cfg, state, reduce_list, kind));
 					}
-					return (check_conflict(cfg, state, reduce_list, kind));
-				}
-				else {
-					// Favor of shifting
-					del_node_trans_list(reduce_list, reset_list);
-					several = true; break;
+					else {
+						// Favor of shifting
+						del_node_trans_list(reduce_list, reset_list);
+						several = true; break;
+					}
 				}
 			}
 			else if ((kind == REDUCE_REDUCE)
