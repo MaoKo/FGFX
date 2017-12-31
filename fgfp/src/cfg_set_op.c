@@ -29,8 +29,7 @@ compute_first(cfg_t* cfg) {
 	do {
 		change = false;
 		for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
-			production_t* prod = (production_t*)
-						AT_VECTOR(cfg->productions, i);
+			production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 			bitset_t* first = first_production(prod);
 			if (!is_subset_bitset(prod->select_set, first)) {
 				if (!prod->symbol_lhs->first)

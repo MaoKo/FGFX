@@ -29,11 +29,14 @@ void del_cfg(cfg_t*);
 cfg_t* parse_cfg(int);
 void augment_grammar(cfg_t*);
 int detect_bad_symbol(cfg_t*);
+int cfg_sanity_check(cfg_t*);
 #ifdef PRINT_DEBUG
 void print_terminal(cfg_t const*);
 void print_non_terminal(cfg_t const*);
 void print_production(cfg_t const*);
 void print_nullable(cfg_t const*);
+void print_first_set(cfg_t const*);
+void print_follow_set(cfg_t const*);
 #endif /* PRINT_DEBUG */
 
 #endif /* CFG_H */

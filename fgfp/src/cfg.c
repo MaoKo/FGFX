@@ -3,6 +3,7 @@
 
 #include "cfg.h"
 #include "cfg_production.h"
+#include "cfg_set_op.h"
 #include "lexer.h"
 #include "utils.h"
 
@@ -83,6 +84,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 		{ symbol->is_defined = true; }
 	else {
 		symbol->prod_lst = new_bitset();
+		symbol->is_used = true;
 		if (!symbol->prod_lst)
 			{ fail = 1; }
 	}
@@ -127,14 +129,19 @@ augment_grammar(cfg_t* cfg) {
 		{ return; }
 	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
 	start->is_defined = true;
-	production_t* prod = new_production(start,
-					SIZE_VECTOR(cfg->productions));
+
+	production_t* prod = new_production(start, SIZE_VECTOR(cfg->productions));
+
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
+
+	eof_symbol->is_used = true;
 	eof_symbol->is_eof = true;
+
 	add_symbol_rhs(prod, eof_symbol);
 	ADD_BITSET(start->prod_lst, SIZE_VECTOR(cfg->productions));
 	PUSH_BACK_VECTOR(cfg->productions, prod);
+
 	cfg->goal = start->index;
 }
 
@@ -222,9 +229,9 @@ cfg_alias_list(cfg_t* cfg) {
 		}
 
 		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL,
-													C_LEXEME(cfg->lex));
+												C_LEXEME(cfg->lex));
 		size_t index_alias = alias_ter->index;
-//		alias_ter->is_defined = false;
+		alias_ter->is_used = true;
 
 		if ((advance_token(cfg->lex) != T_BARROW)
 				|| (advance_token(cfg->lex) != T_LITERAL)) {
@@ -423,11 +430,6 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 
 	if (advance_token(cfg->lex) != T_RPAREN)
 		{ return (ERROR); }
-
-	if (!last_symbol_in_prod(crt_prod)) {
-		fprintf(stderr, "Warning production %zu contain no terminal.\n",
-													GET_INDEX(crt_prod) + 1);
-	}
 	return (DONE);
 }
 
@@ -461,6 +463,8 @@ int
 cfg_atom(cfg_t* cfg, production_t* prod) {
 	symbol_t* atom_symbol = add_symbol_cfg(cfg,
 					advance_token(cfg->lex), C_LEXEME(cfg->lex));
+	atom_symbol->is_used = true;
+
 	if ((atom_symbol->kind == LITERAL)
 			&& (atom_symbol->terminal_alias != -1)) {
 		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
@@ -482,6 +486,10 @@ unused_symbol(vector_t const* symbol_tab) {
 					? "Non Terminal" : "Literal"), symbol->name);
 			unused = ERROR;
 		}
+		else if (!symbol->is_used) {
+			fprintf(stderr, "Warning %s defined but not used.\n",
+															symbol->name);
+		}
 	}
 	return (unused);
 }
@@ -493,6 +501,33 @@ detect_bad_symbol(cfg_t* cfg) {
 	int exit_status = unused_symbol(cfg->non_terminal)
 			|| unused_symbol(cfg->terminal);
 	return (exit_status);
+}
+
+int
+cfg_sanity_check(cfg_t* cfg) {
+	if (!SIZE_VECTOR(cfg->token_file)) {
+		fprintf(stderr, "At most one location of token must be defined.\n");
+		del_cfg(cfg);
+		return (ERROR);
+	}
+	else if (detect_bad_symbol(cfg) == ERROR) {
+		del_cfg(cfg);
+		return (ERROR);
+	}
+	else if (unreachable_production(cfg) == ERROR)
+		{ fprintf(stderr, "Some unreachable nonterminal has been remove.\n"); }
+
+	preprocess_literal(cfg);
+	check_mimic_prod(cfg);
+
+	detect_nullable(cfg);
+	compute_first(cfg);
+
+	if (cfg_not_realizable(cfg) == ERROR)
+		{ return (ERROR); }
+
+	compute_follow(cfg);
+	return (DONE);
 }
 
 #ifdef PRINT_DEBUG
@@ -539,6 +574,44 @@ print_nullable(cfg_t const* cfg) {
 		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
 		if (non_terminal->nullable)
 			{ printf("%s is nullable.\n", non_terminal->name); }
+	}
+}
+
+void
+print_first_set(cfg_t const* cfg) {
+	puts("=== FIRST SET ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
+		printf("FIRST(%s) = {", non_terminal->name);
+		bool first = true;
+		int j;
+		while ((j = IT_NEXT(non_terminal->first)) != IT_NULL) {
+			if (!first)
+				{ printf(", "); }
+			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
+			printf("%s", terminal->name);
+			first = false;
+		}
+		puts("}");
+	}
+}
+
+void
+print_follow_set(cfg_t const* cfg) {
+	puts("=== FOLLOW SET ===");
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* non_terminal = AT_VECTOR(cfg->non_terminal, i);
+		printf("FOLLOW(%s) = {", non_terminal->name);
+		bool first = true;
+		int j;
+		while ((j = IT_NEXT(non_terminal->follow)) != IT_NULL) {
+			if (!first)
+				{ printf(", "); }
+			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
+			printf("%s", terminal->name);
+			first = false;
+		}
+		puts("}");
 	}
 }
 

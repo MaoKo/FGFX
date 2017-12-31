@@ -73,16 +73,28 @@ preprocess_literal(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
-		production_t* prod = (production_t*)
-					AT_VECTOR(cfg->productions, i);
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 		list_rhs_t* list = prod->rhs_element;
 		while (list) {
 			if (list->symbol_rhs->kind == LITERAL) {
-				list->symbol_rhs = (symbol_t*)
-					AT_VECTOR(cfg->terminal,
-					list->symbol_rhs->terminal_alias);
+				list->symbol_rhs = (symbol_t*)AT_VECTOR(cfg->terminal,
+										list->symbol_rhs->terminal_alias);
 			}
 			list = list->next;
+		}
+	}
+	return (DONE);
+}
+
+int
+check_mimic_prod(cfg_t const* cfg) {
+	if (!cfg)
+		{ return (ERROR); }
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		if (prod->mimic_sym && !last_symbol_in_prod(prod)) {
+			fprintf(stderr, "Warning production %zu contain no terminal.\n",
+								GET_INDEX(prod) + 1);
 		}
 	}
 	return (DONE);
@@ -208,6 +220,21 @@ unreachable_production(cfg_t const* cfg) {
 	return (unreach);
 }
 
+int
+cfg_not_realizable(cfg_t const* cfg) {
+	if (!cfg)
+		{ return (ERROR); }
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* symbol = AT_VECTOR(cfg->non_terminal, i);
+		if ((is_empty_bitset(symbol->first)) && (!symbol->nullable)) {
+			fprintf(stderr, "Non terminal %s derive no string at all.\n",
+								symbol->name);
+			return (ERROR);
+		}
+	}
+	return (DONE);
+}
+
 bool
 disjoint_select_set(cfg_t const* cfg, symbol_t* nter) {
 	if (!cfg)
@@ -218,15 +245,17 @@ disjoint_select_set(cfg_t const* cfg, symbol_t* nter) {
 		production_t* prod = BACK_VECTOR(stack_prod);
 		for (size_t j = 0; j < SIZE_VECTOR(stack_prod) - 1; ++j) {
 			production_t* tmp_p = AT_VECTOR(stack_prod, j);
-			if (!is_disjoint_bitset(prod->select_set,
-						tmp_p->select_set)) {
+			if (!is_disjoint_bitset(prod->select_set, tmp_p->select_set)) {
 				disjoint = false;
-				goto exit;
+				break;
 			}
 		}
+		if (!disjoint)
+			{ break; }
+
 		POP_BACK_VECTOR(stack_prod);	
 	}
-exit:
+
 	del_vector(stack_prod);
 	return (disjoint);
 }
