@@ -132,7 +132,7 @@ first_list_rhs_t(list_rhs_t const* list) {
 	bitset_t* select_set = new_bitset();
 	while (list) {
 		if (IS_TERMINAL(list->symbol_rhs)) {
-			ADD_BITSET(select_set, list->symbol_rhs->index);
+			ADD_BITSET(select_set, GET_INDEX(list->symbol_rhs));
 			break;
 		}
 		else {
@@ -187,22 +187,20 @@ unreachable_production(cfg_t const* cfg) {
 	vector_t* stack_prod = NULL;
 
 	symbol_t* crt_symbol = AT_VECTOR(cfg->non_terminal, cfg->goal);
-	ADD_BITSET(nter_seen, crt_symbol->index);
+	ADD_BITSET(nter_seen, GET_INDEX(crt_symbol));
 
 	stack_prod = stack_production_lhs(cfg, crt_symbol);
-
 	while (!EMPTY_VECTOR(stack_prod)) {
 		production_t* crt_prod = (production_t*)BACK_VECTOR(stack_prod);
 		POP_BACK_VECTOR(stack_prod);
+
 		list_rhs_t* list = crt_prod->rhs_element;
 		while (list) {
 			crt_symbol = list->symbol_rhs;
-			if (IS_NON_TERMINAL(crt_symbol)
-						&& !IS_PRESENT(nter_seen,
-						crt_symbol->index)) {
-				ADD_BITSET(nter_seen, crt_symbol->index);
-				move_vector(stack_prod,
-					stack_production_lhs(cfg, crt_symbol));
+			if (IS_NON_TERMINAL(crt_symbol) && !IS_PRESENT(nter_seen,
+												GET_INDEX(crt_symbol))) {
+				ADD_BITSET(nter_seen, GET_INDEX(crt_symbol));
+				move_vector(stack_prod, stack_production_lhs(cfg, crt_symbol));
 			}
 			list = list->next;
 		}
@@ -224,19 +222,81 @@ unreachable_production(cfg_t const* cfg) {
 	return (unreach);
 }
 
+static bool
+nter_not_derive(cfg_t const* cfg, symbol_t* symbol, bitset_t* nter_seen) {
+	if (IS_PRESENT(nter_seen, GET_INDEX(symbol)) || symbol->realizable)
+		{ return (symbol->realizable);  }
+
+	ADD_BITSET(nter_seen, GET_INDEX(symbol));
+
+	vector_t* stack_prod = stack_production_lhs(cfg, symbol);
+	for (size_t i = 0; i < SIZE_VECTOR(stack_prod); ++i) {
+		production_t* crt_prod = (production_t*)AT_VECTOR(stack_prod, i);
+		list_rhs_t* list = crt_prod->rhs_element;
+
+		bool seq_real = true;
+		while (list) {
+			symbol_t* crt_symbol = list->symbol_rhs;
+			if (IS_NON_TERMINAL(crt_symbol))
+				{ seq_real &= nter_not_derive(cfg, crt_symbol, nter_seen); }
+			list = list->next;
+		}
+
+		if (seq_real) {
+			symbol->realizable = seq_real;
+			break;
+		}
+	}
+	del_vector(stack_prod);
+	return (symbol->realizable);
+}
+
+static void
+precompute_realizable(cfg_t const* cfg) {
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* crt_prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		list_rhs_t* list = crt_prod->rhs_element;
+		bool whole_ter = true;
+		while (list) {
+			symbol_t* crt_symbol = list->symbol_rhs;
+			if (!IS_TERMINAL(crt_symbol)) {
+				whole_ter = false;
+				break;
+			}
+			list = list->next;
+		}
+		LHS(crt_prod)->realizable = whole_ter;
+	}
+}
+
 int
 cfg_not_realizable(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
-	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+
+	precompute_realizable(cfg);
+
+	int exit_status = DONE;
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
 		symbol_t* symbol = AT_VECTOR(cfg->non_terminal, i);
-		if ((is_empty_bitset(symbol->first)) && (!symbol->nullable)) {
+		if (symbol->realizable)
+			{ continue; }
+
+		if ((is_empty_bitset(symbol->first)) && (!symbol->nullable))
+			{ symbol->realizable = false; }
+		else {
+			bitset_t* nter_seen = new_bitset();
+			nter_not_derive(cfg, symbol, nter_seen);
+			del_bitset(nter_seen);
+		}
+
+		if (!symbol->realizable) {
 			fprintf(stderr, "Non terminal %s derive no string at all.\n",
-								symbol->name);
-			return (ERROR);
+																symbol->name);
+			exit_status = ERROR;
 		}
 	}
-	return (DONE);
+	return (exit_status);
 }
 
 bool

@@ -37,6 +37,7 @@ typedef struct {
 		// if NON_TERMINAL
 		struct {
 			bool nullable;
+			bool realizable;
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
