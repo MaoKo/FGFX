@@ -105,7 +105,13 @@ atom_FGFL(token_spec_t* spec, int kind_symbol) {
 int
 regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 	token_entry_t* entry = (token_entry_t*)
-				AT_VECTOR(spec->entry_lst, index_entry);
+								AT_VECTOR(spec->entry_lst, index_entry);
+
+	if ((!strcmp(entry->name, "ERROR")) || (!strcmp(entry->name, "EOF"))) {
+			fprintf(stderr, "<%s> name reserved for special use.\n",
+								entry->name);
+			return (T_ERROR);
+	}
 
 	if (peek_token(spec->lex) == T_EQUAL) {
 		if (entry->reg || entry->kind == KEYWORD) {
@@ -164,8 +170,7 @@ int
 regex_list(token_spec_t* spec, int kind_section) {
 	if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
 		int index_entry = atom_FGFL(spec,
-				(advance_token(spec->lex) ==  T_GLOBAL_TOK)
-				? GLOBAL : LOCAL);
+				(advance_token(spec->lex) ==  T_GLOBAL_TOK) ? GLOBAL : LOCAL);
 		if (index_entry == ERROR)
 			{ return (ERROR); }
 		if (regex_assign(spec, index_entry, kind_section) == ERROR
@@ -289,12 +294,13 @@ regex_gen(char const* pathname, token_spec_t** spec) {
 		{ return (ERROR); }
 	token_spec_t* crt_spec = *spec = NEW(token_spec_t, 1);
 	int filde = 0;
+
 	if (!crt_spec || ((filde = open(pathname, O_RDONLY)) == -1))
 		{ return (ERROR); }
 	memset(crt_spec, 0, sizeof(token_spec_t));
+
 	crt_spec->lex = new_lexer(filde);
 	crt_spec->entry_lst = new_vector();
-	if (parse_token_entry(crt_spec))
-		{ return (ERROR); }
-	return (DONE);
+
+	return (parse_token_entry(crt_spec));
 }

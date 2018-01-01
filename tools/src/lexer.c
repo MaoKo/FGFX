@@ -96,15 +96,8 @@ advance_token(lexer_t* lex) {
 			reset_buffer(lex->last_lexeme);
 		}
 	}
-	if (found_token == T_GLOBAL_TOK) {
-		if (!strcmp(C_LEXEME(lex), "ERROR")
-				|| !strcmp(C_LEXEME(lex), "EOF")) {
-			fprintf(stderr, "<%s> name reserved for special use.\n",
-				C_LEXEME(lex));
-			return (T_ERROR);
-		}
-	}
-	else if (found_token == T_DIRECTIVE) {
+
+	if (found_token == T_DIRECTIVE) {
 		static void* directive_tab[][2] = {
 			{ (void*)T_SKIP,		"$SKIP" },
 			{ (void*)T_TOKEN,		"$TOKEN" },
