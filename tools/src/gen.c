@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include "display.h"
+#include "gen.h"
 
 uint8_t
 min_size_type(size_t size) {
@@ -15,7 +15,7 @@ min_size_type(size_t size) {
 }
 
 void
-display_include_macro(int filde, char const* header) {
+gen_include_macro(int filde, char const* header) {
 	write(filde, SEP, 1);
 	while (*header) {
 		char c;
@@ -30,24 +30,23 @@ display_include_macro(int filde, char const* header) {
 }
 
 void
-display_require_macro(int filde, char const* header) {
+gen_require_macro(int filde, char const* header) {
 	dprintf(filde, "#ifndef ");
-	display_include_macro(filde, header);
-	dprintf(filde, NL);
-	dprintf(filde, "#define ");
-	display_include_macro(filde, header);
+	gen_include_macro(filde, header);
+	dprintf(filde, NL "#define ");
+	gen_include_macro(filde, header);
 	dprintf(filde, NL NL);
 }
 
 void
-display_endif(int filde, char const* header) {
+gen_endif(int filde, char const* header) {
 	dprintf(filde, "#endif /* ");
-	display_include_macro(filde, header);
+	gen_include_macro(filde, header);
 	dprintf(filde, " */" NL);
 }
 
 void
-display_verbatim_file(int filde, char const* header) {
+gen_verbatim_file(int filde, char const* header) {
 	if (isdigit(*header))
 		{ write(filde, "_", 1); }
 	while (*header && (isalnum(*header) || (*header == '_')))

@@ -8,13 +8,17 @@
 #include "vector.h"
 
 production_t*
-new_production(symbol_t* lhs, size_t index) {
+new_production(symbol_t* lhs, cfg_t const* cfg) {
 	production_t* prod = NEW(production_t, 1);
+
 	if (!prod)
 		{ return (NULL); }
 	memset(prod, 0, sizeof(production_t));
+
 	prod->symbol_lhs = lhs;
-	prod->index = index;
+	prod->index = SIZE_VECTOR(cfg->productions);
+	PUSH_BACK_VECTOR(cfg->productions, prod);
+
 	return (prod);
 }
 
@@ -34,6 +38,9 @@ del_production(production_t* prod) {
 
 int
 add_symbol_rhs(production_t* prod, symbol_t* symbol) {
+	if (!prod)
+		{ return (ERROR); }
+
 	list_rhs_t* new_list = NEW(list_rhs_t, 1);
 	if (!new_list)
 		{ return (ERROR); }

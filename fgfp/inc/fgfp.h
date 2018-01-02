@@ -15,7 +15,7 @@ typedef struct {
 	bool right;
 } precedence_t;
 
-typedef struct {
+typedef struct symbol_t {
 	size_t index;
 	int kind;
 	char const* name;
@@ -41,6 +41,9 @@ typedef struct {
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
+			// (Optional & List) elements
+			struct symbol_t* special;
+			size_t depth;
 		};
 	};
 } symbol_t;

@@ -38,7 +38,7 @@ bitset_t* closure(cfg_t const*, bitset_t*);
 bitset_t* goto_lr(cfg_t const*, bitset_t*, symbol_t const*);
 int cmp_lr0_state(bitset_t*, bitset_t*);
 int cmp_lr1_state(bitset_t*, bitset_t*);
-vector_t* gen_lr1_states(cfg_t const*);
+vector_t* build_lr1_states(cfg_t const*);
 void compute_reduce_op(cfg_t const*, vector_t*);
 #ifdef PRINT_DEBUG
 void print_lr0_item(lr0_item_t*);

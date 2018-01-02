@@ -10,15 +10,15 @@ static int
 adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	if (!bs || new_size <= bs->nwords)
 		{ return (0); }
-	int oldsize	= _BYTE_SETTYPE(bs->nwords);
+	int oldsize = _BYTE_SETTYPE(bs->nwords);
 
-	bs->nwords	= new_size;
-	bs->nbits	= new_size * _BITS_IN_WORD;
+	bs->nwords = new_size;
+	bs->nbits = new_size * _BITS_IN_WORD;
 
 	if (bs->invert)
 		{ bs->siter = bs->nbits - 1; }
 
-	_SETTYPE* chunk	= NEW(_SETTYPE, _BYTE_SETTYPE(new_size));
+	_SETTYPE* chunk = NEW(_SETTYPE, _BYTE_SETTYPE(new_size));
 	memset(chunk, 0, _BYTE_SETTYPE(new_size));
 
 	if (!chunk)
@@ -42,9 +42,9 @@ new_bitset(void) {
 	if (!bs)
 		{ return (NULL); }
 	memset(bs, 0, sizeof(bitset_t));
-	bs->nwords	= _DEFWORDS;
-	bs->nbits	= _DEFBITS;
-	bs->map		= bs->defmap;
+	bs->nwords = _DEFWORDS;
+	bs->nbits = _DEFBITS;
+	bs->map	 = bs->defmap;
 	return (bs);
 }
 
@@ -62,10 +62,10 @@ dup_bitset(bitset_t const* bs) {
 	bitset_t* nbs		= new_bitset();
 	memcpy(nbs, bs, sizeof(bitset_t));
 	if (bs->map == bs->defmap)
-		{ nbs->map	= nbs->defmap; }
+		{ nbs->map = nbs->defmap; }
 	else {
-		size_t bs_size	= nbs->nwords * sizeof(_SETTYPE);
-		if (!(nbs->map	= NEW(_SETTYPE, bs_size)))
+		size_t bs_size = nbs->nwords * sizeof(_SETTYPE);
+		if (!(nbs->map = NEW(_SETTYPE, bs_size)))
 			{ return (NULL); }
 		memcpy(nbs->map, bs->map, bs_size);
 	}
@@ -120,15 +120,17 @@ _op_bitset(int kind, bitset_t* rbs, bitset_t* lbs) {
 		{ return (NULL); }
 	for (size_t i = 0; i < rbs->nwords; ++i) {
 		switch (kind) {
-			case _UNION:	rbs->map[i] |= lbs->map[i];
+			case _UNION:
+					rbs->map[i] |= lbs->map[i];
 					break;
 			case _INTERSECT:
 					rbs->map[i] &= lbs->map[i];
 					break;
-			case _DIFF:	rbs->map[i] = (rbs->map[i]
-						^ (rbs->map[i] & lbs->map[i]));
+			case _DIFF:
+					rbs->map[i] = (rbs->map[i] ^ (rbs->map[i] & lbs->map[i]));
 					break;
-			case _COMPL:	rbs->map[i] = ~rbs->map[i];
+			case _COMPL:
+					rbs->map[i] = ~rbs->map[i];
 					break;
 		}
 	}
@@ -141,9 +143,9 @@ truncate_bitset(bitset_t* bs) {
 		{ return; }
 	if (bs->map != bs->defmap) {
 		FREE(bs->map);
-		bs->map		= bs->defmap;
-		bs->nwords	= _DEFWORDS;
-		bs->nbits	= _DEFBITS;
+		bs->map = bs->defmap;
+		bs->nwords = _DEFWORDS;
+		bs->nbits = _DEFBITS;
 	}
 	CLEAR_BITSET(bs);
 }

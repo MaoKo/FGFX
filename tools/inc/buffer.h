@@ -3,13 +3,13 @@
 
 #include <stddef.h>
 
-#define BODY_BUFFER(buf)	((buf)->body)
-#define SIZE_BUFFER(buf)	((buf)->size)
+#define BODY_BUFFER(buf)		((buf)->body)
+#define SIZE_BUFFER(buf)		((buf)->size)
 #define ALLOC_SIZE_BUFFER(buf)	((buf)->alloc)
 #define CMP_BUFF_STR(buf, str)	(!strcmp((buf)->body, str))
-#define CMP_BUFFER(b1, b2)	(CMP_BUFF_STR(b1, (b2)->body))
+#define CMP_BUFFER(b1, b2)		(CMP_BUFF_STR(b1, (b2)->body))
 
-#define _BUFF_SIZE		16
+#define _BUFF_SIZE				(16)
 
 typedef struct {
 	char* body;

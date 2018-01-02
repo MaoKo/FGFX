@@ -7,6 +7,6 @@
 #include "vector.h"
 
 bool is_ll1(cfg_t const*);
-vector_t* gen_ll1_table(cfg_t const*);
+vector_t* build_ll1_table(cfg_t const*);
 
 #endif /* LL_H */

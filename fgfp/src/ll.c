@@ -20,7 +20,7 @@ is_ll1(cfg_t const* cfg) {
 }
 
 vector_t*
-gen_ll1_table(cfg_t const* cfg) {
+build_ll1_table(cfg_t const* cfg) {
 	vector_t* ll_table = new_vector();
 
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {

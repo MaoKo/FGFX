@@ -76,6 +76,7 @@ $PRODUCTION
 			;
     
 	<opt_list>	->	<symbol_list>
+				|	'[' <opt_list> ']'
 				|	'$EMPTY'
 				|	 $EMPTY
 				;
@@ -85,7 +86,9 @@ $PRODUCTION
 					|	$EMPTY
  					;
  
-	<mimic>		->	'(' '$MIMIC' <prec_atom> ')' ;
+	<mimic>		->	'(' '$MIMIC' <prec_atom> ')'
+				|	$EMPTY
+				;
 
 	<symbol>	->	GLOBAL_TOK
 				|	NTER
@@ -117,4 +120,6 @@ $ALIAS
 	(UNION		=> '|')				,
 	(ARROW		=> '->')			,
 	(BARROW		=> '=>')			,
+	(LBRACK		=> '[')				,
+	(RBRACK		=> ']')				,
 };

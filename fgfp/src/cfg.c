@@ -63,8 +63,10 @@ del_cfg(cfg_t* cfg) {
 	FREE(cfg);
 }
 
-static int
+static inline int
 cmp_symbol_name(symbol_t const* sym, char const* name) {
+	if (!sym->name)
+		{ return (1); }
 	return (strcmp(sym->name, name));
 }
 
@@ -72,19 +74,23 @@ static symbol_t*
 add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	vector_t* dest = (kind == NON_TERMINAL)
 						? cfg->non_terminal : cfg->terminal;
-	int index = get_index_vector(dest, crt_lexeme, &cmp_symbol_name);
-	if (index != -1)
-		{ return ((symbol_t*)AT_VECTOR(dest, index)); }
+	if (crt_lexeme) {
+		int index = get_index_vector(dest, crt_lexeme, &cmp_symbol_name);
+		if (index != -1)
+			{ return ((symbol_t*)AT_VECTOR(dest, index)); }
+	}
+
 	symbol_t* symbol = NEW(symbol_t, 1);
 	if (!symbol)
 		{ return (NULL); }
-	memset(symbol, 0, sizeof(symbol_t));
+	memset(symbol, 0, sizeof(*symbol));
 
 	symbol->kind = kind;
-	symbol->name = strdup(crt_lexeme);
+	if (crt_lexeme)
+		{ symbol->name = strdup(crt_lexeme); }
 
 	int fail = 0;
-	if (!symbol->name)
+	if (crt_lexeme && !symbol->name)
 		{ fail = 1; }
 	
 	if (kind == LITERAL) 
@@ -118,6 +124,7 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 
 	symbol->index = SIZE_VECTOR(dest);
 	PUSH_BACK_VECTOR(dest, symbol);
+
 	return (symbol);
 }
 
@@ -137,19 +144,18 @@ void
 augment_grammar(cfg_t* cfg) {
 	if (!cfg)
 		{ return; }
-	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "%start%");
+
+	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "$START");
 	start->is_defined = true;
 
-	production_t* prod = new_production(start, SIZE_VECTOR(cfg->productions));
+	production_t* prod = new_production(start, cfg);
+	ADD_BITSET(start->prod_lst, GET_INDEX(prod));
 
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
 	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
 
 	eof_symbol->is_eof = true;
-
 	add_symbol_rhs(prod, eof_symbol);
-	ADD_BITSET(start->prod_lst, SIZE_VECTOR(cfg->productions));
-	PUSH_BACK_VECTOR(cfg->productions, prod);
 
 	cfg->goal = start->index;
 }
@@ -428,7 +434,9 @@ cfg_production(cfg_t* cfg) {
 
 int
 cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
-	production_t* prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
+	production_t* prod = new_production(lhs, cfg);
+	ADD_BITSET(lhs->prod_lst, GET_INDEX(prod));
+
 	if (!prod)
 		{ return (ERROR); }
 	else if ((cfg_opt_list(cfg, prod) == ERROR)
@@ -436,13 +444,12 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		del_production(prod);
 		return (ERROR);
 	}
-
-	ADD_BITSET(lhs->prod_lst, prod->index);
-	PUSH_BACK_VECTOR(cfg->productions, prod);
-
 	while (peek_token(cfg->lex) == T_UNION) {
 		advance_token(cfg->lex);
-		prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
+
+		prod = new_production(lhs, cfg);
+		ADD_BITSET(lhs->prod_lst, GET_INDEX(prod));
+
 		if (!prod)
 			{ return (ERROR); }
 		else if (cfg_opt_list(cfg, prod) == ERROR
@@ -450,9 +457,6 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 			del_production(prod);
 			return (ERROR);
 		}
-
-		ADD_BITSET(lhs->prod_lst, prod->index);
-		PUSH_BACK_VECTOR(cfg->productions, prod);
 	}
 	return (DONE);
 }
@@ -494,9 +498,47 @@ int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
+	else if (peek_token(cfg->lex) == T_LBRACK) {
+		advance_token(cfg->lex);
+
+		if (LHS(prod)->depth > 2) {
+			errorf(CURRENT_LINE(cfg->lex),
+					"A nesting depth of bracket must be less than 3.");
+			return (ERROR);
+		}
+		else if (peek_token(cfg->lex) == T_RBRACK) {
+			warnf(CURRENT_LINE(cfg->lex), "Empty optional elements '[]'.");
+			advance_token(cfg->lex);
+			return (DONE);
+		}
+
+		symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
+
+		opt_nter->is_defined = true;
+		int crt_depth = LHS(prod)->depth;
+
+		if (!crt_depth)
+			{ opt_nter->special = LHS(prod); }
+		else
+			{ opt_nter->special = LHS(prod)->special; }
+		opt_nter->depth = crt_depth + 1;	
+
+		add_symbol_rhs(prod, opt_nter);
+
+		production_t* crt_prod = new_production(opt_nter, cfg);
+		ADD_BITSET(opt_nter->prod_lst, GET_INDEX(crt_prod));
+
+		if (cfg_opt_list(cfg, crt_prod) == ERROR)
+			{ return (ERROR); }
+		else if (advance_token(cfg->lex) != T_RBRACK) {
+			errorf(CURRENT_LINE(cfg->lex),
+					"A close bracket must follow the optional elements.");
+			return (ERROR);
+		}
+	}
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
-	else if (!in_first(cfg->lex, T_LPAREN, T_UNION, T_SEMI, -1)) {
+	else if (!in_first(cfg->lex, T_RBRACK, T_LPAREN, T_UNION, T_SEMI, -1)) {
 		errorf(CURRENT_LINE(cfg->lex),
 					"An open paren, a pipe or a semicolon must follow"
 					" the production %zu.", GET_INDEX(prod) + 1);

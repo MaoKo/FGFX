@@ -34,8 +34,8 @@ find_equiv_state(lr1_state_t* state, size_t i) {
 }
 
 vector_t*
-gen_lalr1_states(cfg_t const* cfg) {
-	vector_t* lr1_states = gen_lr1_states(cfg);
+build_lalr1_states(cfg_t const* cfg) {
+	vector_t* lr1_states = build_lr1_states(cfg);
 	bitset_t* seen_symbol = mark_equiv_state(lr1_states);
 
 	IT_INVERT(seen_symbol);

@@ -29,6 +29,8 @@ $TOKEN
     COMMA       =  / ,                                     / ;
     LBRACE      =  / \{                                    / ;
     RBRACE      =  / \}                                    / ;
+    LBRACK      =  / \[                                    / ;
+    RBRACK      =  / \]                                    / ;
     LPAREN      =  / \(                                    / ;
     RPAREN      =  / \)                                    / ;
 };

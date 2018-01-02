@@ -1,21 +1,22 @@
 #include <stdio.h>
 
-#include "display_lr.h"
-#include "display_dfa.h"
-#include "display.h"
 #include "lr.h"
 
+#include "gen_lr.h"
+#include "gen_dfa.h"
+#include "gen.h"
+
 void
-display_action_enum(int filde) {
+gen_action_enum(int filde) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
-	dprintf(filde, TAB "_SHIFT" TAB "= 0x1000" COMMA NL);
+	dprintf(filde, TAB "_SHIFT"  TAB "= 0x1000" COMMA NL);
 	dprintf(filde, TAB "_REDUCE" TAB "= 0x2000" COMMA NL);
-	dprintf(filde, TAB "_GOTO" TAB "= 0x4000" COMMA NL);
+	dprintf(filde, TAB "_GOTO"   TAB "= 0x4000" COMMA NL);
 	dprintf(filde, END_BLOCK SEMI NL NL);
 }
 
 void
-display_lr_useful_macro(int filde) {
+gen_lr_useful_macro(int filde) {
 	dprintf(filde, DEFINE(SHIFT(x),(x | _SHIFT)) NL);
 	dprintf(filde, DEFINE(REDUCE(x),(x | _REDUCE)) NL);
 	dprintf(filde, DEFINE(GOTO(x),(x | _GOTO)) NL);
@@ -24,11 +25,11 @@ display_lr_useful_macro(int filde) {
 }
 
 void
-display_action_table(int filde, cfg_t const* cfg,
+gen_action_table(int filde, cfg_t const* cfg,
 							vector_t const* lr1_states, char const* header) {
 
 	dprintf(filde, STATIC SP INT NL);
-	display_verbatim_file(filde, header);
+	gen_verbatim_file(filde, header);
 
 	dprintf(filde, "_lr_action_table[%zu][" MACRO_TOKEN "] = " BEG_BLOCK NL,
 			SIZE_VECTOR(lr1_states));
@@ -55,7 +56,7 @@ display_action_table(int filde, cfg_t const* cfg,
 			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal, action->input);
 			dprintf(filde, "[" TOKEN_PREFIX SEP "%s]="
 												REDUCE_STR "(", ter->name);
-			display_nproduction(filde, cfg, action->state ^ _REDUCE);		
+			gen_nproduction(filde, cfg, action->state ^ _REDUCE);		
 			dprintf(filde, ")");
 	
 			if  (action->next)
@@ -74,11 +75,11 @@ display_action_table(int filde, cfg_t const* cfg,
 }
 
 void
-display_goto_table(int filde, cfg_t const* cfg,
+gen_goto_table(int filde, cfg_t const* cfg,
 							vector_t const* lr1_states, char const* header) {
 
 	dprintf(filde, STATIC SP INT NL);
-	display_verbatim_file(filde, header);
+	gen_verbatim_file(filde, header);
 
 	dprintf(filde, "_lr_goto_table[%zu][" MACRO_NTER "] = " BEG_BLOCK NL,
 			SIZE_VECTOR(lr1_states));
@@ -89,7 +90,7 @@ display_goto_table(int filde, cfg_t const* cfg,
 		trans_list_t* action = state->goto_lst;
 		while (action) {
 			dprintf(filde, "[");
-			display_nter_symbol(filde, cfg, action->input ^ _GOTO, true);
+			gen_nter_symbol(filde, cfg, action->input ^ _GOTO, true);
 			dprintf(filde, "]=" GOTO_STR "(%d)", action->state);
 
 			if (action->next)

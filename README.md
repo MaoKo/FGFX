@@ -27,4 +27,6 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Allow list elements in FGFP with { ... }
 	.	Allow several alias for the same terminal
 	.	Improve the algorithm for constructing the LALR parsing table
+	.	Change the name display to gen
+	.	Add error recovery mechanism
 	.	Learn MarkDown :)

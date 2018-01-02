@@ -680,7 +680,7 @@ move_dot_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 }
 
 vector_t*
-gen_lr1_states(cfg_t const* cfg) {
+build_lr1_states(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (NULL_VECT); }
 

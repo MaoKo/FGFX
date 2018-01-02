@@ -3,20 +3,17 @@
 #include <string.h>
 
 #include "cfg_production.h"
+#include "gen_cfg.h"
 
-#include "display_cfg.h"
-#include "lr.h"
-#include "lalr.h"
-#include "display_lr.h"
-#include "ll.h"
-#include "display_ll.h"
+#include "gen_lr.h"
+#include "gen_ll.h"
 
-#include "display_dfa.h"
-#include "display.h"
+#include "gen_dfa.h"
+#include "gen.h"
 #include "utils.h"
 
 void
-display_location_token(int filde, vector_t const* path_token) {
+gen_location_token(int filde, vector_t const* path_token) {
 	dprintf(filde, DEFINE(_ONLY_TOKEN_,) NL);
 	for (size_t i = 0; i < SIZE_VECTOR(path_token); ++i) {
 		dprintf(filde, INCLUDE(%s) NL,
@@ -26,12 +23,19 @@ display_location_token(int filde, vector_t const* path_token) {
 }
 
 void
-display_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
+gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 	vector_t const* nter = cfg->non_terminal;
 
 	symbol_t* symbol = (symbol_t*)AT_VECTOR(nter, index);
-	dprintf(filde, NTER_PREFIX);
+	int depth = 0;
 
+	if (symbol->special) {
+		dprintf(filde, SPE_PREFIX);
+		depth = symbol->depth;
+		symbol = symbol->special;
+	}
+
+	dprintf(filde, NTER_PREFIX);
 	if (sep)
 		{ dprintf(filde, SEP); }
 
@@ -41,14 +45,16 @@ display_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 		else
 			{ write(filde, symbol->name + i, 1); }
 	}
+	while (depth--)
+		{ dprintf(filde, OPT_STR); }
 }
 
 void
-display_non_terminal_enum(int filde, cfg_t const* cfg) {
+gen_non_terminal_enum(int filde, cfg_t const* cfg) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
 		dprintf(filde, TAB);
-		display_nter_symbol(filde, cfg, i, true);
+		gen_nter_symbol(filde, cfg, i, true);
 		dprintf(filde, COMMA NL);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
@@ -57,11 +63,11 @@ display_non_terminal_enum(int filde, cfg_t const* cfg) {
 }
 
 void
-display_nproduction(int filde, cfg_t const* cfg, size_t index) {
+gen_nproduction(int filde, cfg_t const* cfg, size_t index) {
 	dprintf(filde, PROD_PREFIX SEP LHS_STR SEP);
 
 	production_t* prod = (production_t*)AT_VECTOR(cfg->productions, index);
-	display_nter_symbol(filde, cfg, prod->symbol_lhs->index, false);
+	gen_nter_symbol(filde, cfg, prod->symbol_lhs->index, false);
 
 	dprintf(filde, SEP RHS_STR);
 	list_rhs_t* list = prod->rhs_element;
@@ -70,17 +76,17 @@ display_nproduction(int filde, cfg_t const* cfg, size_t index) {
 		if (IS_TERMINAL(list->symbol_rhs))
 			{ dprintf(filde, TOKEN_PREFIX "%s", list->symbol_rhs->name); }
 		else
-			{ display_nter_symbol(filde, cfg, list->symbol_rhs->index, false); }
+			{ gen_nter_symbol(filde, cfg, list->symbol_rhs->index, false); }
 		list = list->next;
 	}
 }
 
 void
-display_production_enum(int filde, cfg_t const* cfg) {
+gen_production_enum(int filde, cfg_t const* cfg) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
 		dprintf(filde, TAB);
-		display_nproduction(filde, cfg, i);
+		gen_nproduction(filde, cfg, i);
 		dprintf(filde, COMMA NL);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
@@ -89,15 +95,15 @@ display_production_enum(int filde, cfg_t const* cfg) {
 }
 
 void
-display_rhs_table(int filde, cfg_t const* cfg, char const* header) {
+gen_rhs_table(int filde, cfg_t const* cfg, char const* header) {
 	dprintf(filde, STATIC SP INT NL);
-	display_verbatim_file(filde, header);
+	gen_verbatim_file(filde, header);
 
 	dprintf(filde, "_rhs_prod_table[%s] = " BEG_BLOCK NL, "TOTAL_PROD");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 		dprintf(filde, TAB "[");
-		display_nproduction(filde, cfg, i);
+		gen_nproduction(filde, cfg, i);
 		dprintf(filde, "] = %zu" COMMA NL,
 								size_gen_list((gen_list_t*)prod->rhs_element));
 	}
@@ -105,17 +111,17 @@ display_rhs_table(int filde, cfg_t const* cfg, char const* header) {
 }
 
 void
-display_lhs_table(int filde, cfg_t const* cfg, char const* header) {
+gen_lhs_table(int filde, cfg_t const* cfg, char const* header) {
 	dprintf(filde, STATIC SP INT NL);
-	display_verbatim_file(filde, header);
+	gen_verbatim_file(filde, header);
 
 	dprintf(filde, "_lhs_prod_table[%s] = " BEG_BLOCK NL, "TOTAL_PROD");
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions) - 1; ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 		dprintf(filde, TAB "[");
-		display_nproduction(filde, cfg, i);
+		gen_nproduction(filde, cfg, i);
 		dprintf(filde, "] = ");
-		display_nter_symbol(filde, cfg, LHS(prod)->index, true);
+		gen_nter_symbol(filde, cfg, LHS(prod)->index, true);
 		dprintf(filde, COMMA NL);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
@@ -134,9 +140,9 @@ count_max_follow(vector_t const* vnter) {
 }
 
 void
-display_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
+gen_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
 	dprintf(filde, STATIC SP INT NL);
-	display_verbatim_file(filde, header);
+	gen_verbatim_file(filde, header);
 
 	dprintf(filde, "_sync_token[%s][%zu] = " BEG_BLOCK NL,
 		MACRO_NTER, count_max_follow(cfg->non_terminal) + 1);
@@ -144,8 +150,9 @@ display_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->non_terminal) - 1; ++i) {
 		symbol_t* nter = AT_VECTOR(cfg->non_terminal, i);
 		dprintf(filde, TAB "[");
-		display_nter_symbol(filde, cfg, i, true);
+		gen_nter_symbol(filde, cfg, i, true);
 		dprintf(filde, "] = " BEG_BLOCK SP);
+
 		int j;
 		while ((j = IT_NEXT(nter->follow)) != IT_NULL) {
 			symbol_t* terminal = AT_VECTOR(cfg->terminal, j);
@@ -154,51 +161,5 @@ display_synchronizing_token(int filde, cfg_t const* cfg, char const* header) {
 		dprintf(filde, "-1" SP END_BLOCK COMMA NL);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
-}
-
-int
-display_parsing_table(cfg_t const* cfg, char const* base_file) {
-	char const* header = strjoin(base_file, ".h");
-	int filde = open_new_file(header);
-	if (filde == -1)
-		{ return (ERROR); }
-	display_require_macro(filde, base_file);
-
-	display_location_token(filde, cfg->token_file);
-	display_non_terminal_enum(filde, cfg);	
-
-	display_production_enum(filde, cfg);
-
-	display_rhs_table(filde, cfg, header);	
-	display_lhs_table(filde, cfg, header);	
-
-	display_ll_useful_macro(filde, cfg);
-
-	if (is_ll1(cfg)) {
-		vector_t* ll1_table = gen_ll1_table(cfg);
-		display_ll_table(filde, cfg, ll1_table, header);
-		foreach_vector(ll1_table, &del_trans_list);
-		del_vector(ll1_table);
-	}
-
-	vector_t* lr1_states = gen_lalr1_states(cfg);
-	compute_reduce_op(cfg, lr1_states);
-
-	display_action_enum(filde);
-	display_lr_useful_macro(filde);
-	display_action_table(filde, cfg, lr1_states, header);
-	display_goto_table(filde, cfg, lr1_states, header);
-
-	foreach_vector(lr1_states, &del_lr1_state);
-	del_vector(lr1_states);
-
-	display_synchronizing_token(filde, cfg, header);
-	display_endif(filde, base_file);
-
-	if (close(filde) == -1)
-		{ return (ERROR); }
-
-	FREE(header);
-	return (DONE);	
 }
 
