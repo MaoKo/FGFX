@@ -5,6 +5,7 @@
 
 #include "lexer.h"
 #include "fgfx.lex.h"
+#include "error.h"
 #include "utils.h"
 #include "buffer.h"
 
@@ -60,8 +61,7 @@ get_next_token(lexer_t* lex) {
 	}
 	
 	if (last_match == T_ERROR) {
-		fprintf(stderr, "Lexical Error <%d:%s>.\n",
-			lex->lineno, C_LEXEME(lex));
+		errorf(CURRENT_LINE(lex), "Lexical Error '%s'.", C_LEXEME(lex));
 		lex->last_char = -1;
 	}
 	else {
@@ -118,7 +118,8 @@ advance_token(lexer_t* lex) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))
 				{ return ((long)*directive_tab[i]); }
 		}
-		fprintf(stderr, "Bad directive <%s>.\n", C_LEXEME(lex));
+		errorf(CURRENT_LINE(lex), "Bad directive %s.", C_LEXEME(lex));
+		return (T_ERROR);
 	}
 	lex->last_token = -1;
 	return (found_token);

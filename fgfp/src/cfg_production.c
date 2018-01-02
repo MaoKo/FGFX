@@ -3,6 +3,7 @@
 
 #include "cfg_production.h"
 #include "cfg.h"
+#include "error.h"
 #include "utils.h"
 #include "vector.h"
 
@@ -97,8 +98,8 @@ check_mimic_prod(cfg_t const* cfg) {
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 		if (prod->mimic_sym && !last_symbol_in_prod(prod)) {
-			fprintf(stderr, "Warning production %zu contain no terminal.\n",
-								GET_INDEX(prod) + 1);
+			warnf(0, "The production %zu contain no terminal for the $MIMIC.",
+							GET_INDEX(prod) + 1);
 		}
 	}
 	return (DONE);
@@ -210,7 +211,7 @@ unreachable_production(cfg_t const* cfg) {
 	for (int i = SIZE_VECTOR(cfg->non_terminal) - 1; i >= 0; --i) {
 		if (!IS_PRESENT(nter_seen, (size_t)i)) {
 			unreach = ERROR;
-			fprintf(stderr, "Warning %s unreachable.\n",
+			warnf(0, "The nonterminal %s is unreachable.",
 				((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name);
 			erase_vector(cfg->non_terminal, i);
 		}
@@ -291,8 +292,8 @@ cfg_not_realizable(cfg_t const* cfg) {
 		}
 
 		if (!symbol->realizable) {
-			fprintf(stderr, "Non terminal %s derive no string at all.\n",
-																symbol->name);
+			errorf(0, "Non terminal %s derive no string at all.",
+									symbol->name);
 			exit_status = ERROR;
 		}
 	}

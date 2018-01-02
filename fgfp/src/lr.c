@@ -4,6 +4,7 @@
 #include "lr.h"
 #include "cfg.h"
 #include "cfg_production.h"
+#include "error.h"
 #include "utils.h"
 #include "vector.h"
 
@@ -854,9 +855,9 @@ detect_error(cfg_t const* cfg, lr1_state_t* state,
 							trans_list_t* reduce_list, size_t index) {
 
 	if (check_conflict(cfg, state, &reduce_list, SHIFT_REDUCE))
-		{ fprintf(stderr, "Shift/Reduce (state %zu).\n", index); }
+		{ warnf(0, "Shift/Reduce (state %zu).", index); }
 	if (check_conflict(cfg, state, &reduce_list, REDUCE_REDUCE))
-		{ fprintf(stderr, "Reduce/Reduce (state %zu).\n", index); }
+		{ warnf(0, "Reduce/Reduce (state %zu).", index); }
 
 	if (!state->reduces)
 		{ state->reduces = reduce_list; }

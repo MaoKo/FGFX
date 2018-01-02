@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "utils.h"
+#include "error.h"
 
 size_t
 round_up(size_t size) {
@@ -215,7 +216,7 @@ _pmalloc(size_t size) {
 	assert(chunk);
 #else
 	if (!chunk) {
-		fprintf(stderr, "No enough memory for this process.\n");
+		errorf(0, "No enough memory for this process.");
 		errno = ENOMEM;
 	}
 #endif
@@ -233,7 +234,7 @@ _prealloc(void* ptr, size_t size) {
 	assert(new_chunk);
 #else
 	if (!chunck) {
-		fprintf(stderr, "The reallocation has failed.\n");
+		errorf(0, "The reallocation has failed.\n");
 		errno = ENOMEM;
 	}
 #endif

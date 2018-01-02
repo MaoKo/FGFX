@@ -4,6 +4,7 @@
 #include "cfg.h"
 #include "cfg_production.h"
 #include "cfg_set_op.h"
+#include "error.h"
 #include "lexer.h"
 #include "utils.h"
 
@@ -126,7 +127,6 @@ cfg_t*
 parse_cfg(int filde) {
 	cfg_t* cfg = new_cfg(filde);
 	if (cfg_section(cfg) == ERROR) {
-		/* ERROR */
 		del_cfg(cfg);
 		return (NULL);
 	}
@@ -168,7 +168,8 @@ static int cfg_list(cfg_t*, production_t*);
 static int cfg_atom(cfg_t*, production_t*);
 
 static int
-cfg_entry_section(cfg_t* cfg, int kind) {
+cfg_entry_section(cfg_t* cfg) {
+	int kind = advance_token(cfg->lex);
 	int (*section_ptr)(cfg_t*) = NULL;
 	switch (kind) {
 		case T_EXTERN:		section_ptr = &cfg_path_list;
@@ -181,15 +182,18 @@ cfg_entry_section(cfg_t* cfg, int kind) {
 					break; 
 	}
 	if (!section_ptr) {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex), "Bad section directive.");
 		return (ERROR);
 	}
-	if (advance_token(cfg->lex) != kind
-			|| advance_token(cfg->lex) != T_LBRACE
-			|| (*section_ptr)(cfg) == ERROR
-			|| advance_token(cfg->lex) != T_RBRACE
-			|| advance_token(cfg->lex) != T_SEMI) {
-		/* ERROR */
+	char miss_c;
+	if ((miss_c = '{', advance_token(cfg->lex) != T_LBRACE)
+			|| (miss_c = '\0', (*section_ptr)(cfg) == ERROR)
+			|| (miss_c = '}', advance_token(cfg->lex) != T_RBRACE)
+			|| (miss_c = ';', advance_token(cfg->lex) != T_SEMI)) {
+		if (miss_c) {
+			errorf(CURRENT_LINE(cfg->lex),
+							"Missing a '%c' after the directive.", miss_c);
+		}
 		return (ERROR);
 	}
 	return (DONE);
@@ -199,12 +203,12 @@ int
 cfg_section(cfg_t* cfg) {
 	bool empty = true;
 	while (peek_token(cfg->lex) != T_EOF) {
-		if (cfg_entry_section(cfg, peek_token(cfg->lex)) == ERROR)
+		if (cfg_entry_section(cfg) == ERROR)
 			{ return (ERROR); }
 		empty = false;
 	}
 	if (empty)
-		{ fprintf(stderr, "Warning: empty file.\n"); }
+		{ warnf(CURRENT_LINE(cfg->lex), "Empty file."); }
 	return (DONE);
 }
 
@@ -221,7 +225,8 @@ cfg_path_list(cfg_t* cfg) {
 		}
 	}
 	else {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex),
+						"Missing a literal in the $EXTERN section.");
 		return (ERROR);
 	}
 	return (DONE);
@@ -233,28 +238,32 @@ cfg_alias_list(cfg_t* cfg) {
 		{ return (DONE); }
 	else if (advance_token(cfg->lex) == T_LPAREN) {
 		if (advance_token(cfg->lex) != T_GLOBAL_TOK) {
-			/* ERROR */
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing an token identifier in the $ALIAS section.");
 			return (ERROR);
 		}
 
-		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL,
-												C_LEXEME(cfg->lex));
+		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
 		size_t index_alias = alias_ter->index;
-		if ((advance_token(cfg->lex) != T_BARROW)
-				|| (advance_token(cfg->lex) != T_LITERAL)) {
-			/* ERROR */
+
+		char const* next = NULL;
+		if ((next = "=>", advance_token(cfg->lex) != T_BARROW)
+				|| (next = "literal", advance_token(cfg->lex) != T_LITERAL)) {
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing a %s in the $ALIAS section.", next);
 			return (ERROR);
 		}
 		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(cfg->lex));
 		if (literal->terminal_alias != -1) {
-			/* ERROR */
-			fprintf(stderr, "Redefinning literal %s.\n", C_LEXEME(cfg->lex));
+			errorf(CURRENT_LINE(cfg->lex),
+						"Redefinning literal %s.", C_LEXEME(cfg->lex));
 			return (ERROR);
 		}
 		else if ((alias_ter->prec && literal->prec)
 					&& (alias_ter->prec != literal->prec)) {
-			fprintf(stderr, "Several precedence for the terminal %s.\n",
-								alias_ter->name);
+			errorf(CURRENT_LINE(cfg->lex),
+						"Several precedence for the terminal %s.",
+						alias_ter->name);
 			return (ERROR);
 		}
 
@@ -265,16 +274,18 @@ cfg_alias_list(cfg_t* cfg) {
 			{ alias_ter->prec = literal->prec; }
 
 		if (advance_token(cfg->lex) != T_RPAREN) {
-			/* ERROR */
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing a close paren in the $ALIAS section.");
 			return (ERROR);
 		}
-		if (peek_token(cfg->lex) == T_COMMA) {
+		else if (peek_token(cfg->lex) == T_COMMA) {
 			advance_token(cfg->lex);
 			return (cfg_alias_list(cfg));
 		}
 	}
 	else {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex),
+						"Missing an open paren in the $ALIAS section.");
 		return (ERROR);
 	}
 	return (DONE);
@@ -285,7 +296,8 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 	size_t allow_kind = peek_token(cfg->lex);
 
 	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL)) {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex),
+						"Missing a token identifier or a literal.");
 		return (ERROR);
 	}
 
@@ -294,8 +306,9 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 		symbol_t* prec_ter = add_symbol_cfg(cfg, allow_kind,
 													C_LEXEME(cfg->lex));
 		if (prec_ter->prec) {
-			fprintf(stderr, "Precedence already define for the symbol %s.\n",
-								prec_ter->name);
+			errorf(CURRENT_LINE(cfg->lex),
+							"Precedence already define for the symbol %s.",
+							prec_ter->name);
 			return (ERROR);
 		}
 
@@ -317,14 +330,17 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 
 		prec_ter->prec = prec;
 		if (peek_token(cfg->lex) != T_COMMA
-								&& peek_token(cfg->lex) != T_RPAREN)
-			{ return (ERROR); }
-	
-		if (peek_token(cfg->lex) == T_COMMA)
+								&& peek_token(cfg->lex) != T_RPAREN) {
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing a close paren in the $PRECEDENCE section.");
+			return (ERROR);
+		}
+		else if (peek_token(cfg->lex) == T_COMMA)
 			{ advance_token(cfg->lex); }
 
 		allow_kind = peek_token(cfg->lex);
 	}
+
 	advance_token(cfg->lex);
 	return (DONE);
 }
@@ -338,7 +354,9 @@ cfg_precedence_list(cfg_t* cfg) {
 		int kind_prec = advance_token(cfg->lex);
 		switch (kind_prec) {
 			case T_LEFT: case T_RIGHT: case T_NONASSOC: break;
-			default: return (ERROR);
+			default: errorf(CURRENT_LINE(cfg->lex),
+						"Bad associativity in the $PRECEDENCE section.");
+					return (ERROR);
 		}
 		if (advance_token(cfg->lex) == T_LPAREN) {
 			if (cfg_precedence_atom(cfg, kind_prec, prec_depth++) == ERROR)
@@ -346,8 +364,11 @@ cfg_precedence_list(cfg_t* cfg) {
 			if (peek_token(cfg->lex) == T_COMMA)
 				{ advance_token(cfg->lex); }
 		}
-		else
-			{ return (ERROR); }
+		else {
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing an open paren in the $PRECEDENCE section.");
+			return (ERROR);
+		}
 	}
 }
 
@@ -365,24 +386,26 @@ follow_prod(cfg_t* cfg) {
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL,
 												C_LEXEME(cfg->lex));
 	if (peek_token(cfg->lex) == T_ARROW) {
-		cfg->miss_prod = false;
 		advance_token(cfg->lex);
 
+		cfg->miss_prod = false;
 		symbol_lhs->is_defined = true;
-		if (cfg_rhs(cfg, symbol_lhs) == ERROR) {
-			/* ERROR */
-			return (ERROR);
-		}
+
+		if (cfg_rhs(cfg, symbol_lhs) == ERROR)
+			{ return (ERROR); }
 	}
 	else if (advance_token(cfg->lex) == T_EQUAL) {
 		if (advance_token(cfg->lex) != T_START) {
-			fprintf(stderr, "Must $START follow %s = .\n", symbol_lhs->name);
+			errorf(CURRENT_LINE(cfg->lex),
+						"Must $START follow '%s = '.", symbol_lhs->name);
 			return (ERROR);
 		}
 		cfg->goal = symbol_lhs->index;
 	}
 	else {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex),
+						"Missing an arrow (->) or an equal sign after"
+						" the nonterminal %s.", symbol_lhs->name);
 		return (ERROR);
 	}
 	return (DONE);
@@ -390,10 +413,14 @@ follow_prod(cfg_t* cfg) {
 
 int
 cfg_production(cfg_t* cfg) {
-	if (advance_token(cfg->lex) != NON_TERMINAL
-			|| follow_prod(cfg) == ERROR
-			|| advance_token(cfg->lex) != T_SEMI) {
-		/* ERROR */
+	char const* next;
+	if ((next = "nonterminal", advance_token(cfg->lex) != NON_TERMINAL)
+			|| (next = NULL, follow_prod(cfg) == ERROR)
+			|| (next = ";", advance_token(cfg->lex) != T_SEMI)) {
+		if (next) {
+			errorf(CURRENT_LINE(cfg->lex),
+							"Missing %s for the production.", next);
+		}
 		return (ERROR);
 	}
 	return (DONE);
@@ -404,7 +431,7 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 	production_t* prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 	if (!prod)
 		{ return (ERROR); }
-	if ((cfg_opt_list(cfg, prod) == ERROR)
+	else if ((cfg_opt_list(cfg, prod) == ERROR)
 								|| (cfg_mimic(cfg, prod) == ERROR)) {
 		del_production(prod);
 		return (ERROR);
@@ -418,7 +445,7 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		prod = new_production(lhs, SIZE_VECTOR(cfg->productions));
 		if (!prod)
 			{ return (ERROR); }
-		if (cfg_opt_list(cfg, prod) == ERROR
+		else if (cfg_opt_list(cfg, prod) == ERROR
 									|| cfg_mimic(cfg, prod) == ERROR) {
 			del_production(prod);
 			return (ERROR);
@@ -434,19 +461,31 @@ int
 cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 	if (peek_token(cfg->lex) != T_LPAREN)
 		{ return (DONE); }
+
 	advance_token(cfg->lex);
-	if (advance_token(cfg->lex) != T_MIMIC)
-		{ return (ERROR); }
+
+	if (advance_token(cfg->lex) != T_MIMIC) {
+		return (ERROR);
+		errorf(CURRENT_LINE(cfg->lex),
+					"The directive $MIMIC must follow the open paren.");
+	}
 
 	int allow_kind = advance_token(cfg->lex);
-	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL))
-		{ return (ERROR); }
+	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL)) {
+		errorf(CURRENT_LINE(cfg->lex),
+					"The directive $MIMIC must be followed by"
+					" a token name or a literal.");
+		return (ERROR);
+	}
 
 	crt_prod->mimic_sym = add_symbol_cfg(cfg, allow_kind, C_LEXEME(cfg->lex));
 	crt_prod->mimic_sym->is_used = true;
 
-	if (advance_token(cfg->lex) != T_RPAREN)
-		{ return (ERROR); }
+	if (advance_token(cfg->lex) != T_RPAREN) {
+		errorf(CURRENT_LINE(cfg->lex),
+					"A close paren must follow the directive $MIMIC.");
+		return (ERROR);
+	}
 
 	return (DONE);
 }
@@ -458,7 +497,9 @@ cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
 	else if (!in_first(cfg->lex, T_LPAREN, T_UNION, T_SEMI, -1)) {
-		/* ERROR */
+		errorf(CURRENT_LINE(cfg->lex),
+					"An open paren, a pipe or a semicolon must follow"
+					" the production %zu.", GET_INDEX(prod) + 1);
 		return (ERROR);
 	}
 	return (DONE);
@@ -466,14 +507,9 @@ cfg_opt_list(cfg_t* cfg, production_t* prod) {
 
 int
 cfg_list(cfg_t* cfg, production_t* prod) {
-	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
-		if (cfg_atom(cfg, prod) == ERROR)
-			{ return (ERROR); }
-	}
-	while (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
-		if (cfg_atom(cfg, prod) == ERROR)
-			{ return (ERROR); }
-	}
+	cfg_atom(cfg, prod);
+	while (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
+		{ cfg_atom(cfg, prod); }
 	return (DONE);
 }
 
@@ -483,10 +519,9 @@ cfg_atom(cfg_t* cfg, production_t* prod) {
 					advance_token(cfg->lex), C_LEXEME(cfg->lex));
 
 	atom_symbol->is_used = true;
-	if ((atom_symbol->kind == LITERAL)
-			&& (atom_symbol->terminal_alias != -1)) {
+	if ((atom_symbol->kind == LITERAL) && (atom_symbol->terminal_alias != -1)) {
 		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
-					atom_symbol->terminal_alias));
+								atom_symbol->terminal_alias));
 	}
 	else
 		{ add_symbol_rhs(prod, atom_symbol); }
@@ -499,14 +534,14 @@ unused_symbol(vector_t const* symbol_tab) {
 	for (size_t i = 0; i < SIZE_VECTOR(symbol_tab); ++i) {
 		symbol_t* symbol = (symbol_t*)AT_VECTOR(symbol_tab, i);
 		if (!symbol->is_defined) {
-			fprintf(stderr, "%s %s used but not defined.\n",
+			errorf(0, "The %s %s is used but not defined.",
 								((IS_NON_TERMINAL(symbol))
-								? "Non Terminal" : "Literal"), symbol->name);
+								? "non terminal" : "literal"), symbol->name);
 			unused = ERROR;
 		}
 		else if (!symbol->is_used) {
-			fprintf(stderr, "Warning %s defined but not used.\n",
-								symbol->name);
+			warnf(0, "The symbol %s is defined but not used.",
+							symbol->name);
 		}
 	}
 	return (unused);
@@ -527,17 +562,17 @@ cfg_sanity_check(cfg_t* cfg) {
 		{ return (ERROR); }
 
 	if (cfg->miss_prod) {
-		fprintf(stderr, "No production encounter at all.\n");
+		errorf(0, "No production have been encounter at all.");
 		return (ERROR);
 	}
 	else if (!SIZE_VECTOR(cfg->token_file)) {
-		fprintf(stderr, "At most one location of token must be defined.\n");
+		errorf(0, "At most one location of token must be defined.");
 		return (ERROR);
 	}
 	else if (detect_bad_symbol(cfg) == ERROR)
 		{ return (ERROR); }
 	else if (unreachable_production(cfg) == ERROR)
-		{ fprintf(stderr, "Some unreachable nonterminal has been remove.\n"); }
+		{ warnf(0, "Some unreachable nonterminal has been remove."); }
 
 	preprocess_literal(cfg);
 	check_mimic_prod(cfg);

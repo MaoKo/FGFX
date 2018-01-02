@@ -6,6 +6,9 @@ I attempt to fix this.
 The goal of FGFP is to create from a grammar description a LALR(1) parsing table.
 Also for speed, maybe, I replace the Vector with Hash.
 I also no free memory or only a subset. I try to fix this as soon as possible.
+I want to, before anything, create the LR(1) automata and after merging similar state with same LR(0) items.
+It's seem dump because i can use the technique of propagate and spontaneous lookahead drawn from the Dragon Book.
+But i prefer do that, if the user want to conserve the LR(1) table.
 
 ### How to make? ###
 Git clone the repository.
@@ -25,4 +28,3 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Allow several alias for the same terminal
 	.	Improve the algorithm for constructing the LALR parsing table
 	.	Learn MarkDown :)
-

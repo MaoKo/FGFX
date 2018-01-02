@@ -29,14 +29,6 @@ int main(int argc, char* argv[]) {
 	}
 
 #if 0
-	if (!is_ll1(cfg)) {
-		printf("Is not LL(1) :(\n");
-		del_cfg(cfg);
-		exit(1);
-	}
-#endif	
-
-#if 0
 	vector_t* lr1_states = gen_lalr1_states(cfg);
 
 	compute_reduce_op(cfg, lr1_states);

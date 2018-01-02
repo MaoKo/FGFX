@@ -60,14 +60,10 @@ $PRODUCTION
 						;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
-	<production_list>		->	<production> <production_list'>
+	<production_list>		->	<production> <production_list>
 							|	$EMPTY
 							;
 
-	<production_list'>	->	<production> <production_list'>
-						|	$EMPTY
-						;
-    
 
 	<production>	->	NTER <follow_prod> ';' ;
 	<follow_prod>	->	'=' '$START'
