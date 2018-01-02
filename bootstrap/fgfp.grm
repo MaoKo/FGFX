@@ -54,9 +54,12 @@ $PRODUCTION
 						|	LITERAL
 						;
 
-	<prec_dir>			->	'$LEFT'
+	<prec_dir>			->	'$NONASSOC'
+						|	<left_right>
+						;
+
+	<left_right>		->	'$LEFT'
 						|	'$RIGHT'
-						|	'$NONASSOC'
 						;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
@@ -93,8 +96,13 @@ $PRODUCTION
 				|	NTER
 				|	LITERAL
 				|	'[' <rhs> ']'
+				|	'{' <rhs> '}' <opt_dir>
 				;
     
+	<opt_dir>	->	'=>' '(' <left_right> ')'
+				|	$EMPTY
+				;
+
 	<FGFP>	=	$START;
 };
 

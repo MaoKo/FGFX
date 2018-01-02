@@ -8,13 +8,17 @@ static void
 print_error(size_t lineno, char const* label,
 								char const* format, va_list args) {
 	// Color Output
-	fprintf(stderr, (isatty(STDERR_FILENO) ? "\e[1;31m" : ""));
+	int tty = isatty(STDERR_FILENO);
+	if (tty)
+		{ fprintf(stderr, "\e[1;31m"); }
 	fprintf(stderr, "(%s", label);
 	if (lineno)
 		{ fprintf(stderr, ":%zu", lineno); }
 	fprintf(stderr, ") ");
 	vfprintf(stderr, format, args);
-	fprintf(stderr, "\n\e[0m");
+	fprintf(stderr, "\n");
+	if (tty)
+		{ fprintf(stderr, "\e[0m"); }
 }
 
 void

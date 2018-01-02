@@ -440,10 +440,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 	if (!prod)
 		{ return (ERROR); }
 	else if ((cfg_opt_list(cfg, prod) == ERROR)
-								|| (cfg_mimic(cfg, prod) == ERROR)) {
-		del_production(prod);
-		return (ERROR);
-	}
+								|| (cfg_mimic(cfg, prod) == ERROR))
+		{ return (ERROR); }
 	while (peek_token(cfg->lex) == T_UNION) {
 		advance_token(cfg->lex);
 
@@ -453,10 +451,8 @@ cfg_rhs(cfg_t* cfg, symbol_t* lhs) {
 		if (!prod)
 			{ return (ERROR); }
 		else if (cfg_opt_list(cfg, prod) == ERROR
-									|| cfg_mimic(cfg, prod) == ERROR) {
-			del_production(prod);
-			return (ERROR);
-		}
+									|| cfg_mimic(cfg, prod) == ERROR)
+			{ return (ERROR); }
 	}
 	return (DONE);
 }
@@ -496,11 +492,13 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 
 int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
-	if (in_first(cfg->lex, T_LBRACK, NON_TERMINAL, TERMINAL, LITERAL, -1))
+	if (in_first(cfg->lex, T_LBRACK, T_LBRACE,
+										NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
-	else if (!in_first(cfg->lex, T_RBRACK, T_LPAREN, T_UNION, T_SEMI, -1)) {
+	else if (!in_first(cfg->lex, T_RBRACK, T_RBRACE, 
+									T_LPAREN, T_UNION, T_SEMI, -1)) {
 		errorf(CURRENT_LINE(cfg->lex),
 					"An open paren, a pipe or a semicolon must follow"
 					" the production %zu.", GET_INDEX(prod) + 1);
@@ -513,64 +511,124 @@ int
 cfg_list(cfg_t* cfg, production_t* prod) {
 	if (cfg_atom(cfg, prod) == ERROR)
 		{ return (ERROR); }
-	while (in_first(cfg->lex, T_LBRACK, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
+	while (in_first(cfg->lex, T_LBRACK, T_LBRACE,
+									NON_TERMINAL, TERMINAL, LITERAL, -1)) {
 		if (cfg_atom(cfg, prod) == ERROR)
 			{ return (ERROR); }
 	}
 	return (DONE);
 }
 
-int
-cfg_atom(cfg_t* cfg, production_t* prod) {
-	static size_t special_pos = 0;
-
-	if (peek_token(cfg->lex) == T_LBRACK) {
+static int
+add_recursive(cfg_t* cfg, symbol_t* opt_nter, size_t base_index) {
+	size_t kind_recur = T_LEFT;
+	if (peek_token(cfg->lex) == T_BARROW) {
 		advance_token(cfg->lex);
-
-		int greater_depth = (LHS(prod)->depth > 2);
-		int empty_opt = (peek_token(cfg->lex) == T_RBRACK);
-	
-		if (greater_depth || empty_opt) {
-			int exit_st;
-			if (empty_opt) {
-				warnf(CURRENT_LINE(cfg->lex), "Empty optional elements '[]'.");
-				advance_token(cfg->lex);
-				exit_st = DONE;
-			}
-			if (greater_depth) {
-				errorf(CURRENT_LINE(cfg->lex),
-						"A nesting depth of bracket must be less than 3.");
-				exit_st = ERROR;
-			}
-			return (exit_st);
-		}
-
-		symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
-
-		opt_nter->is_defined = true;
-		int crt_depth = LHS(prod)->depth;
-
-		if (!crt_depth)
-			{ opt_nter->special = LHS(prod); }
-		else
-			{ opt_nter->special = LHS(prod)->special; }
-		opt_nter->depth = crt_depth + 1;	
-
-		opt_nter->spec_nth = ++special_pos;
-		add_symbol_rhs(prod, opt_nter);	
-
-		production_t* empty_prod = new_production(opt_nter, cfg);
-		ADD_BITSET(opt_nter->prod_lst, GET_INDEX(empty_prod));
-
-		special_pos = 0;
-		if (cfg_rhs(cfg, opt_nter) == ERROR)
-			{ return (ERROR); }
-		else if (advance_token(cfg->lex) != T_RBRACK) {
+		if (advance_token(cfg->lex) != T_LPAREN) {
 			errorf(CURRENT_LINE(cfg->lex),
-					"A close bracket must follow the optional elements.");
+					"Missing an open paren when the kind of"
+					" recursivity is choosen.");
 			return (ERROR);
 		}
-		special_pos = opt_nter->spec_nth;
+		kind_recur = advance_token(cfg->lex);
+		switch (kind_recur) {
+			case T_LEFT: case T_RIGHT: break;
+			default:
+				errorf(CURRENT_LINE(cfg->lex), "Missing $RIGHT or $LEFT.");
+				return (ERROR);
+		}
+		if (advance_token(cfg->lex) != T_RPAREN) {
+			errorf(CURRENT_LINE(cfg->lex),
+					"Missing an close paren when the kind of"
+					" recursivity is choosen.");
+			return (ERROR);
+		}
+	}
+
+	for (size_t i = base_index; i < SIZE_VECTOR(cfg->productions); ++i) {
+		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
+		if (LHS(prod) == opt_nter) {
+			if (kind_recur == T_RIGHT)
+				{ add_symbol_rhs(prod, opt_nter); }
+			else
+				{ add_symbol_rhs_front(prod, opt_nter);  }
+		}
+	}
+	return (DONE);
+} 
+
+static int
+enclosed_element(cfg_t* cfg, production_t* prod) {
+	static size_t special_pos = 0;
+	int kind = (advance_token(cfg->lex) == T_LBRACK) ? OPT : LST;
+
+	int greater_depth = (LHS(prod)->depth > 2);
+	int empty_opt = ((peek_token(cfg->lex) == T_RBRACK)
+								|| (peek_token(cfg->lex) == T_RBRACE));
+
+	if (greater_depth || empty_opt) {
+		int exit_st;
+		if (empty_opt) {
+			warnf(CURRENT_LINE(cfg->lex), "Empty optional elements '%s'.",
+											(kind == OPT) ? "[]" : "{}");
+			advance_token(cfg->lex);
+			exit_st = DONE;
+		}
+		if (greater_depth) {
+			errorf(CURRENT_LINE(cfg->lex),
+								"A nesting depth must be less than 3.");
+			exit_st = ERROR;
+		}
+		return (exit_st);
+	}
+
+	symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
+
+	opt_nter->is_defined = true;
+	opt_nter->spec_kind = kind;
+
+	int crt_depth = LHS(prod)->depth;
+
+	if (!crt_depth)
+		{ opt_nter->special = LHS(prod); }
+	else
+		{ opt_nter->special = LHS(prod)->special; }
+	opt_nter->depth = crt_depth + 1;	
+
+	opt_nter->spec_nth = ++special_pos;
+	add_symbol_rhs(prod, opt_nter);	
+
+	production_t* empty_prod = new_production(opt_nter, cfg);
+	ADD_BITSET(opt_nter->prod_lst, GET_INDEX(empty_prod));
+
+	size_t base_index = SIZE_VECTOR(cfg->productions);
+	special_pos = 0;
+	if (cfg_rhs(cfg, opt_nter) == ERROR)
+		{ return (ERROR); }
+	else if ((kind == OPT) && (advance_token(cfg->lex) != T_RBRACK)) {
+		errorf(CURRENT_LINE(cfg->lex),
+				"A close bracket must follow the optional elements.");
+		return (ERROR);
+	}
+	else if ((kind == LST) && (advance_token(cfg->lex) != T_RBRACE)) {
+		errorf(CURRENT_LINE(cfg->lex),
+				"A close brace must follow the list elements.");
+		return (ERROR);
+	}
+
+	if (kind == LST && (add_recursive(cfg, opt_nter, base_index) == ERROR))
+		{ return (ERROR); }
+
+	special_pos = opt_nter->spec_nth;
+	return (DONE);
+}
+
+int
+cfg_atom(cfg_t* cfg, production_t* prod) {
+	if ((peek_token(cfg->lex) == T_LBRACK)
+								|| (peek_token(cfg->lex) == T_LBRACE)) {
+		if (enclosed_element(cfg, prod) == ERROR)
+			{ return (ERROR); }
 	}
 	else {
 		symbol_t* atom_symbol = add_symbol_cfg(cfg,

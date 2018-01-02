@@ -5,7 +5,9 @@
 #include "vector.h"
 
 #define PRIME_STR	"_PRIME"
+
 #define OPT_STR		"_OPT"
+#define LST_STR		"_LST"
 
 #define NTER_PREFIX	"N"
 #define PROD_PREFIX	"P"

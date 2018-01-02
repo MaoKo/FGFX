@@ -10,6 +10,7 @@
 production_t* new_production(symbol_t*, cfg_t const*);
 void del_production(production_t*);
 int add_symbol_rhs(production_t*, symbol_t*);
+int add_symbol_rhs_front(production_t*, symbol_t*);
 symbol_t* last_symbol_in_prod(production_t const*);
 int preprocess_literal(cfg_t const*);
 int check_mimic_prod(cfg_t const*);

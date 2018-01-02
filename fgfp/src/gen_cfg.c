@@ -25,35 +25,32 @@ gen_location_token(int filde, vector_t const* path_token) {
 void
 gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 	vector_t const* nter = cfg->non_terminal;
-
 	symbol_t* symbol = (symbol_t*)AT_VECTOR(nter, index);
 
 	size_t depth = 0;
-	size_t spec_nth = 0;
 
-	if (symbol->special) {
+	symbol_t* spec_sym = symbol;
+	if (spec_sym->special) {
 		dprintf(filde, SPE_PREFIX);
-
-		depth = symbol->depth;
-		spec_nth = symbol->spec_nth;
-
-		symbol = symbol->special;
+		depth = spec_sym->depth;
+		symbol = spec_sym->special;
 	}
 
 	dprintf(filde, NTER_PREFIX);
 	if (sep)
 		{ dprintf(filde, SEP); }
 
-	for (size_t i = 1; i < (strlen(symbol->name) - 1); ++i) {
+	size_t len = strlen(symbol->name) - 1;
+	for (size_t i = 1; i < len; ++i) {
 		if (symbol->name[i] == '\'')
 			{ dprintf(filde, PRIME_STR); }
 		else
 			{ write(filde, symbol->name + i, 1); }
 	}
-	if (spec_nth)
-		{ dprintf(filde, "%zu", spec_nth); }
+	if (spec_sym->spec_nth)
+		{ dprintf(filde, "%zu", spec_sym->spec_nth); }
 	while (depth--)
-		{ dprintf(filde, OPT_STR); }
+		{ dprintf(filde, (spec_sym->kind == OPT) ? OPT_STR : LST_STR); }
 }
 
 void

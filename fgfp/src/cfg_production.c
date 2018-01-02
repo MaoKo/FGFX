@@ -62,6 +62,31 @@ add_symbol_rhs(production_t* prod, symbol_t* symbol) {
 	return (DONE);
 }
 
+int
+add_symbol_rhs_front(production_t* prod, symbol_t* symbol) {
+	if (!prod)
+		{ return (ERROR); }
+
+	list_rhs_t* new_list = NEW(list_rhs_t, 1);
+	if (!new_list)
+		{ return (ERROR); }
+
+	memset(new_list, 0, sizeof(list_rhs_t));
+	new_list->pos = 1;
+	new_list->symbol_rhs = symbol;
+
+	new_list->next = prod->rhs_element;
+	prod->rhs_element = new_list;
+
+	new_list = new_list->next;
+	while (new_list) {
+		++(new_list->pos);
+		new_list = new_list->next;
+	}
+
+	return (DONE);
+}
+
 symbol_t*
 last_symbol_in_prod(production_t const* prod) {
 	if (!prod)
@@ -104,9 +129,15 @@ check_mimic_prod(cfg_t const* cfg) {
 		{ return (ERROR); }
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
-		if (prod->mimic_sym && !last_symbol_in_prod(prod)) {
-			warnf(0, "The production %zu contain no terminal for the $MIMIC.",
-							GET_INDEX(prod) + 1);
+		if (prod->mimic_sym) {
+			if (!last_symbol_in_prod(prod)) {
+				warnf(0, "The production %zu contain no terminal"
+							" for the $MIMIC.", GET_INDEX(prod) + 1);
+			}
+			if (!prod->mimic_sym->prec) {
+				warnf(0, "The precedence is not defined for the terminal %s.",
+							prod->mimic_sym->name);
+			}
 		}
 	}
 	return (DONE);
