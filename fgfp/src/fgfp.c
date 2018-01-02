@@ -93,6 +93,8 @@ int main(int argc, char* argv[]) {
 		{ exit(EXIT_FAILURE); }
 
 	augment_grammar(cfg);
+//	print_production(cfg);
+
 	if (cfg_sanity_check(cfg) == ERROR) {
 		del_cfg(cfg);
 		exit(EXIT_FAILURE);

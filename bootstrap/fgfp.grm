@@ -74,9 +74,8 @@ $PRODUCTION
 	<rhs'>	->	'|' <opt_list> <mimic> <rhs'>
 			|	$EMPTY
 			;
-    
+   
 	<opt_list>	->	<symbol_list>
-				|	'[' <opt_list> ']'
 				|	'$EMPTY'
 				|	 $EMPTY
 				;
@@ -93,6 +92,7 @@ $PRODUCTION
 	<symbol>	->	GLOBAL_TOK
 				|	NTER
 				|	LITERAL
+				|	'[' <rhs> ']'
 				;
     
 	<FGFP>	=	$START;

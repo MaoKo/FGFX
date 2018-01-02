@@ -44,6 +44,7 @@ typedef struct symbol_t {
 			// (Optional & List) elements
 			struct symbol_t* special;
 			size_t depth;
+			size_t spec_nth;
 		};
 	};
 } symbol_t;

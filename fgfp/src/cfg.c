@@ -496,46 +496,8 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 
 int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
-	if (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
+	if (in_first(cfg->lex, T_LBRACK, NON_TERMINAL, TERMINAL, LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
-	else if (peek_token(cfg->lex) == T_LBRACK) {
-		advance_token(cfg->lex);
-
-		if (LHS(prod)->depth > 2) {
-			errorf(CURRENT_LINE(cfg->lex),
-					"A nesting depth of bracket must be less than 3.");
-			return (ERROR);
-		}
-		else if (peek_token(cfg->lex) == T_RBRACK) {
-			warnf(CURRENT_LINE(cfg->lex), "Empty optional elements '[]'.");
-			advance_token(cfg->lex);
-			return (DONE);
-		}
-
-		symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
-
-		opt_nter->is_defined = true;
-		int crt_depth = LHS(prod)->depth;
-
-		if (!crt_depth)
-			{ opt_nter->special = LHS(prod); }
-		else
-			{ opt_nter->special = LHS(prod)->special; }
-		opt_nter->depth = crt_depth + 1;	
-
-		add_symbol_rhs(prod, opt_nter);
-
-		production_t* crt_prod = new_production(opt_nter, cfg);
-		ADD_BITSET(opt_nter->prod_lst, GET_INDEX(crt_prod));
-
-		if (cfg_opt_list(cfg, crt_prod) == ERROR)
-			{ return (ERROR); }
-		else if (advance_token(cfg->lex) != T_RBRACK) {
-			errorf(CURRENT_LINE(cfg->lex),
-					"A close bracket must follow the optional elements.");
-			return (ERROR);
-		}
-	}
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
 	else if (!in_first(cfg->lex, T_RBRACK, T_LPAREN, T_UNION, T_SEMI, -1)) {
@@ -549,24 +511,80 @@ cfg_opt_list(cfg_t* cfg, production_t* prod) {
 
 int
 cfg_list(cfg_t* cfg, production_t* prod) {
-	cfg_atom(cfg, prod);
-	while (in_first(cfg->lex, NON_TERMINAL, TERMINAL, LITERAL, -1))
-		{ cfg_atom(cfg, prod); }
+	if (cfg_atom(cfg, prod) == ERROR)
+		{ return (ERROR); }
+	while (in_first(cfg->lex, T_LBRACK, NON_TERMINAL, TERMINAL, LITERAL, -1)) {
+		if (cfg_atom(cfg, prod) == ERROR)
+			{ return (ERROR); }
+	}
 	return (DONE);
 }
 
 int
 cfg_atom(cfg_t* cfg, production_t* prod) {
-	symbol_t* atom_symbol = add_symbol_cfg(cfg,
+	static size_t special_pos = 0;
+
+	if (peek_token(cfg->lex) == T_LBRACK) {
+		advance_token(cfg->lex);
+
+		int greater_depth = (LHS(prod)->depth > 2);
+		int empty_opt = (peek_token(cfg->lex) == T_RBRACK);
+	
+		if (greater_depth || empty_opt) {
+			int exit_st;
+			if (empty_opt) {
+				warnf(CURRENT_LINE(cfg->lex), "Empty optional elements '[]'.");
+				advance_token(cfg->lex);
+				exit_st = DONE;
+			}
+			if (greater_depth) {
+				errorf(CURRENT_LINE(cfg->lex),
+						"A nesting depth of bracket must be less than 3.");
+				exit_st = ERROR;
+			}
+			return (exit_st);
+		}
+
+		symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
+
+		opt_nter->is_defined = true;
+		int crt_depth = LHS(prod)->depth;
+
+		if (!crt_depth)
+			{ opt_nter->special = LHS(prod); }
+		else
+			{ opt_nter->special = LHS(prod)->special; }
+		opt_nter->depth = crt_depth + 1;	
+
+		opt_nter->spec_nth = ++special_pos;
+		add_symbol_rhs(prod, opt_nter);	
+
+		production_t* empty_prod = new_production(opt_nter, cfg);
+		ADD_BITSET(opt_nter->prod_lst, GET_INDEX(empty_prod));
+
+		special_pos = 0;
+		if (cfg_rhs(cfg, opt_nter) == ERROR)
+			{ return (ERROR); }
+		else if (advance_token(cfg->lex) != T_RBRACK) {
+			errorf(CURRENT_LINE(cfg->lex),
+					"A close bracket must follow the optional elements.");
+			return (ERROR);
+		}
+		special_pos = opt_nter->spec_nth;
+	}
+	else {
+		symbol_t* atom_symbol = add_symbol_cfg(cfg,
 					advance_token(cfg->lex), C_LEXEME(cfg->lex));
 
-	atom_symbol->is_used = true;
-	if ((atom_symbol->kind == LITERAL) && (atom_symbol->terminal_alias != -1)) {
-		add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
+		atom_symbol->is_used = true;
+		if ((atom_symbol->kind == LITERAL)
+									&& (atom_symbol->terminal_alias != -1)) {
+			add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
 								atom_symbol->terminal_alias));
+		}
+		else
+			{ add_symbol_rhs(prod, atom_symbol); }
 	}
-	else
-		{ add_symbol_rhs(prod, atom_symbol); }
 	return (DONE);
 }
 
