@@ -37,7 +37,7 @@ free_symbol(symbol_t* sym) {
 		}
 		else if ((sym->kind == TERMINAL) && (sym->prec))
 			{ FREE(sym->prec); }
-		else if ((sym->kind == LITERAL) && (!sym->is_defined) && (sym->prec))
+		else if ((sym->kind == LITERAL) && (!sym->share_prec))
 			{ FREE(sym->prec); }
 	}
 	FREE(sym);
@@ -238,28 +238,19 @@ cfg_path_list(cfg_t* cfg) {
 	return (DONE);
 }
 
-int
-cfg_alias_list(cfg_t* cfg) {
-	if (peek_token(cfg->lex) == T_RBRACE)
-		{ return (DONE); }
-	else if (advance_token(cfg->lex) == T_LPAREN) {
-		if (advance_token(cfg->lex) != T_GLOBAL_TOK) {
-			errorf(CURRENT_LINE(cfg->lex),
-						"Missing an token identifier in the $ALIAS section.");
-			return (ERROR);
-		}
+static int
+alias_literal_list(cfg_t* cfg, symbol_t* alias_ter) {
+	if (peek_token(cfg->lex) != T_LITERAL) {
+		errorf(CURRENT_LINE(cfg->lex),
+			"Missing a literal after the => in the $ALIAS section.");
+		return (ERROR);
+	}
 
-		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
-		size_t index_alias = alias_ter->index;
-
-		char const* next = NULL;
-		if ((next = "=>", advance_token(cfg->lex) != T_BARROW)
-				|| (next = "literal", advance_token(cfg->lex) != T_LITERAL)) {
-			errorf(CURRENT_LINE(cfg->lex),
-						"Missing a %s in the $ALIAS section.", next);
-			return (ERROR);
-		}
+	size_t index_alias = alias_ter->index;
+	while (peek_token(cfg->lex) == T_LITERAL) {
+		advance_token(cfg->lex);
 		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(cfg->lex));
+
 		if (literal->terminal_alias != -1) {
 			errorf(CURRENT_LINE(cfg->lex),
 						"Redefinning literal %s.", C_LEXEME(cfg->lex));
@@ -275,11 +266,38 @@ cfg_alias_list(cfg_t* cfg) {
 
 		literal->is_defined = true;
 		literal->terminal_alias = index_alias;
+	
+		if (literal->prec) {
+			literal->share_prec = true;
+			alias_ter->prec = literal->prec;
+		}
 
-		if (literal->prec)
-			{ alias_ter->prec = literal->prec; }
+		if (peek_token(cfg->lex) == T_COMMA)
+			{ advance_token(cfg->lex); }
+	}
+	return (DONE);
+}
 
-		if (advance_token(cfg->lex) != T_RPAREN) {
+int
+cfg_alias_list(cfg_t* cfg) {
+	if (peek_token(cfg->lex) == T_RBRACE)
+		{ return (DONE); }
+	else if (advance_token(cfg->lex) == T_LPAREN) {
+		if (advance_token(cfg->lex) != T_GLOBAL_TOK) {
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing an token identifier in the $ALIAS section.");
+			return (ERROR);
+		}
+
+		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+		if (advance_token(cfg->lex) != T_BARROW) {
+			errorf(CURRENT_LINE(cfg->lex),
+						"Missing a => in the $ALIAS section.");
+			return (ERROR);
+		}
+		else if (alias_literal_list(cfg, alias_ter) == ERROR)
+			{ return (ERROR); }
+		else if (advance_token(cfg->lex) != T_RPAREN) {
 			errorf(CURRENT_LINE(cfg->lex),
 						"Missing a close paren in the $ALIAS section.");
 			return (ERROR);
@@ -322,7 +340,7 @@ cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 		if (!prec)
 			{ return (ERROR); }
 
-		memset(prec, 0, sizeof(precedence_t));
+		memset(prec, 0, sizeof(*prec));
 		prec->precedence = prec_depth;
 
 		switch (kind_prec) {
@@ -691,8 +709,9 @@ cfg_sanity_check(cfg_t* cfg) {
 		{ return (ERROR); }
 	else if (unreachable_production(cfg) == ERROR)
 		{ warnf(0, "Some unreachable nonterminal has been remove."); }
+	else if (preprocess_literal(cfg) == ERROR)
+		{ return (ERROR); }
 
-	preprocess_literal(cfg);
 	check_mimic_prod(cfg);
 
 	detect_nullable(cfg);
@@ -702,6 +721,7 @@ cfg_sanity_check(cfg_t* cfg) {
 		{ return (ERROR); }
 
 	compute_follow(cfg);
+
 	return (DONE);
 }
 

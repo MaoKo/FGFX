@@ -29,8 +29,10 @@ typedef struct symbol_t {
 				struct
 					{ bool is_eof; };
 				// if ALIAS
-				struct
-					{ int terminal_alias; };
+				struct {
+					int terminal_alias;
+					bool share_prec;
+				};
 			};
 			precedence_t* prec;
 		};

@@ -61,7 +61,7 @@ get_next_token(lexer_t* lex) {
 	}
 	
 	if (last_match == T_ERROR) {
-		errorf(CURRENT_LINE(lex), "Lexical Error '%s'.", C_LEXEME(lex));
+		errorf(CURRENT_LINE(lex), "Lexical error '%s'.", C_LEXEME(lex));
 		lex->last_char = -1;
 	}
 	else {

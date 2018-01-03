@@ -100,6 +100,7 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	puts("HERE");
 	gen_fgfp_file(cfg, get_filename(argv[1]));
 
 #if 0

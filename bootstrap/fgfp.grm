@@ -15,9 +15,15 @@ $PRODUCTION
 	<extern_section>	->	'$EXTERN' '{' <path_list> '}' ';'    ;
 	<path_list>			->	LITERAL [ ',' <path_list> ] | $EMPTY ;
 
-	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';'           ;
-	<alias_list>		->	<alias_entry> [ ',' <alias_list> ] | $EMPTY ;
-	<alias_entry>		->	'(' GLOBAL_TOK '=>' LITERAL ')' ;
+	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';'            ;
+	<alias_list>		->	<alias_entry> [ ',' <alias_list> ] | $EMPTY  ;
+	<alias_entry>		->	'(' GLOBAL_TOK '=>' <alias_literal_list> ')' ;
+
+	<alias_literal_list>	->	LITERAL [ ',' <alias_literal_list'> ] ;
+	<alias_literal_list'>	->	LITERAL [ ',' <alias_literal_list'> ]
+							|	$EMPTY
+							;
+
 
 	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
 	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')'

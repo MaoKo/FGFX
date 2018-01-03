@@ -105,6 +105,30 @@ int
 preprocess_literal(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
+
+	int is_error = DONE;
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
+		symbol_t* literal = (symbol_t*)AT_VECTOR(cfg->terminal, i);
+		if (literal->kind == LITERAL) {
+			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal,
+										literal->terminal_alias);
+			if (!ter->prec) {
+				literal->share_prec = true;
+				ter->prec = literal->prec;
+			}
+
+			if (ter->prec != literal->prec) {
+				errorf(0, "The terminal %s has %s alias with different"
+							" precedence.", ter->name, literal->name);
+				literal->share_prec = false;
+				is_error = ERROR;
+			}
+		}
+	}
+
+	if (is_error == ERROR)
+		{ return (ERROR); }
+	
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
 		if (prod->mimic_sym && (prod->mimic_sym->kind == LITERAL)) {
