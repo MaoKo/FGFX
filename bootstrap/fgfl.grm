@@ -5,10 +5,7 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFL>		->	<section> <FGFL>
-				|	$EMPTY
-				;
-
+	<FGFL>		->	{ <section> } => ( $RIGHT ) ;
 	<section>	->	<skip_section>
 				|	<token_section>
 				|	<keyword_section>
@@ -18,25 +15,14 @@ $PRODUCTION
 	<token_section>		->	'$TOKEN'	'{' <regex_list>   '}' ';' ;
 	<keyword_section>	->	'$KEYWORD'	'{' <keyword_list> '}' ';' ;
 
-	<regex_list>	->	<atom_FGFL> <regex_assign> ';' <regex_list>
-					|	$EMPTY
-					;
+	<regex_list>	->	{ <atom_FGFL> <regex_assign> ';' } => ( $RIGHT ) ;
 
 	<regex_assign>	->	'=' REGEX
 					|	'->' '$IGCASE'
 					;
 
-	<keyword_list>	->	<atom_FGFL> <keyword_list'>
-					|	$EMPTY
-					;
-
-	<keyword_list'>	->	',' <keyword_list>
-					|	$EMPTY
-					;
-
-	<atom_FGFL>	->	GLOBAL_TOK
-				|	LOCAL_TOK
-				;
+	<keyword_list>	->	<atom_FGFL> [ ',' <keyword_list> ] | $EMPTY ;
+	<atom_FGFL>	->	GLOBAL_TOK | LOCAL_TOK ;
 
 	<FGFL>	=	$START;
 };

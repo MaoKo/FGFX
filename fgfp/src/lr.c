@@ -803,7 +803,7 @@ check_conflict(cfg_t const* cfg, lr1_state_t* state,
 					else
 						{ last_sym = last_symbol_in_prod(crt_prod); }
 
-					if (PRECEDENCE(last_sym) != NOT_PREC
+					if (last_sym && PRECEDENCE(last_sym) != NOT_PREC
 							&& PRECEDENCE(shift_sym) != NOT_PREC) {
 						if (PRECEDENCE(last_sym) > PRECEDENCE(shift_sym)) {
 							del_node_trans_list(&state->shift_lst,

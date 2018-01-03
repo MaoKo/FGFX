@@ -5,102 +5,59 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFP>	->	<section> <FGFP>
-			|	$EMPTY
-			;
-
+	<FGFP>	->	{ <section> } => ( $RIGHT ) ;
 	<section>	->	<extern_section>
 				|	<production_section>
 				|	<alias_section>
 				|	<prec_section>
 				;
     
-	<extern_section>	->	'$EXTERN' '{' <path_list> '}' ';' ;
-	<path_list>			->	LITERAL <path_list'> 
-						|	$EMPTY
-						;
+	<extern_section>	->	'$EXTERN' '{' <path_list> '}' ';'    ;
+	<path_list>			->	LITERAL [ ',' <path_list> ] | $EMPTY ;
 
-	<path_list'>		->	',' <path_list>
-						|	$EMPTY
-						;
-
-	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';' ;
-	<alias_list>		->	'(' GLOBAL_TOK '=>' LITERAL ')' <alias_list'>
-						|	$EMPTY
-						;
-
-	<alias_list'>		->	',' <alias_list>
-						|	$EMPTY
-						;
+	<alias_section>		->	'$ALIAS' '{' <alias_list> '}' ';'           ;
+	<alias_list>		->	<alias_entry> [ ',' <alias_list> ] | $EMPTY ;
+	<alias_entry>		->	'(' GLOBAL_TOK '=>' LITERAL ')' ;
 
 	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
-	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')' <prec_list'>
+	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')'
+										[ ',' <prec_list> ]
 						|	$EMPTY
 						;
 
-	<prec_list'>		->	',' <prec_list>
-						|	$EMPTY
-						;
+	<prec_atom_list>	->	<prec_atom> [ ',' <prec_atom_list'> ]          ;
+	<prec_atom_list'>	->	<prec_atom> [ ',' <prec_atom_list'> ] | $EMPTY ;
 
-	<prec_atom_list>	->	<prec_atom> <prec_atom_list'> ;
-	<prec_atom_list'>	->	',' <prec_atom_list''>
-						|	$EMPTY
-						;
-	<prec_atom_list''>	->	<prec_atom> <prec_atom_list'>
-						|	$EMPTY
-						;
+	<prec_atom>			->	GLOBAL_TOK | LITERAL ;
+	<prec_dir>			->	'$NONASSOC' | <left_right> ;
+	<left_right>		->	'$LEFT' | '$RIGHT' ;
 
-	<prec_atom>			->	GLOBAL_TOK
-						|	LITERAL
-						;
-
-	<prec_dir>			->	'$NONASSOC'
-						|	<left_right>
-						;
-
-	<left_right>		->	'$LEFT'
-						|	'$RIGHT'
-						;
 
 	<production_section>	->	'$PRODUCTION' '{' <production_list> '}' ';' ;
-	<production_list>		->	<production> <production_list>
-							|	$EMPTY
-							;
-
+	<production_list>		->	{ <production> } => ( $RIGHT ) ;
 
 	<production>	->	NTER <follow_prod> ';' ;
 	<follow_prod>	->	'=' '$START'
 					|	'->' <rhs>
 					;
     
-	<rhs>	->	<opt_list> <mimic> <rhs'> ;
-	<rhs'>	->	'|' <opt_list> <mimic> <rhs'>
-			|	$EMPTY
-			;
+	<rhs>	->	<opt_list> <mimic> { '|' <opt_list> <mimic> } => ( $RIGHT ) ;
    
 	<opt_list>	->	<symbol_list>
 				|	'$EMPTY'
 				|	 $EMPTY
 				;
 
-	<symbol_list>	->	<symbol> <symbol_list'> ;
-	<symbol_list'>	->	<symbol> <symbol_list'>
-					|	$EMPTY
- 					;
- 
+	<symbol_list>	->	<symbol> { <symbol> } => ( $RIGHT ) ;
+
 	<mimic>		->	'(' '$MIMIC' <prec_atom> ')'
 				|	$EMPTY
 				;
 
-	<symbol>	->	GLOBAL_TOK
+	<symbol>	->	<prec_atom>
 				|	NTER
-				|	LITERAL
 				|	'[' <rhs> ']'
-				|	'{' <rhs> '}' <opt_dir>
-				;
-    
-	<opt_dir>	->	'=>' '(' <left_right> ')'
-				|	$EMPTY
+				|	'{' <rhs> '}' [ '=>' '(' <left_right> ')' ]
 				;
 
 	<FGFP>	=	$START;
