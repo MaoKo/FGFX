@@ -195,6 +195,7 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 
 void
 dfa_gen(token_spec_t* spec, char const* base_file) {
+	(void)base_file;
 	if (!spec)
 		{ return; }
 	vector_t* trans = NULL;
@@ -205,7 +206,7 @@ dfa_gen(token_spec_t* spec, char const* base_file) {
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	gen_dfa_matrix(base_file, trans, final, spec->entry_lst);
+//	gen_dfa_matrix(base_file, trans, final, spec->entry_lst);
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
 		{ del_trans_list(AT_VECTOR(trans, i)); }
 

@@ -18,13 +18,14 @@ After you can do: ./efgfl example/lex/token_c.lex
 Which create a file called token_c.h.lex ready for lexing.
 
 ### TODO ###
-	.	More accurate handle of error in FGFX
+	.	More accurate handle of error in FGFX (FGFP done)
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
 	.	Allow forward reference in FGFL
 	.	No output in FGFL when the file is empty
-	.	Allow several alias for the same terminal
 	.	Improve the algorithm for constructing the LALR parsing table
-	.	Change the name display to gen
 	.	Add error recovery mechanism
+	.	Add parser and lexer in the template dir
+	.	Add in FGFP ( ... | ... )
+	.	Add STATE in FGFL
 	.	Learn MarkDown :)

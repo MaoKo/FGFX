@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "token_def.h"
 #include "utils.h"
 #include "bitset.h"
 #include "nfa.h"

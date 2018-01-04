@@ -4,15 +4,12 @@
 #include <unistd.h>
 
 #include "token_def.h"
-#include "lexer.h"
-#include "utils.h"
 #include "regex.h"
 #include "nfa.h"
+#include "lexer.h"
 #include "buffer.h"
-
-#define	_ONLY_TOKEN_
-#include "fgfx.lex.h"
-#undef	_ONLY_TOKEN_
+#include "error.h"
+#include "utils.h"
 
 static void
 del_token_entry(token_entry_t* entry) {
@@ -22,6 +19,7 @@ del_token_entry(token_entry_t* entry) {
 		else if (entry->phase == FRAGMENT)
 			{ FREE_FRAG(entry->frag); }
 		FREE(entry->name);
+		FREE(entry->reg_str);
 		FREE(entry);
 	}
 }
@@ -42,20 +40,20 @@ cmp_token_entry(token_entry_t* entry, char const* str) {
 	return (strcmp(entry->name, str));
 }
 
-static int
+static token_entry_t*
 add_entry_lexeme(token_spec_t* spec, int kind) {
 	int offset = (kind == LOCAL);
+	int index = get_index_vector(spec->entry_lst,
+						C_LEXEME(spec->lex) + offset, &cmp_token_entry);
 
-	int i = get_index_vector(spec->entry_lst,
-			C_LEXEME(spec->lex) + offset, &cmp_token_entry);
+	if (index != -1)
+		{ return ((token_entry_t*)AT_VECTOR(spec->entry_lst, index)); }
 
-	if (i != -1)
-		{ return (i); }
 	token_entry_t* entry = NEW(token_entry_t, 1);
 	if (!entry)
-		{ return (ERROR); }
-
+		{ return (NULL); }
 	memset(entry, 0, sizeof(token_entry_t));
+
 	entry->kind = kind;
 	switch (entry->kind) {
 		case GLOBAL:
@@ -64,11 +62,13 @@ add_entry_lexeme(token_spec_t* spec, int kind) {
 		case LOCAL: entry->used = false;
 			break;
 	}
+
 	entry->name = strdup(C_LEXEME(spec->lex) + offset);
 	entry->igcase = false;
+
 	if (!entry->name) {
 		del_token_entry(entry);
-		return (ERROR);
+		return (NULL);
 	}
 
 	if (entry->kind == KEYWORD)
@@ -76,10 +76,10 @@ add_entry_lexeme(token_spec_t* spec, int kind) {
 	else
 		{ entry->phase = AST; }
 
-	i = SIZE_VECTOR(spec->entry_lst);
+	entry->index = SIZE_VECTOR(spec->entry_lst);
 	PUSH_BACK_VECTOR(spec->entry_lst, entry);
 
-	return (i);
+	return (entry);
 }
 
 static int parse_section(token_spec_t*);
@@ -88,45 +88,32 @@ static inline int token_section(token_spec_t*);
 static inline int skip_section(token_spec_t*);
 static int keyword_list(token_spec_t*, int);
 static int regex_list(token_spec_t*, int);
-static int regex_assign(token_spec_t*, int, int);
-static int atom_FGFL(token_spec_t*, int);
+static int regex_assign(token_spec_t*, token_entry_t*, int);
 
 int
-atom_FGFL(token_spec_t* spec, int kind_symbol) {
-	int err_entry = add_entry_lexeme(spec, kind_symbol);
-	if (err_entry == ERROR) {
-		fprintf(stderr, "Error (%d): Unable to allocate for some entry.\n",
-			CURRENT_LINE(spec->lex));
-		return (ERROR);
-	}
-	return (err_entry);
-}
-
-int
-regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
-	token_entry_t* entry = (token_entry_t*)
-								AT_VECTOR(spec->entry_lst, index_entry);
-
+regex_assign(token_spec_t* spec, token_entry_t* entry, int kind_section) {
 	if ((!strcmp(entry->name, "ERROR")) || (!strcmp(entry->name, "EOF"))) {
-			fprintf(stderr, "<%s> name reserved for special use.\n",
-								entry->name);
+			errorf(CURRENT_LINE(spec->lex), "Can't redefine %s. "
+											"Name reserved for special use.\n",
+											entry->name);
 			return (T_ERROR);
 	}
 
 	if (peek_token(spec->lex) == T_EQUAL) {
-		if (entry->reg || entry->kind == KEYWORD) {
-			fprintf(stderr, "Error (%d): Redefinning %s.\n",
-					CURRENT_LINE(spec->lex), entry->name);
+		if (entry->reg_str|| entry->kind == KEYWORD) {
+			errorf(CURRENT_LINE(spec->lex), "Redefinning the token %s.",
+											entry->name);
 			return (ERROR);
 		}
 		if (kind_section == T_SKIP)
 			{ entry->skip = true; }
 		advance_token(spec->lex);
 		if (advance_token(spec->lex) != T_REGEX) {
-			fprintf(stderr, "Error (%d): No found regex after %s = .\n",
-				CURRENT_LINE(spec->lex), entry->name);
+			errorf(CURRENT_LINE(spec->lex), "No found regex after %s = .",
+												entry->name);
 			return (ERROR);
 		}
+
 		unget_c_buffer(LAST_LEXEME(spec->lex), 1);
 		size_t save_space = 0;
 
@@ -144,23 +131,30 @@ regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 
 		CURRENT_LINE(spec->lex) += char_in_str(
 				C_LEXEME(spec->lex) + front_space, '\n');
-		entry->reg = regex2ast(spec, C_LEXEME(spec->lex) + front_space);
-	}
-	else if (peek_token(spec->lex) == T_ARROW) {
-		if (!entry->reg) {
-			fprintf(stderr, "Token %s not defined.\n", entry->name);
+		entry->reg_str = strdup(C_LEXEME(spec->lex) + front_space);
+
+		if (!entry->reg_str) {
+			errorf(0, "Non enough memory for allocate the regex string.");
 			return (ERROR);
 		}
+	}
+	else if (peek_token(spec->lex) == T_ARROW) {
 		advance_token(spec->lex);
 		if (advance_token(spec->lex) != T_IGCASE) {
-			fprintf(stderr, "Expected $IGCASE after %s -> .\n",
-				entry->name);
+			errorf(CURRENT_LINE(spec->lex), "Expected $IGCASE after %s -> .",
+													entry->name);
+			return (ERROR);
+		}
+		if (!entry->reg_str) {
+			errorf(CURRENT_LINE(spec->lex), "Token %s not defined for $IGCASE.",
+													entry->name);
 			return (ERROR);
 		}
 		entry->igcase = true;
 	}
 	else {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex), "An equal or an arrow must"
+										" follow the token.");
 		return (ERROR);
 	}
 	return (DONE);
@@ -168,20 +162,24 @@ regex_assign(token_spec_t* spec, int index_entry, int kind_section) {
 
 int
 regex_list(token_spec_t* spec, int kind_section) {
-	if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
-		int index_entry = atom_FGFL(spec,
-				(advance_token(spec->lex) ==  T_GLOBAL_TOK) ? GLOBAL : LOCAL);
-		if (index_entry == ERROR)
+	if (peek_token(spec->lex) == T_RBRACE)
+		{ return (DONE); }
+	else if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
+		token_entry_t* entry = add_entry_lexeme(spec, advance_token(spec->lex));
+		if (entry == NULL)
 			{ return (ERROR); }
-		if (regex_assign(spec, index_entry, kind_section) == ERROR
-				|| advance_token(spec->lex) != T_SEMI) {
-			/* ERROR */
+		else if (regex_assign(spec, entry, kind_section) == ERROR)
+			{ return (ERROR); }
+		if (advance_token(spec->lex) != T_SEMI) {
+			errorf(CURRENT_LINE(spec->lex), "Missing a ; after the regex.");
 			return (ERROR);
 		}
 		return (regex_list(spec, kind_section));
 	}
 	else if (peek_token(spec->lex) != T_RBRACE) {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex), "Missing a local or  global token in"
+							" $%s section", (kind_section == T_TOKEN)
+											? "TOKEN" : "SKIP");
 		return (ERROR);
 	}
 	return (DONE);
@@ -192,32 +190,30 @@ keyword_list(token_spec_t* spec, int dummy) {
 	if (peek_token(spec->lex) == T_RBRACE)
 		{ return (DONE); }
 	else if (advance_token(spec->lex) == T_GLOBAL_TOK) {
-		int index_key = atom_FGFL(spec, KEYWORD);
-		if (index_key == ERROR) {
-			/* ERROR */
+		token_entry_t* entry = add_entry_lexeme(spec, KEYWORD);
+		++(entry->count);
+		if (entry->reg_str) {
+			errorf(CURRENT_LINE(spec->lex), "Redefinning token %s in $KEYWORD.",
+														entry->name);
 			return (ERROR);
 		}
-		token_entry_t* entry = AT_VECTOR(spec->entry_lst, index_key);
-		if (entry->reg) {
-			fprintf(stderr, "Redefinning %s.\n", entry->name);
-			return (ERROR);
-		}
-		else if ((size_t)index_key != LAST_INDEX_VECTOR(spec->entry_lst)) {
-			fprintf(stderr, "Warning %s appear twice or more "
-					"in the keyword section.\n",
-				entry->name);
+		else if (entry->count > 1) {
+			warnf(CURRENT_LINE(spec->lex), "%s appear %zu in the"
+						" $KEYWORD section.", entry->name, entry->count);
 		}
 		if (peek_token(spec->lex) == T_COMMA) {
 			advance_token(spec->lex);
 			return (keyword_list(spec, dummy));
 		}
 		else if (peek_token(spec->lex) != T_RBRACE) {
-			/* ERROR */
+			errorf(CURRENT_LINE(spec->lex), "Missing a '}' in"
+											" $KEYWORD section");
 			return (ERROR);
 		}
 	}
 	else {
-		fprintf(stderr, "Expected identifier in the KEYWORD section.\n");
+		errorf(CURRENT_LINE(spec->lex), "Expected identifier in"
+										" the $KEYWORD section.");
 		return (ERROR);
 	}
 	return (DONE);
@@ -228,17 +224,20 @@ entry_section(token_spec_t* spec, int kind) {
 	int (*section_ptr)(token_spec_t*, int) = &regex_list;
 	if (kind == T_KEYWORD)
 		{ section_ptr = &keyword_list; }
+
+	char next;
 	if (advance_token(spec->lex) != kind
-			|| advance_token(spec->lex) != T_LBRACE
-			|| (*section_ptr)(spec, kind) == ERROR
-			|| advance_token(spec->lex) != T_RBRACE) {
-		/* ERROR */
+			|| (next = '{', advance_token(spec->lex) != T_LBRACE)
+			|| (next = '\0', (*section_ptr)(spec, kind) == ERROR)
+			|| (next = '}', advance_token(spec->lex) != T_RBRACE)) {
+		if (next) {
+			errorf(CURRENT_LINE(spec->lex), "Missing a '%c' after"
+											" the directive.", next);
+		}
 		return (ERROR);
 	}
 	if (advance_token(spec->lex) != T_SEMI) {
-		fprintf(stderr,
-			"Error (%d): No semicolon after the regex.\n",
-			CURRENT_LINE(spec->lex));
+		errorf(CURRENT_LINE(spec->lex), "No semicolon after the directive.");
 		return (ERROR);
 	}
 	return (DONE);
@@ -261,18 +260,18 @@ keyword_section(token_spec_t* spec) {
 
 int
 parse_section(token_spec_t* spec) {
-	int exit_status = DONE;
+	int exit_st = DONE;
 	if (peek_token(spec->lex) == T_SKIP)
-		{ exit_status = skip_section(spec); }
+		{ exit_st = skip_section(spec); }
 	else if (peek_token(spec->lex) == T_TOKEN)
-		{ exit_status = token_section(spec); }
+		{ exit_st = token_section(spec); }
 	else if (peek_token(spec->lex) == T_KEYWORD)
-		{ exit_status = keyword_section(spec); }
+		{ exit_st = keyword_section(spec); }
 	else {
-		/* ERORR */
-		exit_status = ERROR;
+		errorf(CURRENT_LINE(spec->lex), "Bad section directive.");
+		return (ERROR);
 	}
-	return (exit_status);
+	return (exit_st);
 }
 
 int
@@ -284,23 +283,21 @@ parse_token_entry(token_spec_t* spec) {
 		empty = false;
 	}
 	if (empty)
-		{ fprintf(stderr, "Warning: file empty.\n"); }
+		{ warnf(CURRENT_LINE(spec->lex), "Empty file."); }
 	return (DONE);
 }
 
-int
-regex_gen(char const* pathname, token_spec_t** spec) {
-	if (!spec)
-		{ return (ERROR); }
-	token_spec_t* crt_spec = *spec = NEW(token_spec_t, 1);
-	int filde = 0;
-
-	if (!crt_spec || ((filde = open(pathname, O_RDONLY)) == -1))
-		{ return (ERROR); }
+token_spec_t*
+parse_token_def(int filde) {
+	token_spec_t* crt_spec = NEW(token_spec_t, 1);
+	if (!crt_spec)
+		{ return (NULL); }
 	memset(crt_spec, 0, sizeof(token_spec_t));
-
 	crt_spec->lex = new_lexer(filde);
 	crt_spec->entry_lst = new_vector();
-
-	return (parse_token_entry(crt_spec));
+	if (parse_token_entry(crt_spec) == ERROR) {
+		del_token_spec(crt_spec);
+		return (NULL);
+	}
+	return (crt_spec);
 }

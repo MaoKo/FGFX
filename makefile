@@ -9,15 +9,15 @@ LD_FLAGS	:=	# -pg
 include tools/makefile
 TOOLS_OBJ	:=	$(addprefix tools/,$(TOOLS_OBJ))
 
-#include fgfl/makefile
-#FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
+include fgfl/makefile
+FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
 
 include fgfp/makefile
 FGFP_OBJ	:=	$(addprefix fgfp/,$(FGFP_OBJ))
 
 ALL_OBJ		:=	$(TOOLS_OBJ) $(FGFL_OBJ) $(FGFP_OBJ)
 
-#EFGFL		:=	efgfl
+EFGFL		:=	efgfl
 EFGFP		:=	efgfp
 
 all: $(EFGFL) $(EFGFP);

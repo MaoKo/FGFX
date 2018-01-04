@@ -71,36 +71,33 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 	}
 
 	gen_endif(filde, base_file);
-	if (close(filde) == -1)
-		{ return (ERROR); }
 
 	FREE(header);
-
 	return (DONE);	
 }
 
 int main(int argc, char* argv[]) {
 	if (argc <= 1)
-		{ exit(1); }
+		{ return (EXIT_FAILURE); }
+
 	int filde = open(argv[1], O_RDONLY);
 	if (filde == -1) {
-		errorf(0, "Bad file name.");
-		return (ERROR);
+		errorf(0, "Can't open %s.", argv[1]);
+		return (EXIT_FAILURE);
 	}
 
 	cfg_t* cfg = parse_cfg(filde);
 	if (!cfg)
-		{ exit(EXIT_FAILURE); }
+		{ return (EXIT_FAILURE); }
 
 	augment_grammar(cfg);
 //	print_production(cfg);
 
 	if (cfg_sanity_check(cfg) == ERROR) {
 		del_cfg(cfg);
-		exit(EXIT_FAILURE);
+		return (EXIT_FAILURE);
 	}
 
-	puts("HERE");
 	gen_fgfp_file(cfg, get_filename(argv[1]));
 
 #if 0
@@ -112,5 +109,11 @@ int main(int argc, char* argv[]) {
 #endif	
 
 	del_cfg(cfg);
+
+	if (close(filde) == -1) {
+		errorf(0, "Can't close %s.", argv[1]);
+		return (EXIT_FAILURE);
+	}
+
 	return (EXIT_SUCCESS);
 }

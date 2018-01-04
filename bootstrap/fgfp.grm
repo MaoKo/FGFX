@@ -5,7 +5,7 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFP>	->	{ <section> } => ( $RIGHT ) ;
+	<FGFP>		->	{ <section> } => ( $RIGHT ) ;
 	<section>	->	<extern_section>
 				|	<production_section>
 				|	<alias_section>
@@ -23,7 +23,6 @@ $PRODUCTION
 	<alias_literal_list'>	->	LITERAL [ ',' <alias_literal_list'> ]
 							|	$EMPTY
 							;
-
 
 	<prec_section>		->	'$PRECEDENCE' '{' <prec_list> '}' ';' ;
 	<prec_list>			->	<prec_dir> '(' <prec_atom_list> ')'
@@ -47,7 +46,8 @@ $PRODUCTION
 					|	'->' <rhs>
 					;
     
-	<rhs>	->	<opt_list> <mimic> { '|' <opt_list> <mimic> } => ( $RIGHT ) ;
+	<rhs>	->	<opt_list> <mimic>
+				{ '|' <opt_list> <mimic> } => ( $RIGHT ) ;
    
 	<opt_list>	->	<symbol_list>
 				|	'$EMPTY'
@@ -63,6 +63,7 @@ $PRODUCTION
 	<symbol>	->	<prec_atom>
 				|	NTER
 				|	'[' <rhs> ']'
+//				|	'(' <rhs> ')'
 				|	'{' <rhs> '}' [ '=>' '(' <left_right> ')' ]
 				;
 

@@ -1,6 +1,7 @@
 #ifndef FGFL_H
 #define FGFL_H
 
+#include <stddef.h>
 #include <stdbool.h>
 
 #include "vector.h"
@@ -47,15 +48,23 @@ typedef struct {
 } nfa_frag_t;
 
 typedef struct {
-	enum { GLOBAL, LOCAL, KEYWORD } kind;
-	bool used;
-	bool igcase;
-	bool skip;
+	size_t index;
 	char* name;
-	enum { NONE, AST, FRAGMENT, } phase;
+	char* reg_str;
+	int kind;
+	bool used;
 	union {
-		node_ast_t* reg;
-		nfa_frag_t* frag;
+		struct { // if GLOBAL & LOCAL
+			bool igcase;
+			bool skip;
+			enum { NONE, AST, FRAGMENT, } phase;
+			union {
+				node_ast_t* reg;
+				nfa_frag_t* frag;
+			};
+		};
+		struct // if KEYWORD
+			{ size_t count; };
 	};
 } token_entry_t;
 

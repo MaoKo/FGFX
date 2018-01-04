@@ -7,6 +7,7 @@
 #include "gen_dfa.h"
 #include "gen.h"
 #include "utils.h"
+#include "token_def.h"
 #include "nfa.h"
 
 static inline void
@@ -133,16 +134,16 @@ gen_dfa_matrix(char const* base_file, vector_t const* trans,
 	if (filde == -1)
 		{ return (ERROR); }
 
-	display_require_macro(filde, base_file);
-	display_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
-	display_token_enum(filde, elst);
+	gen_require_macro(filde, base_file);
+	gen_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
+	gen_token_enum(filde, elst);
 	IFNDEF_ONLY_TOKEN(filde);
-	display_dfa_useful_macro(filde);
-	display_state_table(filde, trans, header);
-	display_final_table(filde, final, header);
-	display_skip_table(filde, elst, header);
+	gen_dfa_useful_macro(filde);
+	gen_state_table(filde, trans, header);
+	gen_final_table(filde, final, header);
+	gen_skip_table(filde, elst, header);
 	ENDIF_ONLY_TOKEN(filde);
-	display_endif(filde, base_file);
+	gen_endif(filde, base_file);
 
 	if (close(filde) == -1)
 		{ return (ERROR); }

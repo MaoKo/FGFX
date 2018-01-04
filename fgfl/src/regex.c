@@ -365,6 +365,7 @@ curly_regex(node_ast_t* root) {
 }
 
 /*
+
 static set_t*
 complement_negate_range(set_t* base) {
 	set_t* compl = EMPTY_SET;
@@ -375,6 +376,7 @@ complement_negate_range(set_t* base) {
 	del_set(base);
 	return (compl);
 }
+
 */
 
 static inline node_ast_t*

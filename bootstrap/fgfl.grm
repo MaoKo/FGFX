@@ -9,20 +9,30 @@ $PRODUCTION
 	<section>	->	<skip_section>
 				|	<token_section>
 				|	<keyword_section>
+				|	<state_section>
 				;
 
-	<skip_section>		->	'$SKIP'		'{' <regex_list>   '}' ';' ;
-	<token_section>		->	'$TOKEN'	'{' <regex_list>   '}' ';' ;
-	<keyword_section>	->	'$KEYWORD'	'{' <keyword_list> '}' ';' ;
+	<skip_section>		->	'$SKIP'		'{' <regex_list>		'}' ';' ;
+	<token_section>		->	'$TOKEN'	'{' <regex_list>		'}' ';' ;
+	<keyword_section>	->	'$KEYWORD'	'{' <opt_token_list>	'}' ';' ;
+	<state_section>		->	'$STATE'	'{' <opt_token_list>	'}' ';' ;
 
-	<regex_list>	->	{ <atom_FGFL> <regex_assign> ';' } => ( $RIGHT ) ;
+	<regex_list>	->	{ <state_prefix> <atom> <regex_assign> ';' }
+							=> ( $RIGHT )
+					;
 
-	<regex_assign>	->	'=' REGEX
+	<state_prefix>	-> '(' <token_list> ')' | $EMPTY ;
+
+	<regex_assign>	->	'='   REGEX
 					|	'->' '$IGCASE'
 					;
 
-	<keyword_list>	->	<atom_FGFL> [ ',' <keyword_list> ] | $EMPTY ;
-	<atom_FGFL>	->	GLOBAL_TOK | LOCAL_TOK ;
+	<token_list>		->	GLOBAL_TOK [ ',' <opt_token_list> ] ;
+	<opt_token_list>	->	GLOBAL_TOK [ ',' <opt_token_list> ] | $EMPTY ;
+
+	<atom>	->	GLOBAL_TOK
+			|	LOCAL_TOK
+			;
 
 	<FGFL>	=	$START;
 };
@@ -33,7 +43,10 @@ $ALIAS
 	(TOKEN		=> '$TOKEN')	,
 	(KEYWORD	=> '$KEYWORD')	,
 	(IGCASE		=> '$IGCASE')	,
+	(STATE		=> '$STATE')	,
 	(LBRACE		=> '{')			,
+	(LPAREN		=> '(')			,
+	(RPAREN		=> ')')			,
 	(RBRACE		=> '}')			,
 	(SEMI		=> ';')			,
 	(COMMA		=> ',')			,
