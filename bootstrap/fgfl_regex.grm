@@ -1,0 +1,57 @@
+$EXTERN
+{
+	'fgfl_regex.lex.h',
+};
+
+$PRODUCTION
+{
+	<regex>			->	[ '^' ] [ <regex_union> ] [ '$' ] ;
+
+	<regex_union>	->	<regex_cat>
+						{ '|' <regex_cat> } => ( $RIGHT ) ;
+	<regex_cat>		->	<regex_closure>
+						{ <regex_closure> } => ( $RIGHT ) ;
+	<regex_closure>	->	<regex_atom>
+						{ '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
+
+	<finite_seq>	->	'{' DIGIT [ ',' [ DIGIT ] ] '}' ;
+
+	<regex_atom>	->	<fullccl>
+					|	<string>
+					|	'(' <regex_union> ')'
+					|	BOUND_NAME
+					|	CHAR
+					|	'.'
+					;
+
+	<fullccl>		->	<loneccl> { <kind_fullccl> <loneccl> } => ( $RIGHT ) ;
+	<kind_fullccl>	->	DIFF_CLASS | UNION_CLASS ;
+
+	<loneccl>		->	'[' [ '^' ] <ccl> ']' ;
+
+	<ccl>			->	CHAR [ '-' CHAR ] <ccl>
+					|	$EMPTY
+					;
+
+	<string>	->	'\"' { CHAR } => ( $RIGHT ) '\"' ;
+};
+
+$ALIAS
+{
+	(UNION	=> '|')		,
+	(STAR	=> '*')		,
+	(PLUS	=> '+')		,
+	(QUES	=> '?')		,
+	(LBRACK	=> '[')		,
+	(RBRACK	=> ']')		,
+	(LBRACE	=> '{')		,
+	(RBRACE	=> '}')		,
+	(CARET	=> '^')		,
+	(DOLLAR	=> '$')		,
+	(LPAREN	=> '(')		,
+	(RPAREN	=> ')')		,
+	(HYPHEN	=> '-')		,
+	(COMMA	=> ',')		,
+	(DOT	=> '.')		,
+	(QUOTE	=> '\"')	,
+};

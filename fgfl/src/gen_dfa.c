@@ -10,7 +10,7 @@
 #include "token_def.h"
 #include "nfa.h"
 
-static inline void
+void
 gen_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
 	dprintf(filde, INCLUDE_SYS(stdint.h) NL NL);
 	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "dfa_state_t" SEMI NL,
@@ -19,7 +19,7 @@ gen_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
 			min_size_type(size_final));
 }
 
-static void
+void
 gen_token_enum(int filde, vector_t const* elst) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	size_t count = 0;
@@ -119,35 +119,8 @@ gen_skip_table(int filde, vector_t const* elst, char const* header) {
 	del_vector(skip_table);
 }
 
-static inline void
+void
 gen_dfa_useful_macro(int filde) {
 	dprintf(filde, DEFINE(START_STATE, 1) NL);
 	dprintf(filde, DEFINE(DEAD_STATE, 0) NL NL);
-}
-
-int
-gen_dfa_matrix(char const* base_file, vector_t const* trans,
-		vector_t const* final, vector_t const* elst) {
-	
-	char const* header = strjoin(base_file, ".h");
-	int filde = open_new_file(header);
-	if (filde == -1)
-		{ return (ERROR); }
-
-	gen_require_macro(filde, base_file);
-	gen_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
-	gen_token_enum(filde, elst);
-	IFNDEF_ONLY_TOKEN(filde);
-	gen_dfa_useful_macro(filde);
-	gen_state_table(filde, trans, header);
-	gen_final_table(filde, final, header);
-	gen_skip_table(filde, elst, header);
-	ENDIF_ONLY_TOKEN(filde);
-	gen_endif(filde, base_file);
-
-	if (close(filde) == -1)
-		{ return (ERROR); }
-
-	FREE(header);
-	return (DONE);
 }

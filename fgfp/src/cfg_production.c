@@ -239,6 +239,14 @@ stack_production_lhs(cfg_t const* cfg, symbol_t* nter) {
 	return (stack);
 }
 
+static inline void
+shift_index(cfg_t const* cfg, size_t base) {
+	for (size_t i = base; i < SIZE_VECTOR(cfg->non_terminal); ++i) {
+		symbol_t* crt_symbol = (symbol_t*)AT_VECTOR(cfg->non_terminal, i);
+		--(crt_symbol->index);
+	}
+}
+
 int
 unreachable_production(cfg_t const* cfg) {
 	if (!cfg)
@@ -274,8 +282,9 @@ unreachable_production(cfg_t const* cfg) {
 		if (!IS_PRESENT(nter_seen, (size_t)i)) {
 			unreach = ERROR;
 			warnf(0, "The nonterminal %s is unreachable.",
-				((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name);
+					((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name);
 			erase_vector(cfg->non_terminal, i);
+			shift_index(cfg, i);
 		}
 	} 
 

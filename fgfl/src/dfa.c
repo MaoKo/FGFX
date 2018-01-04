@@ -38,7 +38,7 @@ epsilon_closure(bitset_t* set_state) {
 }
 
 bitset_t*
-DFAedge(bitset_t* states, int symbol) {
+dfa_edge(bitset_t* states, int symbol) {
 	bitset_t* target = new_bitset();
 	int i;
 	while ((i = IT_NEXT(states)) != IT_NULL)
@@ -52,7 +52,7 @@ DFAedge(bitset_t* states, int symbol) {
 }
 
 static vector_t*
-gen_state_table(state_t* master, vector_t** rstates) {
+build_state_table(state_t* master, vector_t** rstates) {
 	vector_t* states = (*rstates) = new_vector();
 	
 	bitset_t* start = new_bitset();
@@ -70,7 +70,7 @@ gen_state_table(state_t* master, vector_t** rstates) {
 		//printf("J = %ld\n", j);
 		PUSH_BACK_VECTOR(trans, NULL_TRANS_LST);
 		for (register int i = MIN_ASCII; i < MAX_ASCII; ++i) {
-			bitset_t* next = DFAedge(AT_VECTOR(states, j), i);
+			bitset_t* next = dfa_edge(AT_VECTOR(states, j), i);
 			if (next == NULL_BITSET)
 				{ continue; }
 
@@ -99,7 +99,7 @@ gen_state_table(state_t* master, vector_t** rstates) {
 }
 
 static vector_t*
-gen_final_table(vector_t* states, vector_t* elst) {
+build_final_table(vector_t* states, vector_t* elst) {
 	vector_t* final = new_vector();
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
 		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
@@ -122,11 +122,12 @@ gen_final_table(vector_t* states, vector_t* elst) {
 	return (final);
 }
 
-static void
-gen_table(state_t* master, vector_t** trans, vector_t** final, vector_t* elst) {
+void
+build_dfa_table(state_t* master, vector_t** trans,
+								vector_t** final, vector_t* elst) {
 	vector_t* states = NULL;
-	*trans = gen_state_table(master, &states);
-	*final = gen_final_table(states, elst);
+	*trans = build_state_table(master, &states);
+	*final = build_final_table(states, elst);
 	for (size_t i = 0; i < SIZE_VECTOR(states); ++i)
 		{ del_bitset((bitset_t*)AT_VECTOR(states, i)); }
 	del_vector(states);
@@ -159,7 +160,7 @@ redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
 	}
 }
 
-static void 
+void 
 equivalent_state(vector_t* trans, vector_t* finalt) {
 	bool repeat;
 	do {
@@ -192,25 +193,3 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 }
 
 #endif /* OPTIMIZE */
-
-void
-dfa_gen(token_spec_t* spec, char const* base_file) {
-	(void)base_file;
-	if (!spec)
-		{ return; }
-	vector_t* trans = NULL;
-	vector_t* final = NULL;
-	gen_table(spec->master, &trans, &final, spec->entry_lst);
-
-#ifdef OPTIMIZE
-	equivalent_state(trans, final);
-#endif /* OPTIMIZE */
-
-//	gen_dfa_matrix(base_file, trans, final, spec->entry_lst);
-	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
-		{ del_trans_list(AT_VECTOR(trans, i)); }
-
-	del_vector(trans); del_vector(final);
-	del_token_spec(spec);
-}
-

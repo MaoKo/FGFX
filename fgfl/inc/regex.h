@@ -25,7 +25,7 @@
 #define ALONE_S			true
 #define MULTI_S			false
 
-node_ast_t* regex2ast(token_spec_t*, char const*);
-void del_node_ast(node_ast_t*);
+regex_node_t* regex_to_ast(token_spec_t*, char const*);
+void del_node_ast(regex_node_t*);
 
 #endif /* REGEX_H */

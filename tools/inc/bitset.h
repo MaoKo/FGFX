@@ -8,9 +8,9 @@
 typedef uint64_t				_SETTYPE;
 
 #define	_BITS_IN_WORD			(sizeof(_SETTYPE) << 3)
-#define _BYTE_SETTYPE(x)		(x * sizeof(_SETTYPE))
-#define _DIV_WSIZE(x)			(x >> 6)
-#define _MOD_WSIZE(x)			(x & 0x3F)
+#define _BYTE_SETTYPE(x)		((x) * sizeof(_SETTYPE))
+#define _DIV_WSIZE(x)			((x) >> 6)
+#define _MOD_WSIZE(x)			((x) & 0x3F)
 #define _DEFWORDS				(8)
 #define _DEFBITS				(_DEFWORDS * _BITS_IN_WORD)
 #define _ROUND(bit)				((_DIV_WSIZE(bit) >> 3) << 4)

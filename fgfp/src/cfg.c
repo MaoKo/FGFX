@@ -707,10 +707,11 @@ cfg_sanity_check(cfg_t* cfg) {
 	}
 	else if (detect_bad_symbol(cfg) == ERROR)
 		{ return (ERROR); }
-	else if (unreachable_production(cfg) == ERROR)
-		{ warnf(0, "Some unreachable nonterminal has been remove."); }
 	else if (preprocess_literal(cfg) == ERROR)
 		{ return (ERROR); }
+
+	if (unreachable_production(cfg) == ERROR)
+		{ warnf(0, "Some unreachable nonterminal has been remove."); }
 
 	check_mimic_prod(cfg);
 

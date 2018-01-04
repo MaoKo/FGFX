@@ -73,6 +73,9 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 	gen_endif(filde, base_file);
 
 	FREE(header);
+	if (close(filde) == -1)
+		{ return (ERROR); }
+
 	return (DONE);	
 }
 
@@ -91,13 +94,12 @@ int main(int argc, char* argv[]) {
 		{ return (EXIT_FAILURE); }
 
 	augment_grammar(cfg);
-//	print_production(cfg);
-
 	if (cfg_sanity_check(cfg) == ERROR) {
 		del_cfg(cfg);
 		return (EXIT_FAILURE);
 	}
 
+//	print_production(cfg);
 	gen_fgfp_file(cfg, get_filename(argv[1]));
 
 #if 0

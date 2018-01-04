@@ -21,11 +21,11 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	More accurate handle of error in FGFX (FGFP done)
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
-	.	Allow forward reference in FGFL
-	.	No output in FGFL when the file is empty
 	.	Improve the algorithm for constructing the LALR parsing table
 	.	Add error recovery mechanism
 	.	Add parser and lexer in the template dir
 	.	Add in FGFP ( ... | ... )
 	.	Add STATE in FGFL
+	.	Problem with realizable nonterminal
 	.	Learn MarkDown :)
+

@@ -81,11 +81,11 @@ make_transition(state_t* start, int label, state_t* final) {
 	return (0);
 }
 
-static nfa_frag_t* dfs_ast(node_ast_t*);
+static nfa_frag_t* dfs_ast(regex_node_t*);
 static bool crt_igcase = false;
 
 static inline nfa_frag_t*
-ast_symbol(node_ast_t* root) {
+ast_symbol(regex_node_t* root) {
 	state_t* final_s = new_state();
 	if ((root->alone && !crt_igcase)
 			|| (root->alone && crt_igcase
@@ -119,7 +119,7 @@ ast_symbol(node_ast_t* root) {
 }
 
 static nfa_frag_t*
-ast_union(node_ast_t* root) {
+ast_union(regex_node_t* root) {
 	state_t* start = new_state();
 	nfa_frag_t* left = dfs_ast(root->left);
 	nfa_frag_t* right = dfs_ast(root->right);	
@@ -134,7 +134,7 @@ ast_union(node_ast_t* root) {
 }
 
 static nfa_frag_t*
-ast_concat(node_ast_t* root) {
+ast_concat(regex_node_t* root) {
 	nfa_frag_t* left = dfs_ast(root->left);
 	nfa_frag_t* right = dfs_ast(root->right);
 	if (attach_tail(left->head, right, NULL))
@@ -145,7 +145,7 @@ ast_concat(node_ast_t* root) {
 }
 
 static nfa_frag_t*
-ast_closure(node_ast_t* root) {
+ast_closure(regex_node_t* root) {
 	nfa_frag_t* child = dfs_ast(root->left);
 	state_t* front_state = new_state();
 	if (attach_tail(front_state, child, NULL))
@@ -157,7 +157,7 @@ ast_closure(node_ast_t* root) {
 
 /* Depth First Search over the ast for constructing a sub-NFA */
 static nfa_frag_t* 
-dfs_ast(node_ast_t* root) {
+dfs_ast(regex_node_t* root) {
 	if (root) {
 		switch (root->kind_ast) {
 			case AST_UNION:		return (ast_union(root));
@@ -174,7 +174,7 @@ dfs_ast(node_ast_t* root) {
 }
 
 nfa_frag_t*
-ast2nfa(node_ast_t* root, int priority, bool igcase) {
+ast_to_nfa(regex_node_t* root, int priority, bool igcase) {
 	crt_igcase = igcase;
 	nfa_frag_t* frag = dfs_ast(root);
 	STATE_FINAL(frag->head, priority);
@@ -190,8 +190,8 @@ nfa_gen(token_spec_t* spec) {
 		token_entry_t* entry = (token_entry_t*)
 					AT_VECTOR(spec->entry_lst, i);
 		if (entry->kind == GLOBAL) {
-			node_ast_t* ast = entry->reg;
-			entry->frag = ast2nfa(ast, i + 1, entry->igcase);
+			regex_node_t* ast = entry->reg;
+			entry->frag = ast_to_nfa(ast, i + 1, entry->igcase);
 			del_node_ast(ast);
 
 			entry->phase = FRAGMENT;

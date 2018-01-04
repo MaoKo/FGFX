@@ -2,6 +2,7 @@
 #define _FGFX_LEX_H_
 
 #include <stdint.h>
+
 typedef	uint8_t	dfa_state_t;
 typedef	uint8_t	final_state_t;
 

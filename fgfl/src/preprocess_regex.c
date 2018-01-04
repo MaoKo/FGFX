@@ -4,6 +4,7 @@
 
 #include "token_def.h"
 #include "preprocess_regex.h"
+#include "regex.h"
 #include "error.h"
 #include "utils.h"
 
@@ -56,12 +57,12 @@ dependency_macro(token_spec_t* spec, token_entry_t* entry,
 				}
 				if (!find_dependence || depend_keyword) {
 					if (!find_dependence) {
-						errorf(0, "Macro name %s not defined anywhere.",
-										beg_macro);
+						errorf(0, "Macro name %.*s is not defined anywhere.",
+										size, beg_macro);
 					}
 					else if (depend_keyword) {
-						errorf(0, "Macro name %s is a keyword.",
-										beg_macro);
+						errorf(0, "Macro name %.*s is a keyword.",
+										size, beg_macro);
 					}
 					del_bitset(*set_macro);
 					return (ERROR);
@@ -131,5 +132,26 @@ topological_sort(token_spec_t* spec) {
 
 	del_bitset(seen_reg);
 	return (stack_order);
+}
+
+int
+compute_regex(token_spec_t* spec) {
+	vector_t* stack_order;
+	int exit_st = DONE;
+
+	if ((stack_order = topological_sort(spec))) {
+		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
+			size_t j = (long)AT_VECTOR(stack_order, i);
+			token_entry_t* crt_entry = (token_entry_t*)
+											AT_VECTOR(spec->entry_lst, j);
+			if (crt_entry->kind != KEYWORD)
+				{ crt_entry->reg = regex_to_ast(spec, crt_entry->reg_str); }
+		}
+	}
+	else
+		{ exit_st = ERROR; }
+
+	del_vector(stack_order);
+	return (exit_st);
 }
 

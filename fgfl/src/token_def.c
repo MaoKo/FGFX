@@ -28,7 +28,7 @@ void
 del_token_spec(token_spec_t* spec) {
 	if (spec) {
 		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i)
-			{ del_token_entry(AT_VECTOR(spec->entry_lst, i)); }
+			{ del_token_entry((token_entry_t*)AT_VECTOR(spec->entry_lst, i)); }
 		del_vector(spec->entry_lst);
 		del_lexer(spec->lex);
 	}

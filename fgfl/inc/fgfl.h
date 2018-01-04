@@ -9,12 +9,12 @@
 #include "buffer.h"
 #include "lexer.h"
 
-typedef struct node_ast_t {
+typedef struct regex_node_t {
 	enum { AST_UNION, AST_CONCAT, AST_CLOSURE, AST_SYMBOL, } kind_ast;
 	union {
 		struct {
-			struct node_ast_t* left;
-			struct node_ast_t* right;
+			struct regex_node_t* left;
+			struct regex_node_t* right;
 		};
 		struct {
 			bool alone;
@@ -24,7 +24,7 @@ typedef struct node_ast_t {
 			};
 		};
 	};
-} node_ast_t;
+} regex_node_t;
 
 typedef struct edge_t edge_t;
 
@@ -59,7 +59,7 @@ typedef struct {
 			bool skip;
 			enum { NONE, AST, FRAGMENT, } phase;
 			union {
-				node_ast_t* reg;
+				regex_node_t* reg;
 				nfa_frag_t* frag;
 			};
 		};

@@ -1,11 +1,13 @@
-#ifndef GEN_DFA_H
-#define GEN_DFA_H
+#ifndef DFA_H
+#define DFA_H
 
 #include "fgfl.h"
+#include "vector.h"
 
 void edges(state_t*, int, bitset_t*);
 bitset_t* epsilon_closure(bitset_t*);
-bitset_t* DFAedge(bitset_t*, int);
-void dfa_gen(token_spec_t*, char const*);
+bitset_t* dfa_edge(bitset_t*, int);
+void equivalent_state(vector_t*, vector_t*);
+void build_dfa_table(state_t*, vector_t**, vector_t**, vector_t*);
 
-#endif /* GEN_DFA_H */
+#endif /* DFA_H */

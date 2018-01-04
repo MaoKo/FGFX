@@ -18,12 +18,12 @@ static bool escaped = false;
 
 // Static Prototype
 
-static node_ast_t* reg_expr(void);
-static node_ast_t* reg_term(void);
-static node_ast_t* reg_fact(void);
-static node_ast_t* reg_atom(void);
-static node_ast_t* reg_quote(void);
-static node_ast_t* reg_range(void);
+static regex_node_t* reg_expr(void);
+static regex_node_t* reg_term(void);
+static regex_node_t* reg_fact(void);
+static regex_node_t* reg_atom(void);
+static regex_node_t* reg_quote(void);
+static regex_node_t* reg_range(void);
 
 static bool is_oct_prefix(int);
 static bool is_hex_prefix(int);
@@ -34,16 +34,16 @@ static int get_c(void);
 
 // Node Function
 
-static node_ast_t*
+static regex_node_t*
 node_ast(int kind, ...) {
-	node_ast_t* node = NEW(node_ast_t, 1);
+	regex_node_t* node = NEW(regex_node_t, 1);
 	if (!node)
 		{ return (NULL); }
 	va_list args;
 	va_start(args, kind);
 	if (kind != AST_SYMBOL) {
-		node->left = va_arg(args, node_ast_t*);
-		node->right = va_arg(args, node_ast_t*);
+		node->left = va_arg(args, regex_node_t*);
+		node->right = va_arg(args, regex_node_t*);
 	}
 	else {
 		node->alone = va_arg(args, int);
@@ -58,7 +58,7 @@ node_ast(int kind, ...) {
 }
 
 void
-del_node_ast(node_ast_t* node) {
+del_node_ast(regex_node_t* node) {
 	if (node) {
 		if (node->kind_ast != AST_SYMBOL) {
 			del_node_ast(node->left);
@@ -70,12 +70,12 @@ del_node_ast(node_ast_t* node) {
 	}
 }
 
-static node_ast_t*
-cpy_node_ast(node_ast_t* root) {
+static regex_node_t*
+cpy_node_ast(regex_node_t* root) {
 	if (root) {
 		if (root->kind_ast != AST_SYMBOL) {
-			node_ast_t* left = cpy_node_ast(root->left);
-			node_ast_t* right = cpy_node_ast(root->right);
+			regex_node_t* left = cpy_node_ast(root->left);
+			regex_node_t* right = cpy_node_ast(root->right);
 			return (node_ast(root->kind_ast, left, right));
 		}
 		else { 
@@ -91,11 +91,11 @@ cpy_node_ast(node_ast_t* root) {
 	return (NULL);
 }
 
-static node_ast_t*
-cpy_concat_node_ast(node_ast_t* root, size_t size) {
+static regex_node_t*
+cpy_concat_node_ast(regex_node_t* root, size_t size) {
 	if (!size)
 		{ return (node_ast(AST_SYMBOL, EPSILON)); }
-	node_ast_t* atom = root;
+	regex_node_t* atom = root;
 	for (size_t i = 1; i < size; ++i)
 		{ root = node_ast(AST_CONCAT, root, cpy_node_ast(atom)); }
 	return (root);
@@ -276,14 +276,14 @@ str2int(void) {
 	return (digit);
 }
 
-static node_ast_t*
-diff_range(node_ast_t* root) {
+static regex_node_t*
+diff_range(regex_node_t* root) {
 	if (root->alone != MULTI_S)
 		{ /* ERROR */ }
 	expected(REG_RBRACE);
 	if (!match(REG_LBRACK))
 		{ /* ERROR */ }
-	node_ast_t* diff = reg_range();
+	regex_node_t* diff = reg_range();
 	if (diff->alone != MULTI_S)
 		{ /* ERROR */ }
 	DIFF_BITSET(root->cclass, diff->cclass);
@@ -303,9 +303,9 @@ cmp_entry_str(token_entry_t const* entry, char const* str) {
 	return (strcmp(entry->name, str));
 }
 
-static node_ast_t*
-bound_name(node_ast_t* root) {
-	node_ast_t* rep_node = NULL;
+static regex_node_t*
+bound_name(regex_node_t* root) {
+	regex_node_t* rep_node = NULL;
 	buffer_t* bound = read_ident();
 	
 	int index = get_index_vector(local_spec->entry_lst,
@@ -327,10 +327,10 @@ bound_name(node_ast_t* root) {
 	return (rep_node);
 }
 
-static node_ast_t*
-finite_seq(node_ast_t* root) {
+static regex_node_t*
+finite_seq(regex_node_t* root) {
 	int start = str2int();
-	node_ast_t* rep_node = cpy_concat_node_ast(root, start);
+	regex_node_t* rep_node = cpy_concat_node_ast(root, start);
 	if (match(REG_COMMA)) {
 		if (isdigit(peek())) {
 			int until = str2int();
@@ -351,9 +351,9 @@ finite_seq(node_ast_t* root) {
 	return (rep_node);
 }
 
-static node_ast_t*
-curly_regex(node_ast_t* root) {
-	node_ast_t* rep_node = NULL;
+static regex_node_t*
+curly_regex(regex_node_t* root) {
+	regex_node_t* rep_node = NULL;
 	if (match(REG_HYPHEN))
 		{ return (diff_range(root));  }
 	else if (is_letter(peek()))
@@ -379,15 +379,15 @@ complement_negate_range(set_t* base) {
 
 */
 
-static inline node_ast_t*
+static inline regex_node_t*
 dot_regex(void) {
 	bitset_t* newl = new_bitset();
 	ADD_BITSET(newl, '\n');
 	return (node_ast(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }
 
-node_ast_t*
-regex2ast(token_spec_t* token_spec, char const* regex_str) {
+regex_node_t*
+regex_to_ast(token_spec_t* token_spec, char const* regex_str) {
 	if (!token_spec || !regex_str)
 		{ return (NULL); }
 	regex_str_env = regex_str;
@@ -413,9 +413,9 @@ is_in_follow(int alone, ...) {
 	return (is_match && !escaped);
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_expr(void) {
-	node_ast_t* root = reg_term();
+	regex_node_t* root = reg_term();
 	while (is_in_follow(REG_UNION, -1)) {
 		advance();
 		root = node_ast(AST_UNION, root, reg_term());
@@ -423,17 +423,17 @@ reg_expr(void) {
 	return (root);
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_term(void) {
-	node_ast_t* root = reg_fact();
+	regex_node_t* root = reg_fact();
 	while (!is_in_follow(REG_UNION, REG_RPAREN, -1) && !is_end())
 		{ root = node_ast(AST_CONCAT, root, reg_fact()); }
 	return (root);
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_fact(void) {
-	node_ast_t* root = reg_atom();
+	regex_node_t* root = reg_atom();
 	while (is_in_follow(REG_KLEENE, REG_PKLEENE,
 					REG_OKLEENE, REG_LBRACE, -1)) {
 		int closure_kind = advance();
@@ -458,12 +458,12 @@ reg_fact(void) {
 	return (root);
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_atom(void) {
 	if (!is_metachar(peek()) && peek() != EOS)
 		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
 	else if (match(REG_LPAREN)) { 
-		node_ast_t* expr = reg_expr();
+		regex_node_t* expr = reg_expr();
 		expected(REG_RPAREN);
 		return (expr);
 	}
@@ -473,12 +473,12 @@ reg_atom(void) {
 	return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_quote(void) {
-	node_ast_t* root_concat = NULL;
+	regex_node_t* root_concat = NULL;
 	while (!is_in_follow(REG_DQUOTE, -1) && !is_end()) {
 		int c = advance();
-		node_ast_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
+		regex_node_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
 		if (!root_concat)
 			{ root_concat = symbol; }
 		else
@@ -491,7 +491,7 @@ reg_quote(void) {
 	return (root_concat);
 }
 
-static node_ast_t*
+static regex_node_t*
 reg_range(void) {
 	bool negate = false;
 	bitset_t* range = new_bitset();
