@@ -10,7 +10,11 @@
 #include "lexer.h"
 
 typedef struct regex_node_t {
-	enum { AST_UNION, AST_CONCAT, AST_CLOSURE, AST_SYMBOL, } kind_ast;
+	enum {
+		AST_UNION, AST_CONCAT,
+		AST_CLOSURE, AST_SYMBOL,
+	} kind_ast;
+
 	union {
 		struct {
 			struct regex_node_t* left;
@@ -51,7 +55,6 @@ typedef struct {
 	size_t index;
 	int kind;
 	bool is_used;
-	bool is_defined;
 	char* name;
 	char* reg_str;
 	union {
@@ -63,10 +66,14 @@ typedef struct {
 				regex_node_t* reg;
 				nfa_frag_t* frag;
 			};
+			bool all_state;
 			bitset_t* valid_state;
 		};
-		struct // if KEYWORD & STATE
-			{ size_t count; };
+		struct { // if KEYWORD & STATE
+			struct // if STATE
+				{ bool is_defined; };
+			size_t count;
+		};
 	};
 } token_entry_t;
 

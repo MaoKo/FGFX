@@ -12,12 +12,15 @@
 lexer_t*
 new_lexer(int filde) {
 	lexer_t* lex = NEW(lexer_t, 1);
+
 	if (!lex)
 		{ return (NULL); }
 	memset(lex, 0, sizeof(lexer_t));
+
 	lex->filde = filde;
 	lex->last_token = lex->last_char = -1;
 	lex->lineno = 1;
+
 	return (lex);
 }
 
@@ -39,6 +42,7 @@ get_next_token(lexer_t* lex) {
 		state = fgfx_state_table[state][lex->last_char];
 		last_match = is_final_state(state);
 		write_char_buffer(lex->last_lexeme, lex->last_char);
+
 		if (lex->last_char == '\n')
 			{ ++(lex->lineno); }
 	}
@@ -72,7 +76,7 @@ get_next_token(lexer_t* lex) {
 	return (last_match);
 }
 
-static int
+static inline int
 allow_skip(int token) {
 	for (size_t i = 0; fgfx_skip_table[i] != -1; ++i) {
 		if (token == fgfx_skip_table[i])
@@ -84,7 +88,7 @@ allow_skip(int token) {
 long
 advance_token(lexer_t* lex) {
 	if (!lex)
-		{ return (-1); }
+		{ return (ERROR); }
 	long found_token;
 	if (lex->last_token != -1)
 		{ found_token = lex->last_token; }

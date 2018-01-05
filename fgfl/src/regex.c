@@ -58,11 +58,11 @@ node_ast(int kind, ...) {
 }
 
 void
-del_node_ast(regex_node_t* node) {
+del_regex_node(regex_node_t* node) {
 	if (node) {
 		if (node->kind_ast != AST_SYMBOL) {
-			del_node_ast(node->left);
-			del_node_ast(node->right);
+			del_regex_node(node->left);
+			del_regex_node(node->right);
 		}
 		else if (!node->alone)
 			{ del_bitset(node->cclass); }

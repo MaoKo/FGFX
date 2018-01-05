@@ -33,11 +33,14 @@ del_record(void) {
 state_t*
 new_state(void) {
 	state_t* state = NEW(state_t, 1);
+
 	if (!state)
 		{ return (NULL); }
 	memset(state, 0, sizeof(state_t));
+
 	state->index_state = current_index;
 	record_state[current_index++] = state;
+
 	return (state);
 }
 
@@ -63,22 +66,24 @@ attach_tail(state_t* state, ...) {
 	while ((frag = va_arg(args, nfa_frag_t*))) {
 		edge_t* new_edge = NEW(edge_t, 1);
 		if (!new_edge)
-			{ return (-1);  }
+			{ return (ERROR);  }
 		CPY_EDGE(new_edge, frag->tail);
 		PUSH_EDGE(state, new_edge);
 	}
 	va_end(args);
-	return (0);
+	return (DONE);
 }
 
 static int
 make_transition(state_t* start, int label, state_t* final) {
 	edge_t* new_edge = NEW(edge_t, 1);
 	if (!new_edge)
-		{ return (-1); }
+		{ return (ERROR); }
+
 	INIT_EDGE(new_edge, label, final);
 	PUSH_EDGE(start, new_edge);
-	return (0);
+
+	return (DONE);
 }
 
 static nfa_frag_t* dfs_ast(regex_node_t*);
@@ -182,22 +187,25 @@ ast_to_nfa(regex_node_t* root, int priority, bool igcase) {
 }
 
 int
-nfa_gen(token_spec_t* spec) {
+build_nfa(token_spec_t* spec) {
 	if (!spec)
-		{ return (-1); }
+		{ return (ERROR); }
+
 	spec->master = new_state();
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
 		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (entry->kind == GLOBAL) {
 			regex_node_t* ast = entry->reg;
 			entry->frag = ast_to_nfa(ast, i + 1, entry->igcase);
-			del_node_ast(ast);
+
+			del_regex_node(ast);
 
 			entry->phase = FRAGMENT;
 			if (attach_tail(spec->master, entry->frag, NULL))
-				{ return (-1); }
+				{ return (ERROR); }
 		}
 	}
-	return (0);
+
+	return (DONE);
 }
 

@@ -77,7 +77,8 @@ main(int argc, char const* argv[]) {
 		return (EXIT_FAILURE);
 	}
 
-	nfa_gen(spec);
+//	print_token_entry(spec);
+	build_nfa(spec);
 
 	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
 	del_token_spec(spec);

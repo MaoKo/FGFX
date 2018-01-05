@@ -26,6 +26,6 @@
 #define MULTI_S			false
 
 regex_node_t* regex_to_ast(token_spec_t*, char const*);
-void del_node_ast(regex_node_t*);
+void del_regex_node(regex_node_t*);
 
 #endif /* REGEX_H */

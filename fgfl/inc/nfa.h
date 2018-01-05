@@ -29,6 +29,6 @@ state_t* state_at(size_t);
 
 state_t* new_state(void);
 nfa_frag_t* ast_to_nfa(regex_node_t*, int, bool);
-int nfa_gen(token_spec_t*);
+int build_nfa(token_spec_t*);
 
 #endif /* NFA_H */

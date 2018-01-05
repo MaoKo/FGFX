@@ -17,7 +17,6 @@ $TOKEN
 
     /* FGFP */
     NTER        =  / <{IDENT}('{1,3})?>                    / ;
-    BARROW      =  / =>                                    / ;
     UNION       =  / \|                                    / ;
     LBRACK      =  / \[                                    / ;
     RBRACK      =  / \]                                    / ;
@@ -27,6 +26,7 @@ $TOKEN
     DIRECTIVE   =  / ${IDENT}                              / ;
     GLOBAL_TOK  =  / {IDENT}                               / ;
     ARROW       =  / ->                                    / ;
+    BARROW      =  / =>                                    / ;
     EQUAL       =  / =                                     / ;
     SEMI        =  / ;                                     / ;
     COMMA       =  / ,                                     / ;

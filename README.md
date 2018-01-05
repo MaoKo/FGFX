@@ -27,6 +27,7 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Add in FGFP ( ... | ... )
 	.	Add $STATE in FGFL
 	.	Add $FRAG and $BEGIN in FGFL
+	.	Add $BEGIN in FGFL
 	.	Create the grammar and the lexical specification for regex
 	.	Learn MarkDown :)
 

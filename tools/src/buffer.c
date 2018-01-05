@@ -53,25 +53,25 @@ extend_buffer(buffer_t* buf) {
 			memset(buf->body + buf->index, 0, buf->alloc - buf->index);
 		}
 		else
-			{ return (-1); }
+			{ return (ERROR); }
 	}
-	return (0);
+	return (DONE);
 }
 
 int
 write_char_buffer(buffer_t* buf, char c) {
-	if (extend_buffer(buf))
-		{ return (-1); }
+	if (extend_buffer(buf) == ERROR)
+		{ return (ERROR); }
 	return (buf->body[buf->index++] = c);
 }
 
 int
 write_buffer(buffer_t* buf, char const* str) {
 	if (!buf || !str)
-		{ return (-1); }
+		{ return (ERROR); }
 	while (*str) {
-		if (write_char_buffer(buf, *str++))
-			{ return (-1); }
+		if (write_char_buffer(buf, *str++) == ERROR)
+			{ return (ERROR); }
 	}
 	write_char_buffer(buf, '\0');
 	return (strlen(str));

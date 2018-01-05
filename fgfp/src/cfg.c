@@ -665,7 +665,7 @@ cfg_atom(cfg_t* cfg, production_t* prod) {
 }
 
 static int
-unused_symbol(vector_t const* symbol_tab) {
+cfg_unused_symbol(vector_t const* symbol_tab) {
 	int unused = DONE;
 	for (size_t i = 0; i < SIZE_VECTOR(symbol_tab); ++i) {
 		symbol_t* symbol = (symbol_t*)AT_VECTOR(symbol_tab, i);
@@ -687,8 +687,8 @@ static int
 detect_bad_symbol(cfg_t* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
-	int exit_status = (unused_symbol(cfg->non_terminal) == ERROR)
-			|| (unused_symbol(cfg->terminal) == ERROR );
+	int exit_status = (cfg_unused_symbol(cfg->non_terminal) == ERROR)
+			|| (cfg_unused_symbol(cfg->terminal) == ERROR );
 	return ((exit_status) ? ERROR : DONE);
 }
 
