@@ -25,7 +25,8 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Add error recovery mechanism
 	.	Add parser and lexer in the template dir
 	.	Add in FGFP ( ... | ... )
-	.	Add STATE in FGFL
-	.	Problem with realizable nonterminal
+	.	Add $STATE in FGFL
+	.	Add $FRAG and $BEGIN in FGFL
+	.	Create the grammar and the lexical specification for regex
 	.	Learn MarkDown :)
 

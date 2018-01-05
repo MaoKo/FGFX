@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "token_def.h"
+#include "token_spec.h"
 #include "utils.h"
 #include "bitset.h"
 #include "nfa.h"
@@ -187,8 +187,7 @@ nfa_gen(token_spec_t* spec) {
 		{ return (-1); }
 	spec->master = new_state();
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* entry = (token_entry_t*)
-					AT_VECTOR(spec->entry_lst, i);
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (entry->kind == GLOBAL) {
 			regex_node_t* ast = entry->reg;
 			entry->frag = ast_to_nfa(ast, i + 1, entry->igcase);
@@ -197,10 +196,6 @@ nfa_gen(token_spec_t* spec) {
 			entry->phase = FRAGMENT;
 			if (attach_tail(spec->master, entry->frag, NULL))
 				{ return (-1); }
-		}
-		else if (!entry->used) {
-			fprintf(stderr, "Warring token %s not used.\n",
-				entry->name);
 		}
 	}
 	return (0);

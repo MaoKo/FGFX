@@ -12,6 +12,7 @@
 //Misc
 #define MIN(x, y)			((x < y) ? x : y)
 #define MAX(x, y)			((x > y) ? x : y)
+#define GET_INDEX(obj)		((obj)->index)
 
 #define EOS					'\0'
 #define ERROR				-1

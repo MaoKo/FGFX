@@ -67,7 +67,7 @@ $PRODUCTION
 				|	'{' <rhs> '}' [ '=>' '(' <left_right> ')' ]
 				;
 
-	<FGFP>	=	$START;
+	<FGFP> = $START;
 };
 
 $ALIAS

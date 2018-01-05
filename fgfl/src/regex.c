@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "regex.h"
-#include "token_def.h"
+#include "token_spec.h"
 #include "lexer.h"
 #include "utils.h"
 #include "nfa.h"

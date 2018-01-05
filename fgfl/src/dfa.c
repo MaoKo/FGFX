@@ -1,6 +1,6 @@
 #include "dfa.h"
 #include "gen_dfa.h"
-#include "token_def.h"
+#include "token_spec.h"
 #include "nfa.h"
 #include "utils.h"
 

@@ -19,39 +19,36 @@ $PRODUCTION
 	<regex_atom>	->	<fullccl>
 					|	<string>
 					|	'(' <regex_union> ')'
+					|	'.'
 					|	BOUND_NAME
 					|	CHAR
-					|	'.'
 					;
 
 	<fullccl>		->	<loneccl> { <kind_fullccl> <loneccl> } => ( $RIGHT ) ;
 	<kind_fullccl>	->	DIFF_CLASS | UNION_CLASS ;
 
 	<loneccl>		->	'[' [ '^' ] <ccl> ']' ;
+	<ccl>			->	{ CHAR [ '-' CHAR ] } => ( $RIGHT ) ;
 
-	<ccl>			->	CHAR [ '-' CHAR ] <ccl>
-					|	$EMPTY
-					;
-
-	<string>	->	'\"' { CHAR } => ( $RIGHT ) '\"' ;
+	<string>		->	'\"' { CHAR } => ( $RIGHT ) '\"' ;
 };
 
 $ALIAS
 {
-	(UNION	=> '|')		,
-	(STAR	=> '*')		,
-	(PLUS	=> '+')		,
-	(QUES	=> '?')		,
-	(LBRACK	=> '[')		,
-	(RBRACK	=> ']')		,
-	(LBRACE	=> '{')		,
-	(RBRACE	=> '}')		,
-	(CARET	=> '^')		,
-	(DOLLAR	=> '$')		,
-	(LPAREN	=> '(')		,
-	(RPAREN	=> ')')		,
-	(HYPHEN	=> '-')		,
-	(COMMA	=> ',')		,
-	(DOT	=> '.')		,
+	(UNION	=>  '|')	,
+	(STAR	=>  '*')	,
+	(PLUS	=>  '+')	,
+	(QUES	=>  '?')	,
+	(LBRACK	=>  '[')	,
+	(RBRACK	=>  ']')	,
+	(LBRACE	=>  '{')	,
+	(RBRACE	=>  '}')	,
+	(CARET	=>  '^')	,
+	(DOLLAR	=>  '$')	,
+	(LPAREN	=>  '(')	,
+	(RPAREN	=>  ')')	,
+	(HYPHEN	=>  '-')	,
+	(COMMA	=>  ',')	,
+	(DOT	=>  '.')	,
 	(QUOTE	=> '\"')	,
 };

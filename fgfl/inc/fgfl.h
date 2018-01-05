@@ -49,10 +49,11 @@ typedef struct {
 
 typedef struct {
 	size_t index;
+	int kind;
+	bool is_used;
+	bool is_defined;
 	char* name;
 	char* reg_str;
-	int kind;
-	bool used;
 	union {
 		struct { // if GLOBAL & LOCAL
 			bool igcase;
@@ -62,8 +63,9 @@ typedef struct {
 				regex_node_t* reg;
 				nfa_frag_t* frag;
 			};
+			bitset_t* valid_state;
 		};
-		struct // if KEYWORD
+		struct // if KEYWORD & STATE
 			{ size_t count; };
 	};
 } token_entry_t;
@@ -71,6 +73,9 @@ typedef struct {
 typedef struct {
 	lexer_t* lex;
 	vector_t* entry_lst;
+	vector_t* state;
+	int start_state;
+	bool miss_regex;
 	state_t* master;
 } token_spec_t;
 

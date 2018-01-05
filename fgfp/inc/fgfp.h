@@ -18,9 +18,9 @@ typedef struct {
 typedef struct symbol_t {
 	size_t index;
 	int kind;
-	char const* name;
 	bool is_defined;
 	bool is_used;
+	char const* name;
 	union {
 		// if TERMINAL && ALIAS
 		struct {

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "token_def.h"
+#include "token_spec.h"
 #include "preprocess_regex.h"
 #include "regex.h"
 #include "error.h"
@@ -22,6 +22,16 @@ size_ident(char const* str) {
 }
 
 static int
+find_macro_name(vector_t* src_vect, char const* beg_macro, size_t size) {
+	for (size_t i = 0; i < SIZE_VECTOR(src_vect); ++i) {
+		token_entry_t* crt_entry = (token_entry_t*)AT_VECTOR(src_vect, i);
+		if (!strncmp(crt_entry->name, beg_macro, size))
+			{ return (i); }
+	}
+	return (-1);
+}
+
+static int
 dependency_macro(token_spec_t* spec, token_entry_t* entry,
 												bitset_t** set_macro) {
 	if (!set_macro)
@@ -36,33 +46,41 @@ dependency_macro(token_spec_t* spec, token_entry_t* entry,
 
 			if (is_letter(*beg_macro)) {
 				bool find_dependence = false;
-				bool depend_keyword = false;
+				int depend_not_token = -1;
 
 				size_t size = size_ident(beg_macro);
+				int index = find_macro_name(spec->entry_lst, beg_macro, size);
 
-				for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
+				if (index != -1) {
+					find_dependence = true;
 					token_entry_t* crt_entry = (token_entry_t*)
-											AT_VECTOR(spec->entry_lst, i);
+										AT_VECTOR(spec->entry_lst, index);
 
-					if (!strncmp(crt_entry->name, beg_macro, size)) {
-						find_dependence = true;
-						if (crt_entry->kind == KEYWORD)
-							{ depend_keyword = true; }
-						else {
-							if (!*set_macro)
-								{ *set_macro = new_bitset(); }
-							ADD_BITSET(*set_macro, crt_entry->index);
-						}
+					if ((crt_entry->kind == KEYWORD))
+						{ depend_not_token = KEYWORD; }
+					else {
+						if (!*set_macro)
+							{ *set_macro = new_bitset(); }
+						ADD_BITSET(*set_macro, GET_INDEX(crt_entry));
 					}
 				}
-				if (!find_dependence || depend_keyword) {
+				else {
+					int index = find_macro_name(spec->state, beg_macro, size);
+					if (index != -1) {
+						find_dependence = true;
+						depend_not_token = STATE;
+					}
+				}
+
+				if (!find_dependence || (depend_not_token != -1)) {
 					if (!find_dependence) {
 						errorf(0, "Macro name %.*s is not defined anywhere.",
 										size, beg_macro);
 					}
-					else if (depend_keyword) {
-						errorf(0, "Macro name %.*s is a keyword.",
-										size, beg_macro);
+					else if (depend_not_token != -1) {
+						errorf(0, "Macro name %.*s is a %s.", size, beg_macro,
+											(depend_not_token == KEYWORD)
+													? "keyword" : "state" );
 					}
 					del_bitset(*set_macro);
 					return (ERROR);
@@ -78,15 +96,15 @@ static int
 recur_node_topsort(token_spec_t* spec, token_entry_t* crt_entry,
 			size_t index_entry, vector_t* stack_order, bitset_t* seen_reg) {
 
-	if (IS_PRESENT(seen_reg, crt_entry->index)) {
-		if (crt_entry->index == index_entry) {
+	if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry))) {
+		if (GET_INDEX(crt_entry) == index_entry) {
 			errorf(0, "Stack overflow. Cycle detected for regex %s.",
 											crt_entry->name);
 			return (ERROR);
 		}
 		return (DONE);
 	}
-	ADD_BITSET(seen_reg, crt_entry->index);
+	ADD_BITSET(seen_reg, GET_INDEX(crt_entry));
 
 	bitset_t* depend_node = NULL;
 	if (dependency_macro(spec, crt_entry, &depend_node) == ERROR)
@@ -103,7 +121,7 @@ recur_node_topsort(token_spec_t* spec, token_entry_t* crt_entry,
 			{ exit_st = ERROR; }
 	}
 
-	PUSH_BACK_VECTOR(stack_order, (void*)crt_entry->index);
+	PUSH_BACK_VECTOR(stack_order, (void*)GET_INDEX(crt_entry));
 	del_bitset(depend_node);
 
 	return (exit_st);
@@ -116,10 +134,13 @@ topological_sort(token_spec_t* spec) {
 
 	int exit_st = DONE;
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		if (IS_PRESENT(seen_reg, i))
-			{ continue; }
 		token_entry_t* crt_entry = (token_entry_t*)
 										AT_VECTOR(spec->entry_lst, i);
+		if (crt_entry->kind != GLOBAL)
+			{ continue; }
+		else if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry)))
+			{ continue; }
+
 		if (recur_node_topsort(spec, crt_entry, i,
 										stack_order, seen_reg) == ERROR)
 			{ exit_st = ERROR; }
@@ -140,6 +161,14 @@ compute_regex(token_spec_t* spec) {
 	int exit_st = DONE;
 
 	if ((stack_order = topological_sort(spec))) {
+		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
+			token_entry_t* crt_entry = (token_entry_t*)
+											AT_VECTOR(spec->entry_lst, i);
+			if ((crt_entry->kind == LOCAL)
+					&& (get_index_vector(stack_order, (void*)i, NULL) != -1))
+				{ crt_entry->is_used = true; }
+		}
+
 		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
 			size_t j = (long)AT_VECTOR(stack_order, i);
 			token_entry_t* crt_entry = (token_entry_t*)

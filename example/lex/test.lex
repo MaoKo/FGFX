@@ -1,6 +1,4 @@
-/* Hello */
-
-$TOKEN {
-
+$TOKEN
+{
 B	=	/  / ;
 };

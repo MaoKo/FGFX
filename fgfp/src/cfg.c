@@ -683,7 +683,7 @@ unused_symbol(vector_t const* symbol_tab) {
 	return (unused);
 }
 
-int
+static int
 detect_bad_symbol(cfg_t* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
@@ -696,8 +696,7 @@ int
 cfg_sanity_check(cfg_t* cfg) {
 	if (!cfg)
 		{ return (ERROR); }
-
-	if (cfg->miss_prod) {
+	else if (cfg->miss_prod) {
 		errorf(0, "No production have been encounter at all.");
 		return (ERROR);
 	}

@@ -28,12 +28,17 @@ gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 	symbol_t* symbol = (symbol_t*)AT_VECTOR(nter, index);
 
 	size_t depth = 0;
+	size_t spec_nth = 0;
 
-	symbol_t* spec_sym = symbol;
-	if (spec_sym->special) {
-		dprintf(filde, SPE_PREFIX);
-		depth = spec_sym->depth;
-		symbol = spec_sym->special;
+	if (symbol->special) {
+		dprintf(filde, ((symbol->kind == OPT) ? OPT_STR : LST_STR));
+		if (sep)
+			{ dprintf(filde, SEP); }
+		
+		depth = symbol->depth;
+		spec_nth = symbol->spec_nth;
+
+		symbol = symbol->special;
 	}
 
 	dprintf(filde, NTER_PREFIX);
@@ -47,10 +52,8 @@ gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 		else
 			{ write(filde, symbol->name + i, 1); }
 	}
-	if (spec_sym->spec_nth)
-		{ dprintf(filde, "%zu", spec_sym->spec_nth); }
-	while (depth--)
-		{ dprintf(filde, (spec_sym->kind == OPT) ? OPT_STR : LST_STR); }
+	if (depth)
+		{ dprintf(filde, SEP "%zu" SEP "%zu", depth, spec_nth); }
 }
 
 void

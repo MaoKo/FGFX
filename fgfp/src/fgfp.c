@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 	}
 
 //	print_production(cfg);
-	gen_fgfp_file(cfg, get_filename(argv[1]));
+	int exit_st = gen_fgfp_file(cfg, get_filename(argv[1]));
 
 #if 0
 	print_production(cfg);
@@ -117,5 +117,5 @@ int main(int argc, char* argv[]) {
 		return (EXIT_FAILURE);
 	}
 
-	return (EXIT_SUCCESS);
+	return (exit_st);
 }

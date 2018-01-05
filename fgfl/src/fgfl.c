@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "token_def.h"
+#include "token_spec.h"
 #include "preprocess_regex.h"
 #include "nfa.h"
 #include "dfa.h"
@@ -47,8 +47,8 @@ gen_fgfl_file(token_spec_t* spec, char const* base_file) {
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
 		{ del_trans_list(AT_VECTOR(trans, i)); }
 
-	del_vector(trans); del_vector(final);
-	del_token_spec(spec);
+	del_vector(trans);
+	del_vector(final);
 
 	FREE(header);
 	if (close(filde) == -1)
@@ -68,21 +68,24 @@ main(int argc, char const* argv[]) {
 		return (EXIT_FAILURE);
 	}
 
-	token_spec_t* spec = parse_token_def(filde);
+	token_spec_t* spec = parse_token_spec(filde);
 	if (!spec)
 		{ exit(EXIT_FAILURE); }
-
-	if (!EMPTY_VECTOR(spec->entry_lst) && compute_regex(spec) != ERROR) {
-		nfa_gen(spec);
-		gen_fgfl_file(spec, get_filename(argv[1]));
+	
+	if (spec_sanity_check(spec) == ERROR) {
+		del_token_spec(spec);
+		return (EXIT_FAILURE);
 	}
 
-//	del_token_spec(spec);
+	nfa_gen(spec);
+
+	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
+	del_token_spec(spec);
 
 	if (close(filde) == -1) {
 		errorf(0, "Can't close %s.", argv[1]);
 		return (EXIT_FAILURE);
 	}
 
-	return (EXIT_SUCCESS);
+	return (exit_st);
 }

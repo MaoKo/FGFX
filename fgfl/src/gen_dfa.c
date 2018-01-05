@@ -7,7 +7,7 @@
 #include "gen_dfa.h"
 #include "gen.h"
 #include "utils.h"
-#include "token_def.h"
+#include "token_spec.h"
 #include "nfa.h"
 
 void

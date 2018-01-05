@@ -5,36 +5,41 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFL>		->	{ <section> } => ( $RIGHT ) ;
-	<section>	->	<skip_section>
-				|	<token_section>
-				|	<keyword_section>
-				|	<state_section>
-				;
+	<FGFL>				->	{ <section> } => ( $RIGHT ) ;
+	<section>			->	<skip_section>
+						|	<token_section>
+						|	<keyword_section>
+						|	<state_section>
+						;
 
 	<skip_section>		->	'$SKIP'		'{' <regex_list>		'}' ';' ;
 	<token_section>		->	'$TOKEN'	'{' <regex_list>		'}' ';' ;
 	<keyword_section>	->	'$KEYWORD'	'{' <opt_token_list>	'}' ';' ;
-	<state_section>		->	'$STATE'	'{' <opt_token_list>	'}' ';' ;
+	<state_section>		->	'$STATE'	'{' <state_token_list>	'}' ';' ;
 
-	<regex_list>	->	{ <state_prefix> <atom> <regex_assign> ';' }
-							=> ( $RIGHT )
-					;
+	<regex_list>		->	{
+								<state_prefix> TERMINAL
+								<regex_assign> <change_state> ';'
+							} => ( $RIGHT ) ;
 
-	<state_prefix>	-> '(' <token_list> ')' | $EMPTY ;
+	<state_prefix>		->	'(' <state_prefix_item> ')' | $EMPTY ;
+	<state_prefix_item>	->	<token_list> | '*' ;
 
-	<regex_assign>	->	'='   REGEX
-					|	'->' '$IGCASE'
-					;
+	<regex_assign>		->	'=' REGEX
+						|	[ ',' <opt_token_list> ] '->' <regex_assign_op>
+						;
 
-	<token_list>		->	GLOBAL_TOK [ ',' <opt_token_list> ] ;
-	<opt_token_list>	->	GLOBAL_TOK [ ',' <opt_token_list> ] | $EMPTY ;
+	<regex_assign_op>	->	'$IGCASE' | '$FRAG' ;
 
-	<atom>	->	GLOBAL_TOK
-			|	LOCAL_TOK
-			;
+	<token_list>		->	TERMINAL [ ',' <opt_token_list> ] ;
+	<opt_token_list>	->	TERMINAL [ ',' <opt_token_list> ] | $EMPTY ;
 
-	<FGFL>	=	$START;
+	<state_token_list>	->	TERMINAL [ '=>' '$INITIAL' ]
+								[ ',' <state_token_list> ] | $EMPTY ;
+
+	<change_state>		->	[ '$BEGIN' '(' TOKEN ')' ] ;
+
+	<FGFL> = $START;
 };
 
 $ALIAS
@@ -44,6 +49,9 @@ $ALIAS
 	(KEYWORD	=> '$KEYWORD')	,
 	(IGCASE		=> '$IGCASE')	,
 	(STATE		=> '$STATE')	,
+	(BEGIN		=> '$BEGIN')	,
+	(FRAG		=> '$FRAG')		,
+	(INITIAL	=> '$INITIAL')	,
 	(LBRACE		=> '{')			,
 	(LPAREN		=> '(')			,
 	(RPAREN		=> ')')			,
@@ -52,5 +60,6 @@ $ALIAS
 	(COMMA		=> ',')			,
 	(EQUAL		=> '=')			,
 	(ARROW		=> '->')		,
+	(BARROW		=> '=>')		,
+	(STAR		=> '*')			,
 };
-

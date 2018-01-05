@@ -6,12 +6,12 @@
 
 #define PRIME_STR	"_PRIME"
 
-#define OPT_STR		"_OPT"
-#define LST_STR		"_LST"
+#define OPT_STR		"OPT"
+#define LST_STR		"LST"
+#define GRP_STR		"GRP"
 
 #define NTER_PREFIX	"N"
 #define PROD_PREFIX	"P"
-#define SPE_PREFIX	"S"
 
 #define LHS_STR		"LHS"
 #define RHS_STR		"RHS"

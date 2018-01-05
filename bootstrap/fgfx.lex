@@ -12,34 +12,38 @@ $TOKEN
 
     /* FGFL */
     LOCAL_TOK   =  / @{IDENT}                              / ;
-    EQUAL       =  / =                                     / ;
     REGEX       =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
-    
+	STAR		=  / \*                                    / ;    
+
     /* FGFP */
     NTER        =  / <{IDENT}('{1,3})?>                    / ;
-    ARROW       =  / ->                                    / ;
+    BARROW      =  / =>                                    / ;
     UNION       =  / \|                                    / ;
+    LBRACK      =  / \[                                    / ;
+    RBRACK      =  / \]                                    / ;
     LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
     
     /* Both FGFL & FGFP */
     DIRECTIVE   =  / ${IDENT}                              / ;
     GLOBAL_TOK  =  / {IDENT}                               / ;
-    BARROW      =  / =>                                    / ;
+    ARROW       =  / ->                                    / ;
+    EQUAL       =  / =                                     / ;
     SEMI        =  / ;                                     / ;
     COMMA       =  / ,                                     / ;
     LBRACE      =  / \{                                    / ;
     RBRACE      =  / \}                                    / ;
-    LBRACK      =  / \[                                    / ;
-    RBRACK      =  / \]                                    / ;
     LPAREN      =  / \(                                    / ;
     RPAREN      =  / \)                                    / ;
 };
 
 $KEYWORD
 {
+	// FGFL
     SKIP, TOKEN, KEYWORD, IGCASE,
-    EXTERN, PRODUCTION, ALIAS, START,
-	PRECEDENCE, EMPTY, LEFT, RIGHT,
-	NONASSOC, MIMIC,
+	STATE, BEGIN, FRAG, INITIAL,
+
+	// FGFP
+    EXTERN, PRODUCTION, ALIAS, PRECEDENCE, MIMIC,
+	EMPTY, START, LEFT, RIGHT, NONASSOC,
 };
 
