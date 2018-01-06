@@ -27,6 +27,6 @@ extern vector_t* record_nfa_state;
 void del_nfa_record(void);
 state_t* new_state(void);
 nfa_frag_t* ast_to_nfa(regex_node_t*, int, bool);
-int build_nfa(token_spec_t*);
+int build_nfa(lexical_spec_t*);
 
 #endif /* NFA_H */

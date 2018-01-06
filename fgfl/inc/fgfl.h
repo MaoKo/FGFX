@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
 	bitset_t* set_state;
 	size_t hash_state;
-//	trans_list_t* tr
+//	trans_list_t* edge;
 	size_t group;
 } dfa_state_t;
 
@@ -70,16 +70,21 @@ typedef struct {
 	char* name;
 	char* reg_str;
 	union {
-		struct { // if GLOBAL & LOCAL
-			bool igcase;
+		struct { // if TERMINAL
+			bool is_igcase;
+			bool is_frag;
+
 			bool skip;
+
 			enum { NONE, AST, FRAGMENT, } phase;
 			union {
 				regex_node_t* reg;
 				nfa_frag_t* frag;
 			};
+
 			bool all_state;
 			bitset_t* valid_state;
+			int begin_state;
 		};
 		struct { // if KEYWORD & STATE
 			struct { // if STATE
@@ -89,15 +94,15 @@ typedef struct {
 			size_t count;
 		};
 	};
-} token_entry_t;
+} spec_entry_t;
 
 typedef struct {
 	lexer_t* lex;
-	vector_t* entry_lst;
-	vector_t* state;
+	vector_t* entry_vect;
+	vector_t* state_vect;
 	int start_state;
 	bool miss_regex;
 	state_t* master;
-} token_spec_t;
+} lexical_spec_t;
 
 #endif /* FGFL_H */

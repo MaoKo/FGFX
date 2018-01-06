@@ -7,7 +7,7 @@
 #include "gen_dfa.h"
 #include "gen.h"
 #include "utils.h"
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "nfa.h"
 
 void
@@ -20,25 +20,25 @@ gen_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
 }
 
 void
-gen_state_enum(int filde, token_spec_t const* spec) {
+gen_state_enum(int filde, lexical_spec_t const* spec) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
-	for (size_t i = 0; i < SIZE_VECTOR(spec->state); ++i) {
-		token_entry_t* crt_state = (token_entry_t*)AT_VECTOR(spec->state, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+		spec_entry_t* crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, i);
 		ENUM_STATE_LINE(filde, crt_state->name);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
 
-	token_entry_t* init_state = AT_VECTOR(spec->state, spec->start_state);
+	spec_entry_t* init_state = AT_VECTOR(spec->state_vect, spec->start_state);
 	dprintf(filde, DEFINE(%s, %s%s%s) NL NL,
 						"INITIAL_STATE", STATE_PREFIX, SEP, init_state->name);
 }
 
 void
-gen_token_enum(int filde, token_spec_t const* spec) {
+gen_token_enum(int filde, lexical_spec_t const* spec) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	size_t count = 0;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
 		if (entry->kind == GLOBAL || entry->kind == KEYWORD) {
 			ENUM_TOKEN_LINE(filde, entry->name);
 			++count;
@@ -61,23 +61,21 @@ gen_state_table(int filde, vector_t const* trans, char const* header) {
 			SIZE_VECTOR(trans), MAX_ASCII);
 
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i) {
-		trans_list_t const* t = (trans_list_t*)AT_VECTOR(trans, i);
+		trans_list_t const* list = (trans_list_t*)AT_VECTOR(trans, i);
 		dprintf(filde, "/* %3zu */" TAB BEG_BLOCK, i);
-		while (t) {
-			trans_list_t const* next = t->next;
-			trans_list_t const* min_range = contiguous_range(t);
-			if (min_range != t) {
+		while (list) {
+			trans_list_t const* next = list->next;
+			trans_list_t const* min_range = contiguous_range(list);
+			if (min_range != list) {
 				dprintf(filde, "[%u ... %u]=%u",
-					min_range->input, t->input, t->state);
+							min_range->input, list->input, list->state);
 				next = min_range->next;
 			}
-			else {
-				dprintf(filde, "[%u]=%u",
-					t->input, t->state);
-			}
+			else
+				{ dprintf(filde, "[%u]=%u", list->input, list->state); }
 			if (next)
 				{ dprintf(filde, COMMA SP); }
-			t = next;
+			list = next;
 		}
 		dprintf(filde, END_BLOCK COMMA NL);
 	}
@@ -103,13 +101,13 @@ gen_final_table(int filde, vector_t const* final, char const* header) {
 }
 
 void
-gen_skip_table(int filde, token_spec_t const* spec, char const* header) {
+gen_skip_table(int filde, lexical_spec_t const* spec, char const* header) {
 	vector_t* skip_table = new_vector();
 	if (!skip_table)
 		{ return; }
 
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
 		if (entry->skip && (entry->kind == GLOBAL))
 			{ PUSH_BACK_VECTOR(skip_table, entry); }
 	}
@@ -122,7 +120,7 @@ gen_skip_table(int filde, token_spec_t const* spec, char const* header) {
 					SIZE_VECTOR(skip_table) + 1);
 
 		for (size_t i = 0; i < SIZE_VECTOR(skip_table); ++i) {
-			token_entry_t* entry = (token_entry_t*)
+			spec_entry_t* entry = (spec_entry_t*)
 					AT_VECTOR(skip_table, i);
 			dprintf(filde, TAB TOKEN_PREFIX SEP "%s" COMMA NL, entry->name);
 		}

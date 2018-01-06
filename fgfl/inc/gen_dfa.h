@@ -16,11 +16,11 @@
 #define STATE_PREFIX			"S"
 
 void gen_dfa_typedef(int, size_t, size_t);
-void gen_state_enum(int, token_spec_t const*);
-void gen_token_enum(int, token_spec_t const*);
+void gen_state_enum(int, lexical_spec_t const*);
+void gen_token_enum(int, lexical_spec_t const*);
 void gen_state_table(int, vector_t const*, char const*);
 void gen_final_table(int, vector_t const*, char const*);
-void gen_skip_table(int, token_spec_t const* spec, char const*);
+void gen_skip_table(int, lexical_spec_t const* spec, char const*);
 void gen_dfa_useful_macro(int);
 
 #endif /* GEN_DFA_H */

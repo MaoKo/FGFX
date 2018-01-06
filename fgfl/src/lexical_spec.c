@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "preprocess_regex.h"
 #include "regex.h"
 #include "nfa.h"
@@ -13,7 +13,7 @@
 #include "utils.h"
 
 static void
-del_token_entry(token_entry_t* entry) {
+del_token_entry(spec_entry_t* entry) {
 	if (entry) {
 		if (entry->phase == AST)	
 			{ del_regex_node(entry->reg); }
@@ -27,17 +27,17 @@ del_token_entry(token_entry_t* entry) {
 	FREE(entry);
 }
 
-static token_spec_t*
-new_token_spec(int filde) {
-	token_spec_t* crt_spec = NEW(token_spec_t, 1);
+static lexical_spec_t*
+new_lexical_spec(int filde) {
+	lexical_spec_t* crt_spec = NEW(lexical_spec_t, 1);
 
 	if (!crt_spec)
 		{ return (NULL); }
-	memset(crt_spec, 0, sizeof(token_spec_t));
+	memset(crt_spec, 0, sizeof(lexical_spec_t));
 
 	crt_spec->lex = new_lexer(filde);
-	crt_spec->entry_lst = new_vector();
-	crt_spec->state = new_vector();
+	crt_spec->entry_vect = new_vector();
+	crt_spec->state_vect = new_vector();
 
 	crt_spec->start_state = -1;
 	crt_spec->miss_regex = true;
@@ -46,38 +46,37 @@ new_token_spec(int filde) {
 }
 
 void
-del_token_spec(token_spec_t* spec) {
+del_lexical_spec(lexical_spec_t* spec) {
 	if (spec) {
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i)
-			{ del_token_entry((token_entry_t*)AT_VECTOR(spec->entry_lst, i)); }
-		del_vector(spec->entry_lst);
-		del_vector(spec->state);
+		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i)
+			{ del_token_entry((spec_entry_t*)AT_VECTOR(spec->entry_vect, i)); }
+		del_vector(spec->entry_vect);
+		del_vector(spec->state_vect);
 		del_lexer(spec->lex);
 	}
 	FREE(spec);
 }
 
 static inline int
-cmp_token_entry(token_entry_t* entry, char const* str) {
+cmp_token_entry(spec_entry_t* entry, char const* str) {
 	return (strcmp(entry->name, str));
 }
 
-static token_entry_t*
-add_entry_lexeme(token_spec_t* spec, int kind) {
+static spec_entry_t*
+add_entry_lexeme(lexical_spec_t* spec, int kind) {
 	int offset = (kind == LOCAL);
 
-	int index = get_index_vector(spec->entry_lst, C_LEXEME(spec->lex) + offset,
+	int index = get_index_vector(spec->entry_vect, C_LEXEME(spec->lex) + offset,												&cmp_token_entry);
+	if (index != -1)
+		{ return ((spec_entry_t*)AT_VECTOR(spec->entry_vect, index)); }
+	index = get_index_vector(spec->state_vect, C_LEXEME(spec->lex) + offset,
 										&cmp_token_entry);
 	if (index != -1)
-		{ return ((token_entry_t*)AT_VECTOR(spec->entry_lst, index)); }
+		{ return ((spec_entry_t*)AT_VECTOR(spec->state_vect, index)); }
+	vector_t* src_vect = ((kind == T_STATE)
+								? spec->state_vect : spec->entry_vect);
 
-	index = get_index_vector(spec->state, C_LEXEME(spec->lex) + offset,
-										&cmp_token_entry);
-	if (index != -1)
-		{ return ((token_entry_t*)AT_VECTOR(spec->state, index)); }
-
-	vector_t* src_vect = ((kind == T_STATE) ? spec->state : spec->entry_lst);
-	token_entry_t* entry = NEW(token_entry_t, 1);
+	spec_entry_t* entry = NEW(spec_entry_t, 1);
 
 	if (!entry)
 		{ return (NULL); }
@@ -92,7 +91,7 @@ add_entry_lexeme(token_spec_t* spec, int kind) {
 	}
 
 	if (entry->kind == GLOBAL || entry->kind == LOCAL) {
-		entry->igcase = false;
+		entry->is_igcase = false;
 		entry->phase = AST;
 	}
 
@@ -102,13 +101,126 @@ add_entry_lexeme(token_spec_t* spec, int kind) {
 	return (entry);
 }
 
-static int spec_token_list(token_spec_t*, int);
-static int spec_regex_list(token_spec_t*, int);
-static int spec_regex_assign(token_spec_t*, token_entry_t*, int);
+static int spec_state_prefix(lexical_spec_t*, bitset_t**, bool*);
+static int spec_regex_assign(lexical_spec_t*, spec_entry_t*, int);
+
+static int spec_regex_property(lexical_spec_t*, spec_entry_t*);
+static int spec_change_state(lexical_spec_t*, spec_entry_t*);
+
+static int spec_token_list(lexical_spec_t*, int);
+static int spec_regex_list(lexical_spec_t*, int);
 
 int
-spec_regex_assign(token_spec_t* spec,
-							token_entry_t* entry, int kind_section) {
+spec_regex_property(lexical_spec_t* spec, spec_entry_t* entry) {
+	int kind_property = peek_token(spec->lex);
+
+	if ((kind_property == T_IGCASE) || (kind_property == T_FRAG)) {
+		advance_token(spec->lex);
+		((kind_property == T_IGCASE)
+				? (entry->is_igcase = true) : (entry->is_frag = true));
+
+		if (peek_token(spec->lex) == T_COMMA) {
+			advance_token(spec->lex);
+
+			if (peek_token(spec->lex) == T_RBRACE)
+				{ return (DONE); }
+			else if ((kind_property == T_IGCASE)
+						&& (peek_token(spec->lex) != T_FRAG)) {
+				errorf(CURRENT_LINE(spec->lex), "$FRAG must follow $IGCASE.");
+				return (ERROR);
+			}
+			else if ((kind_property == T_FRAG)
+						&& (peek_token(spec->lex) != T_IGCASE)) {
+				errorf(CURRENT_LINE(spec->lex), "$IGCASE must follow $FRAG.");
+				return (ERROR);
+			}
+
+			advance_token(spec->lex);
+			((kind_property == T_IGCASE)
+				? (entry->is_frag = true) : (entry->is_igcase = true));
+		}
+	}
+	else {
+		errorf(CURRENT_LINE(spec->lex), "A $FRAG or $IGCASE must appear.");
+		return (ERROR);
+	}
+	return (DONE);
+}
+
+int
+spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
+	if (advance_token(spec->lex) != T_LPAREN) {
+		/* ERROR */
+		return (ERROR);
+	}
+	if (advance_token(spec->lex) != T_BEGIN) {
+		/* ERROR */
+		return (ERROR);
+	}
+	if (advance_token(spec->lex) != T_GLOBAL_TOK) {
+		/* ERROR */
+		return (ERROR);
+	}
+
+	spec_entry_t* crt_state = add_entry_lexeme(spec, STATE);
+	entry->begin_state = GET_INDEX(crt_state);	
+
+	if (advance_token(spec->lex) != T_RPAREN) {
+		/* ERROR */
+		return (ERROR);
+	}
+	return (DONE);	
+}
+
+int
+spec_state_prefix(lexical_spec_t* spec,
+								bitset_t** valid_state, bool* all_state) {
+	if (peek_token(spec->lex) == T_LPAREN) {
+		advance_token(spec->lex);
+		bitset_t* state_seen = new_bitset();
+
+		if (peek_token(spec->lex) == T_STAR) {
+			(*all_state) = true;
+			advance_token(spec->lex);
+		}
+		else if (peek_token(spec->lex) == T_GLOBAL_TOK) {
+			while (peek_token(spec->lex) == T_GLOBAL_TOK) {
+				advance_token(spec->lex);
+
+				spec_entry_t* crt_state = add_entry_lexeme(spec, STATE);
+				crt_state->is_used = true;
+
+				if (IS_PRESENT(state_seen, GET_INDEX(crt_state))) {
+					warnf(CURRENT_LINE(spec->lex),
+							"State %s already present", crt_state->name);
+				}
+				else 
+					{ ADD_BITSET(state_seen, GET_INDEX(crt_state)); }
+
+				if (peek_token(spec->lex) == T_COMMA)
+					{ advance_token(spec->lex); }
+			}
+		}
+		else {
+			errorf(CURRENT_LINE(spec->lex),
+				"Only a state list or the '*' must follow the open paren.");
+			return (ERROR);
+		}
+
+		if (advance_token(spec->lex) != T_RPAREN) {
+			errorf(CURRENT_LINE(spec->lex),
+							"Missing a close paren after the state list.");
+			del_bitset(state_seen);
+			return (ERROR);
+		}
+		(*valid_state) = state_seen;
+	}
+	return (DONE);
+}
+
+int
+spec_regex_assign(lexical_spec_t* spec,
+							spec_entry_t* entry, int kind_section) {
 
 	if ((!strcmp(entry->name, "ERROR")) || (!strcmp(entry->name, "EOF"))) {
 			errorf(CURRENT_LINE(spec->lex),
@@ -118,9 +230,9 @@ spec_regex_assign(token_spec_t* spec,
 	}
 
 	if (peek_token(spec->lex) == T_EQUAL) {
-		if (entry->reg_str|| entry->kind == KEYWORD) {
-			errorf(CURRENT_LINE(spec->lex), "Redefinning the token %s.",
-											entry->name);
+		if (entry->reg_str) {
+			errorf(CURRENT_LINE(spec->lex),
+								"Redefinning the token %s.", entry->name);
 			return (ERROR);
 		}
 
@@ -157,20 +269,28 @@ spec_regex_assign(token_spec_t* spec,
 			errorf(0, "Non enough memory for allocate the regex string.");
 			return (ERROR);
 		}
-	}
-	else if (peek_token(spec->lex) == T_ARROW) {
-		advance_token(spec->lex);
-		if (advance_token(spec->lex) != T_IGCASE) {
-			errorf(CURRENT_LINE(spec->lex),
-							"Expected $IGCASE after %s -> .", entry->name);
-			return (ERROR);
+	
+		if (peek_token(spec->lex) == T_ARROW) {
+			advance_token(spec->lex);
+			if (advance_token(spec->lex) != T_LBRACE) {
+				errorf(CURRENT_LINE(spec->lex),
+							"An open brace must follow the '->'.");
+				return (ERROR);
+			}
+			else if (spec_regex_property(spec, entry) == ERROR)
+				{ return (ERROR); }
+			else if (advance_token(spec->lex) != T_RBRACE) {
+				errorf(CURRENT_LINE(spec->lex),
+							"A close brace must follow the '->'.");
+				return (ERROR);
+			}
+
+			if (peek_token(spec->lex) == T_COMMA) {
+				advance_token(spec->lex);
+				if (spec_change_state(spec, entry) == ERROR)
+					{ return (ERROR); }
+			}
 		}
-		if (!entry->reg_str) {
-			errorf(CURRENT_LINE(spec->lex),
-							"Token %s not defined for $IGCASE.", entry->name);
-			return (ERROR);
-		}
-		entry->igcase = true;
 	}
 	else {
 		errorf(CURRENT_LINE(spec->lex),
@@ -181,63 +301,34 @@ spec_regex_assign(token_spec_t* spec,
 }
 
 int
-spec_regex_list(token_spec_t* spec, int kind_section) {
+spec_regex_list(lexical_spec_t* spec, int kind_section) {
 	if (peek_token(spec->lex) == T_RBRACE)
 		{ return (DONE); }
 
 	bool all_state = false;
 	bitset_t* state_seen = NULL;
 
-	if (peek_token(spec->lex) == T_LPAREN) {
-		advance_token(spec->lex);
-		state_seen = new_bitset();
-
-		if (peek_token(spec->lex) == T_STAR) {
-			all_state = true;
-			advance_token(spec->lex);
-		}
-		else if (peek_token(spec->lex) == T_GLOBAL_TOK) {
-			while (peek_token(spec->lex) == T_GLOBAL_TOK) {
-				advance_token(spec->lex);
-
-				token_entry_t* crt_state = add_entry_lexeme(spec, STATE);
-				crt_state->is_used = true;
-
-				if (IS_PRESENT(state_seen, GET_INDEX(crt_state))) {
-					warnf(CURRENT_LINE(spec->lex),
-							"State %s already present", crt_state->name);
-				}
-				else 
-					{ ADD_BITSET(state_seen, GET_INDEX(crt_state)); }
-
-				if (peek_token(spec->lex) == T_COMMA)
-					{ advance_token(spec->lex); }
-			}
-		}
-		else {
-			errorf(CURRENT_LINE(spec->lex),
-				"Only a state list or the '*' must follow the open paren.");
-			return (ERROR);
-		}
-
-		if (advance_token(spec->lex) != T_RPAREN) {
-			errorf(CURRENT_LINE(spec->lex),
-							"Missing a close paren after the state list.");
-			del_bitset(state_seen);
-			return (ERROR);
-		}
-	}
+	if (spec_state_prefix(spec, &state_seen, &all_state) == ERROR)
+		{ return (ERROR); }
 
 	if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
 		spec->miss_regex = false;
 
-		token_entry_t* entry = add_entry_lexeme(spec, advance_token(spec->lex));
+		int kind_token = advance_token(spec->lex);
+		spec_entry_t* entry = add_entry_lexeme(spec, kind_token);
+
 		entry->all_state = all_state;
 		entry->valid_state = state_seen;
 
-		if (spec_regex_assign(spec, entry, kind_section) == ERROR)
+		if (entry->kind != kind_token) {
+			errorf(CURRENT_LINE(spec->lex),
+								"Redefinning token %s in %s.",
+								entry->name, REGEX_LST_SECT(kind_section));
+			return (ERROR);
+		}
+		else if (spec_regex_assign(spec, entry, kind_section) == ERROR)
 			{ return (ERROR); }
-		if (advance_token(spec->lex) != T_SEMI) {
+		else if (advance_token(spec->lex) != T_SEMI) {
 			errorf(CURRENT_LINE(spec->lex), "Missing a ';' after the regex.");
 			return (ERROR);
 		}
@@ -253,11 +344,11 @@ spec_regex_list(token_spec_t* spec, int kind_section) {
 }
 
 int
-spec_token_list(token_spec_t* spec, int kind_section) {
+spec_token_list(lexical_spec_t* spec, int kind_section) {
 	if (peek_token(spec->lex) == T_RBRACE)
 		{ return (DONE); }
 	else if (advance_token(spec->lex) == T_GLOBAL_TOK) {
-		token_entry_t* entry = add_entry_lexeme(spec, kind_section);
+		spec_entry_t* entry = add_entry_lexeme(spec, kind_section);
 		++(entry->count);
 
 		if (kind_section == STATE)
@@ -302,9 +393,9 @@ spec_token_list(token_spec_t* spec, int kind_section) {
 }
 
 static int
-spec_token_entry_section(token_spec_t* spec) {
+spec_token_entry_section(lexical_spec_t* spec) {
 	int kind = advance_token(spec->lex);
-	int (*section_ptr)(token_spec_t*, int) = NULL;
+	int (*section_ptr)(lexical_spec_t*, int) = NULL;
 
 	switch (kind) {
 		case T_TOKEN: case T_SKIP:
@@ -335,7 +426,7 @@ spec_token_entry_section(token_spec_t* spec) {
 }
 
 int
-spec_token_section(token_spec_t* spec) {
+spec_token_section(lexical_spec_t* spec) {
 	bool empty = true;
 	while (peek_token(spec->lex) != T_EOF) {
 		if (spec_token_entry_section(spec) == ERROR)
@@ -347,21 +438,22 @@ spec_token_section(token_spec_t* spec) {
 	return (DONE);
 }
 
-token_spec_t*
-parse_token_spec(int filde) {
-	token_spec_t* crt_spec = new_token_spec(filde);
+lexical_spec_t*
+parse_lexical_spec(int filde) {
+	lexical_spec_t* crt_spec = new_lexical_spec(filde);
 	if (spec_token_section(crt_spec) == ERROR) {
-		del_token_spec(crt_spec);
+		del_lexical_spec(crt_spec);
 		return (NULL);
 	}
 	return (crt_spec);
 }
 
 static int
-detect_no_defined_state(token_spec_t* spec) {
+detect_no_defined_state(lexical_spec_t* spec) {
 	int not_defined = DONE;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->state); ++i) {
-		token_entry_t* crt_entry = (token_entry_t*)AT_VECTOR(spec->state, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+		spec_entry_t* crt_entry = (spec_entry_t*)
+											AT_VECTOR(spec->state_vect, i);
 		if (!crt_entry->is_defined) {
 			errorf(0, "The state %s is used but not defined.", crt_entry->name);
 			not_defined = ERROR;
@@ -371,17 +463,17 @@ detect_no_defined_state(token_spec_t* spec) {
 }
 
 static int
-check_token_not_prefix(token_spec_t* spec) {
+check_token_not_prefix(lexical_spec_t* spec) {
 	if (spec->start_state == -1) {
-		if (EMPTY_VECTOR(spec->state))
+		if (EMPTY_VECTOR(spec->state_vect))
 			{ return (DONE); }
 		warnf(0, "Initial state not defined. Default set to state 0.");
 		spec->start_state = 0;
 	}
 
 	int not_prefix = DONE;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* crt_entry = AT_VECTOR(spec->entry_lst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
 		if (!crt_entry->valid_state && !crt_entry->all_state) {
 			errorf(0, "Token %s is not prefixed by any state.",
 													crt_entry->name);
@@ -393,9 +485,9 @@ check_token_not_prefix(token_spec_t* spec) {
 }
 
 static void
-spec_unused_symbol(token_spec_t* spec) {
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* crt_entry = AT_VECTOR(spec->entry_lst, i);
+spec_unused_symbol(lexical_spec_t* spec) {
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
 		if ((crt_entry->kind == LOCAL) && (!crt_entry->is_used)) {
 			warnf(0, "Local token %s is defined"
 						" but not used.", crt_entry->name);
@@ -406,8 +498,8 @@ spec_unused_symbol(token_spec_t* spec) {
 		}
 	}
 
-	for (size_t i = 0; i < SIZE_VECTOR(spec->state); ++i) {
-		token_entry_t* crt_entry = AT_VECTOR(spec->state, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+		spec_entry_t* crt_entry = AT_VECTOR(spec->state_vect, i);
 		if (!crt_entry->is_used) {
 			warnf(0, "The state %s is defined"
 						" but not used.", crt_entry->name);
@@ -420,7 +512,7 @@ spec_unused_symbol(token_spec_t* spec) {
 }
 
 int
-spec_sanity_check(token_spec_t* spec) {
+spec_sanity_check(lexical_spec_t* spec) {
 	if (!spec)
 		{ return (ERROR); }
 	else if (compute_regex(spec) == ERROR)
@@ -437,11 +529,11 @@ spec_sanity_check(token_spec_t* spec) {
 #ifdef PRINT_DEBUG
 
 void
-print_token_entry(token_spec_t* spec) {
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* crt_entry = AT_VECTOR(spec->entry_lst, i);
-		printf("Token %s, local %d.\n",
-						crt_entry->name, (crt_entry->kind == LOCAL));
+print_token_entry(lexical_spec_t* spec) {
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
+		printf("Token %s, is_igcase %d, is_frag %d.\n",
+					crt_entry->name, crt_entry->is_igcase, crt_entry->is_frag);
 		if (crt_entry->valid_state)
 			{ print_bitset(crt_entry->valid_state); }
 	}

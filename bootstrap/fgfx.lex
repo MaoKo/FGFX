@@ -12,26 +12,33 @@ $TOKEN
 
     /* FGFL */
     LOCAL_TOK   =  / @{IDENT}                              / ;
+    EQUAL       =  / =                                     / ;
     REGEX       =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
 	STAR		=  / \*                                    / ;    
 
     /* FGFP */
     NTER        =  / <{IDENT}('{1,3})?>                    / ;
+
     UNION       =  / \|                                    / ;
+
     LBRACK      =  / \[                                    / ;
     RBRACK      =  / \]                                    / ;
+
     LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
     
     /* Both FGFL & FGFP */
     DIRECTIVE   =  / ${IDENT}                              / ;
     GLOBAL_TOK  =  / {IDENT}                               / ;
+
     ARROW       =  / ->                                    / ;
     BARROW      =  / =>                                    / ;
-    EQUAL       =  / =                                     / ;
+
     SEMI        =  / ;                                     / ;
     COMMA       =  / ,                                     / ;
+
     LBRACE      =  / \{                                    / ;
     RBRACE      =  / \}                                    / ;
+
     LPAREN      =  / \(                                    / ;
     RPAREN      =  / \)                                    / ;
 };

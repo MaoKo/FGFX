@@ -1,5 +1,5 @@
-#ifndef TOKEN_SPEC_H
-#define TOKEN_SPEC_H
+#ifndef LEXICAL_SPEC_H
+#define LEXICAL_SPEC_H
 
 #include "fgfl.h"
 
@@ -17,11 +17,11 @@
 
 #define USED_ENTRY(entry)	(entry->is_used = true)
 
-token_spec_t* parse_token_spec(int);
-void del_token_spec(token_spec_t*);
-int spec_sanity_check(token_spec_t*);
+lexical_spec_t* parse_lexical_spec(int);
+void del_lexical_spec(lexical_spec_t*);
+int spec_sanity_check(lexical_spec_t*);
 #ifdef PRINT_DEBUG
-void print_token_entry(token_spec_t*);
+void print_token_entry(lexical_spec_t*);
 #endif /* PRINT_DEBUG */
 
-#endif /* TOKEN_SPEC_H */
+#endif /* LEXICAL_SPEC_H */

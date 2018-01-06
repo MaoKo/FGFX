@@ -1,6 +1,6 @@
 #include "dfa.h"
 #include "gen_dfa.h"
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "nfa.h"
 #include "utils.h"
 
@@ -126,7 +126,7 @@ build_final_table(vector_t* states, vector_t* elst) {
 			}
 		}
 		if (min_tok) {
-			char* name = ((token_entry_t*)AT_VECTOR(elst, min_tok - 1))->name;
+			char* name = ((spec_entry_t*)AT_VECTOR(elst, min_tok - 1))->name;
 
 			PUSH_BACK_VECTOR(final, (void*)i);
 			PUSH_BACK_VECTOR(final, name);
@@ -136,11 +136,11 @@ build_final_table(vector_t* states, vector_t* elst) {
 }
 
 void
-build_dfa_table(token_spec_t* spec, vector_t** trans, vector_t** final) {
+build_dfa_table(lexical_spec_t* spec, vector_t** trans, vector_t** final) {
 	vector_t* states = NULL;
 
 	*trans = build_state_table(spec->master, &states);
-	*final = build_final_table(states, spec->entry_lst);
+	*final = build_final_table(states, spec->entry_vect);
 
 	for (size_t i = 0; i < SIZE_VECTOR(states); ++i)
 		{ del_bitset((bitset_t*)AT_VECTOR(states, i)); }

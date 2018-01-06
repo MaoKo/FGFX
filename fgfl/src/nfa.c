@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "utils.h"
 #include "bitset.h"
 #include "nfa.h"
@@ -208,18 +208,18 @@ ast_to_nfa(regex_node_t* root, int priority, bool igcase) {
 }
 
 int
-build_nfa(token_spec_t* spec) {
+build_nfa(lexical_spec_t* spec) {
 	if (!spec)
 		{ return (ERROR); }
 
 //	if (spec->start_state == -1) {
 		spec->master = new_state();
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-			token_entry_t* entry = (token_entry_t*)
-										AT_VECTOR(spec->entry_lst, i);
+		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+			spec_entry_t* entry = (spec_entry_t*)
+										AT_VECTOR(spec->entry_vect, i);
 			if (entry->kind == GLOBAL) {
 				regex_node_t* ast = entry->reg;
-				entry->frag = ast_to_nfa(ast, i + 1, entry->igcase);
+				entry->frag = ast_to_nfa(ast, i + 1, entry->is_igcase);
 
 				del_regex_node(ast);
 

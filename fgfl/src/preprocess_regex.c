@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "preprocess_regex.h"
 #include "regex.h"
 #include "error.h"
@@ -24,7 +24,7 @@ size_ident(char const* str) {
 static int
 find_macro_name(vector_t* src_vect, char const* beg_macro, size_t size) {
 	for (size_t i = 0; i < SIZE_VECTOR(src_vect); ++i) {
-		token_entry_t* crt_entry = (token_entry_t*)AT_VECTOR(src_vect, i);
+		spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(src_vect, i);
 		if (!strncmp(crt_entry->name, beg_macro, size))
 			{ return (i); }
 	}
@@ -32,7 +32,7 @@ find_macro_name(vector_t* src_vect, char const* beg_macro, size_t size) {
 }
 
 static int
-dependency_macro(token_spec_t* spec, token_entry_t* entry,
+dependency_macro(lexical_spec_t* spec, spec_entry_t* entry,
 												bitset_t** set_macro) {
 	if (!set_macro)
 		{ return (ERROR); }
@@ -49,12 +49,12 @@ dependency_macro(token_spec_t* spec, token_entry_t* entry,
 				int depend_not_token = -1;
 
 				size_t size = size_ident(beg_macro);
-				int index = find_macro_name(spec->entry_lst, beg_macro, size);
+				int index = find_macro_name(spec->entry_vect, beg_macro, size);
 
 				if (index != -1) {
 					find_dependence = true;
-					token_entry_t* crt_entry = (token_entry_t*)
-										AT_VECTOR(spec->entry_lst, index);
+					spec_entry_t* crt_entry = (spec_entry_t*)
+										AT_VECTOR(spec->entry_vect, index);
 
 					if ((crt_entry->kind == KEYWORD))
 						{ depend_not_token = KEYWORD; }
@@ -65,7 +65,8 @@ dependency_macro(token_spec_t* spec, token_entry_t* entry,
 					}
 				}
 				else {
-					int index = find_macro_name(spec->state, beg_macro, size);
+					int index = find_macro_name(spec->state_vect,
+														beg_macro, size);
 					if (index != -1) {
 						find_dependence = true;
 						depend_not_token = STATE;
@@ -93,7 +94,7 @@ dependency_macro(token_spec_t* spec, token_entry_t* entry,
 }
 
 static int
-recur_node_topsort(token_spec_t* spec, token_entry_t* crt_entry,
+recur_node_topsort(lexical_spec_t* spec, spec_entry_t* crt_entry,
 			size_t index_entry, vector_t* stack_order, bitset_t* seen_reg) {
 
 	if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry))) {
@@ -114,8 +115,8 @@ recur_node_topsort(token_spec_t* spec, token_entry_t* crt_entry,
 	int exit_st = DONE;
 
 	while ((i = IT_NEXT(depend_node)) != IT_NULL) {
-		token_entry_t* new_entry = (token_entry_t*)
-										AT_VECTOR(spec->entry_lst, i);
+		spec_entry_t* new_entry = (spec_entry_t*)
+										AT_VECTOR(spec->entry_vect, i);
 		if (recur_node_topsort(spec, new_entry, index_entry,
 										stack_order, seen_reg) == ERROR)
 			{ exit_st = ERROR; }
@@ -128,14 +129,14 @@ recur_node_topsort(token_spec_t* spec, token_entry_t* crt_entry,
 }
 
 vector_t*
-topological_sort(token_spec_t* spec) {
+topological_sort(lexical_spec_t* spec) {
 	vector_t* stack_order = new_vector();
 	bitset_t* seen_reg = new_bitset();
 
 	int exit_st = DONE;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-		token_entry_t* crt_entry = (token_entry_t*)
-										AT_VECTOR(spec->entry_lst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* crt_entry = (spec_entry_t*)
+										AT_VECTOR(spec->entry_vect, i);
 		if (crt_entry->kind != GLOBAL)
 			{ continue; }
 		else if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry)))
@@ -156,14 +157,14 @@ topological_sort(token_spec_t* spec) {
 }
 
 int
-compute_regex(token_spec_t* spec) {
+compute_regex(lexical_spec_t* spec) {
 	vector_t* stack_order;
 	int exit_st = DONE;
 
 	if ((stack_order = topological_sort(spec))) {
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
-			token_entry_t* crt_entry = (token_entry_t*)
-											AT_VECTOR(spec->entry_lst, i);
+		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+			spec_entry_t* crt_entry = (spec_entry_t*)
+											AT_VECTOR(spec->entry_vect, i);
 			if ((crt_entry->kind == LOCAL)
 					&& (get_index_vector(stack_order, (void*)i, NULL) != -1))
 				{ crt_entry->is_used = true; }
@@ -171,8 +172,8 @@ compute_regex(token_spec_t* spec) {
 
 		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
 			size_t j = (long)AT_VECTOR(stack_order, i);
-			token_entry_t* crt_entry = (token_entry_t*)
-											AT_VECTOR(spec->entry_lst, j);
+			spec_entry_t* crt_entry = (spec_entry_t*)
+											AT_VECTOR(spec->entry_vect, j);
 			if (crt_entry->kind != KEYWORD)
 				{ crt_entry->reg = regex_to_ast(spec, crt_entry->reg_str); }
 		}

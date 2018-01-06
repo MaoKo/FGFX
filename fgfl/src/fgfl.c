@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "preprocess_regex.h"
 #include "nfa.h"
 #include "dfa.h"
@@ -13,7 +13,7 @@
 #include "utils.h"
 
 static int 
-gen_fgfl_file(token_spec_t* spec, char const* base_file) {
+gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 	char const* header = strjoin(base_file, ".h");
 	int filde = open_new_file(header);
 
@@ -32,7 +32,7 @@ gen_fgfl_file(token_spec_t* spec, char const* base_file) {
 	gen_require_macro(filde, base_file);
 	gen_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
 
-	if (!EMPTY_VECTOR(spec->state))
+	if (!EMPTY_VECTOR(spec->state_vect))
 		{ gen_state_enum(filde, spec); }
 	gen_token_enum(filde, spec);
 
@@ -73,20 +73,20 @@ main(int argc, char const* argv[]) {
 		return (EXIT_FAILURE);
 	}
 
-	token_spec_t* spec = parse_token_spec(filde);
+	lexical_spec_t* spec = parse_lexical_spec(filde);
 	if (!spec)
 		{ exit(EXIT_FAILURE); }
 	
 	if (spec_sanity_check(spec) == ERROR) {
-		del_token_spec(spec);
+		del_lexical_spec(spec);
 		return (EXIT_FAILURE);
 	}
 
-//	print_token_entry(spec);
+	print_token_entry(spec);
 	build_nfa(spec);
 
 	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
-	del_token_spec(spec);
+	del_lexical_spec(spec);
 
 	if (close(filde) == -1) {
 		errorf(0, "Can't close %s.", argv[1]);

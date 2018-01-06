@@ -15,29 +15,28 @@ $PRODUCTION
 	<skip_section>		->	'$SKIP'		'{' <regex_list>		'}' ';' ;
 	<token_section>		->	'$TOKEN'	'{' <regex_list>		'}' ';' ;
 	<keyword_section>	->	'$KEYWORD'	'{' <opt_token_list>	'}' ';' ;
-	<state_section>		->	'$STATE'	'{' <state_token_list>	'}' ';' ;
+	<state_section>		->	'$STATE'	'{' <opt_state_list>	'}' ';' ;
 
-	<regex_list>		->	{
-								<state_prefix> TERMINAL
-								<regex_assign> <change_state> ';'
-							} => ( $RIGHT ) ;
+	<regex_list>		->	{ <state_prefix> TERMINAL <regex_assign> ';' }
+								=> ( $RIGHT ) ;
 
 	<state_prefix>		->	'(' <state_prefix_item> ')' | $EMPTY ;
 	<state_prefix_item>	->	<token_list> | '*' ;
 
-	<regex_assign>		->	'=' REGEX
-						|	[ ',' <opt_token_list> ] '->' <regex_assign_op>
-						;
+	<regex_assign>		->	'=' REGEX [ '->' '{' <regex_property> '}' ]
+								[ ',' <change_state> ] ;
 
-	<regex_assign_op>	->	'$IGCASE' | '$FRAG' ;
+	<regex_property>	->	'$IGCASE' [ ',' '$FRAG'   ]
+						|	'$FRAG'   [ ',' '$IGCASE' ]
+						;
 
 	<token_list>		->	TERMINAL [ ',' <opt_token_list> ] ;
 	<opt_token_list>	->	TERMINAL [ ',' <opt_token_list> ] | $EMPTY ;
 
-	<state_token_list>	->	TERMINAL [ '=>' '$INITIAL' ]
-								[ ',' <state_token_list> ] | $EMPTY ;
+	<opt_state_list>	->	TERMINAL [ '=>' '$INITIAL' ]
+								[ ',' <opt_state_list> ] | $EMPTY ;
 
-	<change_state>		->	[ '$BEGIN' '(' TOKEN ')' ] ;
+	<change_state>		->	'(' '$BEGIN' TERMINAL ')' ;
 
 	<FGFL> = $START;
 };
@@ -52,14 +51,20 @@ $ALIAS
 	(BEGIN		=> '$BEGIN')	,
 	(FRAG		=> '$FRAG')		,
 	(INITIAL	=> '$INITIAL')	,
+
+	(EQUAL		=> '=')			,
+
 	(LBRACE		=> '{')			,
+	(RBRACE		=> '}')			,
+
 	(LPAREN		=> '(')			,
 	(RPAREN		=> ')')			,
-	(RBRACE		=> '}')			,
+
 	(SEMI		=> ';')			,
 	(COMMA		=> ',')			,
-	(EQUAL		=> '=')			,
+
 	(ARROW		=> '->')		,
 	(BARROW		=> '=>')		,
+
 	(STAR		=> '*')			,
 };

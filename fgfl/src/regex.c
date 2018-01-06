@@ -5,13 +5,13 @@
 #include <unistd.h>
 
 #include "regex.h"
-#include "token_spec.h"
+#include "lexical_spec.h"
 #include "lexer.h"
 #include "utils.h"
 #include "nfa.h"
 #include "vector.h"
 
-static token_spec_t* local_spec = NULL;
+static lexical_spec_t* local_spec = NULL;
 static char const* regex_str_env = NULL;
 static int peek_c = -1;
 static bool escaped = false;
@@ -299,7 +299,7 @@ read_ident(void) {
 }
 
 static int
-cmp_entry_str(token_entry_t const* entry, char const* str) {
+cmp_entry_str(spec_entry_t const* entry, char const* str) {
 	return (strcmp(entry->name, str));
 }
 
@@ -308,11 +308,11 @@ bound_name(regex_node_t* root) {
 	regex_node_t* rep_node = NULL;
 	buffer_t* bound = read_ident();
 	
-	int index = get_index_vector(local_spec->entry_lst,
+	int index = get_index_vector(local_spec->entry_vect,
 			BODY_BUFFER(bound), &cmp_entry_str);
 	if (index != -1) {
-		token_entry_t* entry = (token_entry_t*)
-			AT_VECTOR(local_spec->entry_lst, index);
+		spec_entry_t* entry = (spec_entry_t*)
+			AT_VECTOR(local_spec->entry_vect, index);
 		rep_node = cpy_node_ast(entry->reg);
 		USED_ENTRY(entry);
 	}
@@ -387,7 +387,7 @@ dot_regex(void) {
 }
 
 regex_node_t*
-regex_to_ast(token_spec_t* token_spec, char const* regex_str) {
+regex_to_ast(lexical_spec_t* token_spec, char const* regex_str) {
 	if (!token_spec || !regex_str)
 		{ return (NULL); }
 	regex_str_env = regex_str;
