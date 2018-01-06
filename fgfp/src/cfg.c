@@ -35,9 +35,9 @@ free_symbol(symbol_t* sym) {
 			del_bitset(sym->follow);
 			del_bitset(sym->prod_lst);
 		}
-		else if ((sym->kind == TERMINAL) && (sym->prec))
+		else if ((sym->kind == T_TERMINAL) && (sym->prec))
 			{ FREE(sym->prec); }
-		else if ((sym->kind == LITERAL) && (!sym->share_prec))
+		else if ((sym->kind == T_LITERAL) && (!sym->share_prec))
 			{ FREE(sym->prec); }
 	}
 	FREE(sym);
@@ -93,11 +93,11 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	if (crt_lexeme && !symbol->name)
 		{ fail = 1; }
 	
-	if (kind == LITERAL) 
+	if (kind == T_LITERAL) 
 		{ symbol->terminal_alias = -1; }
 	else {
 		symbol->is_used = true;
-		if (kind == TERMINAL)
+		if (kind == T_TERMINAL)
 			{ symbol->is_defined = true; }
 		else {
 			symbol->prod_lst = new_bitset();
@@ -152,7 +152,7 @@ augment_grammar(cfg_t* cfg) {
 	ADD_BITSET(start->prod_lst, GET_INDEX(prod));
 
 	add_symbol_rhs(prod, AT_VECTOR(cfg->non_terminal, cfg->goal));
-	symbol_t* eof_symbol = add_symbol_cfg(cfg, TERMINAL, "EOF");
+	symbol_t* eof_symbol = add_symbol_cfg(cfg, T_TERMINAL, "EOF");
 
 	eof_symbol->is_eof = true;
 	add_symbol_rhs(prod, eof_symbol);
@@ -249,7 +249,7 @@ alias_literal_list(cfg_t* cfg, symbol_t* alias_ter) {
 	size_t index_alias = alias_ter->index;
 	while (peek_token(cfg->lex) == T_LITERAL) {
 		advance_token(cfg->lex);
-		symbol_t* literal = add_symbol_cfg(cfg, LITERAL, C_LEXEME(cfg->lex));
+		symbol_t* literal = add_symbol_cfg(cfg, T_LITERAL, C_LEXEME(cfg->lex));
 
 		if (literal->terminal_alias != -1) {
 			errorf(CURRENT_LINE(cfg->lex),
@@ -283,13 +283,15 @@ cfg_alias_list(cfg_t* cfg) {
 	if (peek_token(cfg->lex) == T_RBRACE)
 		{ return (DONE); }
 	else if (advance_token(cfg->lex) == T_LPAREN) {
-		if (advance_token(cfg->lex) != T_GLOBAL_TOK) {
+		if (advance_token(cfg->lex) != T_TERMINAL) {
 			errorf(CURRENT_LINE(cfg->lex),
 						"Missing an token identifier in the $ALIAS section.");
 			return (ERROR);
 		}
 
-		symbol_t* alias_ter = add_symbol_cfg(cfg, TERMINAL, C_LEXEME(cfg->lex));
+		symbol_t* alias_ter = add_symbol_cfg(cfg,
+										T_TERMINAL, C_LEXEME(cfg->lex));
+
 		if (advance_token(cfg->lex) != T_BARROW) {
 			errorf(CURRENT_LINE(cfg->lex),
 						"Missing a => in the $ALIAS section.");
@@ -319,13 +321,13 @@ static int
 cfg_precedence_atom(cfg_t* cfg, size_t kind_prec, size_t prec_depth) {
 	size_t allow_kind = peek_token(cfg->lex);
 
-	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL)) {
+	if ((allow_kind != T_TERMINAL) && (allow_kind != T_LITERAL)) {
 		errorf(CURRENT_LINE(cfg->lex),
 						"Missing a token identifier or a literal.");
 		return (ERROR);
 	}
 
-	while ((allow_kind == T_GLOBAL_TOK) || (allow_kind == T_LITERAL)) {
+	while ((allow_kind == T_TERMINAL) || (allow_kind == T_LITERAL)) {
 		advance_token(cfg->lex);
 		symbol_t* prec_ter = add_symbol_cfg(cfg, allow_kind,
 													C_LEXEME(cfg->lex));
@@ -407,8 +409,9 @@ cfg_production_list(cfg_t* cfg) {
 
 static int
 follow_prod(cfg_t* cfg) {
-	symbol_t* symbol_lhs = add_symbol_cfg(cfg, NON_TERMINAL,
-												C_LEXEME(cfg->lex));
+	symbol_t* symbol_lhs = add_symbol_cfg(cfg,
+							NON_TERMINAL, C_LEXEME(cfg->lex));
+
 	if (peek_token(cfg->lex) == T_ARROW) {
 		advance_token(cfg->lex);
 
@@ -489,7 +492,7 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 	}
 
 	int allow_kind = advance_token(cfg->lex);
-	if ((allow_kind != T_GLOBAL_TOK) && (allow_kind != T_LITERAL)) {
+	if ((allow_kind != T_TERMINAL) && (allow_kind != T_LITERAL)) {
 		errorf(CURRENT_LINE(cfg->lex),
 					"The directive $MIMIC must be followed by"
 					" a token name or a literal.");
@@ -511,7 +514,7 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(cfg->lex, T_LBRACK, T_LBRACE,
-										NON_TERMINAL, TERMINAL, LITERAL, -1))
+								NON_TERMINAL, T_TERMINAL, T_LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
@@ -530,7 +533,7 @@ cfg_list(cfg_t* cfg, production_t* prod) {
 	if (cfg_atom(cfg, prod) == ERROR)
 		{ return (ERROR); }
 	while (in_first(cfg->lex, T_LBRACK, T_LBRACE,
-									NON_TERMINAL, TERMINAL, LITERAL, -1)) {
+								NON_TERMINAL, T_TERMINAL, T_LITERAL, -1)) {
 		if (cfg_atom(cfg, prod) == ERROR)
 			{ return (ERROR); }
 	}
@@ -653,7 +656,7 @@ cfg_atom(cfg_t* cfg, production_t* prod) {
 					advance_token(cfg->lex), C_LEXEME(cfg->lex));
 
 		atom_symbol->is_used = true;
-		if ((atom_symbol->kind == LITERAL)
+		if ((atom_symbol->kind == T_LITERAL)
 									&& (atom_symbol->terminal_alias != -1)) {
 			add_symbol_rhs(prod, AT_VECTOR(cfg->terminal,
 								atom_symbol->terminal_alias));

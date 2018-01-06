@@ -1,15 +1,15 @@
 $TOKEN {
-	@DIGIT		=	/[0-9]/	;
-	@SIGN		=	/[-+]/	;
+	DIGIT		=	/[0-9]/	 -> { $FRAG };
+	SIGN		=	/[-+]/	 -> { $FRAG };
 
-	@F_S		=	/[flFL]/;
+	F_S			=	/[flFL]/ -> { $FRAG };
 
-	@SCF_EXP	=	/[eE]{SIGN}?{DIGIT}+/	;
-	@BIN_EXP	=	/[pP]{SIGN}?{DIGIT}+/	;
+	SCF_EXP		=	/[eE]{SIGN}?{DIGIT}+/ -> { $FRAG };
+	BIN_EXP		=	/[pP]{SIGN}?{DIGIT}+/ -> { $FRAG };
 
-	@D_FRACT	=	/({DIGIT}+\.)/	;
+	D_FRACT		=	/({DIGIT}+\.)/ -> { $FRAG };
 
-	@DECF		=	/({D_FRACT}{SCF_EXP}?{F_S}?)|\
-					({DIGIT}+{SCF_EXP}{F_S}?)/ ;
+	DECF		=	/({D_FRACT}{SCF_EXP}?{F_S}?)|\
+									({DIGIT}+{SCF_EXP}{F_S}?)/ -> { $FRAG };
 	FLOAT		=	/{D_FRACT}/	;
 };

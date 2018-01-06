@@ -217,7 +217,7 @@ build_nfa(lexical_spec_t* spec) {
 		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 			spec_entry_t* entry = (spec_entry_t*)
 										AT_VECTOR(spec->entry_vect, i);
-			if (entry->kind == GLOBAL) {
+			if ((entry->kind == T_TERMINAL) && (!entry->is_frag)) {
 				regex_node_t* ast = entry->reg;
 				entry->frag = ast_to_nfa(ast, i + 1, entry->is_igcase);
 

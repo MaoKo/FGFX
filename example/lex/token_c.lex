@@ -6,17 +6,19 @@
 
 $TOKEN
 {
-	@ESC_UN		=	/(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})/ ;
-	@LETTER		=	/[A-Za-z_]/ ;
-	@DIGIT		=	/[0-9]/ ;
+	ESC_UN		=	/(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})/ -> { $FRAG };
+	LETTER		=	/[A-Za-z_]/ -> { $FRAG };
+	DIGIT		=	/[0-9]/ -> { $FRAG };
 	IDENT		= 	/({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})*/ ;
 
 	/* C Char token */
 
-	@ESC_OCT	=	/(\\[0-7]{1,3})/ ;
-	@ESC_HEX	=	/(\\x[0-9a-fA-F]+)/ ;
-	@ESC_SEQ	=	/(\\'|\\\"|\\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)/ ;
-	@REG_ESCAPE	=	/({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN})/ ;
+	ESC_OCT		=	/(\\[0-7]{1,3})/ -> { $FRAG };
+	ESC_HEX		=	/(\\x[0-9a-fA-F]+)/ -> { $FRAG };
+	ESC_SEQ		=	/(\\'|\\\"|\\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)/
+							-> { $FRAG };
+
+	REG_ESCAPE	=	/({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN})/ -> { $FRAG } ;
 	CHAR		=	/[LuU]?'([^\n'\\]|{REG_ESCAPE})+'/ ;
 
 	/* C String token */
@@ -79,31 +81,32 @@ $TOKEN
 
 	/* C Int */
 
-	@DEC		=	/([1-9][0-9]*)/ ;
-	@OCT		=	/(0[0-7]*)/ ;
-	@HEX		=	/(0[xX][0-9a-fA-F]+)/ ;
-	@U_S		=	/[uU]/ ;
-	@L_S		=	/[lL]/ ;
-	@LL_S		=	/(ll|LL)/ ;
+	DEC		=	/([1-9][0-9]*)/ -> { $FRAG };
+	OCT		=	/(0[0-7]*)/ -> { $FRAG };
+	HEX		=	/(0[xX][0-9a-fA-F]+)/ -> { $FRAG };
+	U_S		=	/[uU]/ -> { $FRAG };
+	L_S		=	/[lL]/ -> { $FRAG };
+	LL_S		=	/(ll|LL)/ -> { $FRAG };
 
-	@INT_S		=	/(({U_S}{L_S}?)|({U_S}{LL_S})|\
-									({L_S}{U_S}?)|({LL_S}{U_S}?))/ ;
+	INT_S		=	/(({U_S}{L_S}?)|({U_S}{LL_S})|\
+									({L_S}{U_S}?)|({LL_S}{U_S}?))/ -> { $FRAG };
 
 	INTEGER		=	/({DEC}|{OCT}|{HEX}){INT_S}?/ ;
 
 	/* C Float */
+	DIGIT		=	/[0-9]/	 -> { $FRAG };
+	SIGN		=	/[-+]/	 -> { $FRAG };
 
-@SIGN			=	/ [-+] / ;
-@F_S			=	/ [flFL] /;
+	F_S			=	/[flFL]/ -> { $FRAG };
 
-@SCF_EXP		=	/ [eE]{SIGN}?{DIGIT}+ / ;
-@BIN_EXP		=	/ [pP]{SIGN}?{DIGIT}+ / ;
+	SCF_EXP		=	/[eE]{SIGN}?{DIGIT}+/ -> { $FRAG };
+	BIN_EXP		=	/[pP]{SIGN}?{DIGIT}+/ -> { $FRAG };
 
-@D_FRACT		=	/ ({DIGIT}+\.) / ;
+	D_FRACT		=	/({DIGIT}+\.)/ -> { $FRAG };
 
-@DECF			=	/ ({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?) / ;
-FLOAT			=	/ {DECF} / ;
-
+	DECF		=	/({D_FRACT}{SCF_EXP}?{F_S}?)|\
+									({DIGIT}+{SCF_EXP}{F_S}?)/ -> { $FRAG };
+	FLOAT		=	/{D_FRACT}/	;
 };
 
 $SKIP

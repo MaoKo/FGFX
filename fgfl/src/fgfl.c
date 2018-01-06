@@ -82,7 +82,7 @@ main(int argc, char const* argv[]) {
 		return (EXIT_FAILURE);
 	}
 
-	print_token_entry(spec);
+//	print_token_entry(spec);
 	build_nfa(spec);
 
 	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));

@@ -109,7 +109,7 @@ preprocess_literal(cfg_t const* cfg) {
 	int is_error = DONE;
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->terminal); ++i) {
 		symbol_t* literal = (symbol_t*)AT_VECTOR(cfg->terminal, i);
-		if (literal->kind == LITERAL) {
+		if (literal->kind == T_LITERAL) {
 			symbol_t* ter = (symbol_t*)AT_VECTOR(cfg->terminal,
 										literal->terminal_alias);
 			if (!ter->prec) {
@@ -131,13 +131,13 @@ preprocess_literal(cfg_t const* cfg) {
 	
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->productions); ++i) {
 		production_t* prod = (production_t*)AT_VECTOR(cfg->productions, i);
-		if (prod->mimic_sym && (prod->mimic_sym->kind == LITERAL)) {
+		if (prod->mimic_sym && (prod->mimic_sym->kind == T_LITERAL)) {
 			prod->mimic_sym = (symbol_t*)AT_VECTOR(cfg->terminal,
 											prod->mimic_sym->terminal_alias);
 		}
 		list_rhs_t* list = prod->rhs_element;
 		while (list) {
-			if (list->symbol_rhs->kind == LITERAL) {
+			if (list->symbol_rhs->kind == T_LITERAL) {
 				list->symbol_rhs = (symbol_t*)AT_VECTOR(cfg->terminal,
 										list->symbol_rhs->terminal_alias);
 			}
@@ -172,7 +172,7 @@ list_is_nullable(list_rhs_t const* list) {
 	if (!list)
 		{ return (true); }
 	while (list) {
-		if (list->symbol_rhs->kind == TERMINAL)
+		if (list->symbol_rhs->kind == T_TERMINAL)
 			{ return (false); }
 		else if (!list->symbol_rhs->nullable)
 			{ return (false); }

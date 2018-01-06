@@ -7,13 +7,12 @@
 #include "fgfx.lex.h"
 #undef	_ONLY_TOKEN_
 
-#define TERMINAL				T_GLOBAL_TOK
 #define NON_TERMINAL			T_NTER
-#define LITERAL					T_LITERAL
 
-#define IS_TERMINAL(symbol)		((symbol)->kind == TERMINAL)
+#define IS_TERMINAL(symbol)		((symbol)->kind == T_TERMINAL)
 #define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)
-#define IS_LITERAL(symbol)		((symbol)->kind == LITERAL)
+#define IS_LITERAL(symbol)		((symbol)->kind == T_LITERAL)
+
 #define IS_EOF(symbol)			((symbol)->is_eof)
 #define NOT_PREC				(-1)
 

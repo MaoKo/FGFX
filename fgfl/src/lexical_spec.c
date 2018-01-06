@@ -64,36 +64,54 @@ cmp_token_entry(spec_entry_t* entry, char const* str) {
 
 static spec_entry_t*
 add_entry_lexeme(lexical_spec_t* spec, int kind) {
-	int offset = (kind == LOCAL);
+	if ((kind != T_STATE) && ((!strcmp(C_LEXEME(spec->lex), "ERROR"))
+							|| (!strcmp(C_LEXEME(spec->lex), "EOF")))) {
+		errorf(CURRENT_LINE(spec->lex),
+					"Can't redefine %s. Name reserved for special use.",
+					C_LEXEME(spec->lex));
+		return (NULL);
+	}
 
-	int index = get_index_vector(spec->entry_vect, C_LEXEME(spec->lex) + offset,												&cmp_token_entry);
+	int index = get_index_vector(spec->entry_vect,
+							C_LEXEME(spec->lex), &cmp_token_entry);
+
+	spec_entry_t* entry = NULL;
 	if (index != -1)
-		{ return ((spec_entry_t*)AT_VECTOR(spec->entry_vect, index)); }
-	index = get_index_vector(spec->state_vect, C_LEXEME(spec->lex) + offset,
-										&cmp_token_entry);
-	if (index != -1)
-		{ return ((spec_entry_t*)AT_VECTOR(spec->state_vect, index)); }
+		{ entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, index); }
+	else {
+		index = get_index_vector(spec->state_vect,
+							C_LEXEME(spec->lex), &cmp_token_entry);
+		if (index != -1)
+			{ entry = (spec_entry_t*)AT_VECTOR(spec->state_vect, index); }
+	}
+
+	if (entry) {
+		if (entry->kind != kind) {
+			errorf(0, "Attempt to define %s into a %s but it is a %s.",
+				entry->name, KIND_IN2_STR(kind), KIND_IN2_STR(entry->kind));
+			return (NULL);
+		}
+		return (entry);
+	}
+
 	vector_t* src_vect = ((kind == T_STATE)
-								? spec->state_vect : spec->entry_vect);
+						? spec->state_vect : spec->entry_vect);
 
-	spec_entry_t* entry = NEW(spec_entry_t, 1);
-
+	entry = NEW(spec_entry_t, 1);
 	if (!entry)
 		{ return (NULL); }
 	memset(entry, 0, sizeof(*entry));
 
 	entry->kind = kind;
-	entry->name = strdup(C_LEXEME(spec->lex) + offset);
+	entry->name = strdup(C_LEXEME(spec->lex));
 
 	if (!entry->name) {
 		del_token_entry(entry);
 		return (NULL);
 	}
 
-	if (entry->kind == GLOBAL || entry->kind == LOCAL) {
-		entry->is_igcase = false;
-		entry->phase = AST;
-	}
+	if (entry->kind == T_TERMINAL)
+		{ entry->phase = AST; }
 
 	entry->index = SIZE_VECTOR(src_vect);
 	PUSH_BACK_VECTOR(src_vect, entry);
@@ -107,7 +125,7 @@ static int spec_regex_assign(lexical_spec_t*, spec_entry_t*, int);
 static int spec_regex_property(lexical_spec_t*, spec_entry_t*);
 static int spec_change_state(lexical_spec_t*, spec_entry_t*);
 
-static int spec_token_list(lexical_spec_t*, int);
+static int spec_state_token_list(lexical_spec_t*, int);
 static int spec_regex_list(lexical_spec_t*, int);
 
 int
@@ -157,12 +175,14 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 		/* ERROR */
 		return (ERROR);
 	}
-	if (advance_token(spec->lex) != T_GLOBAL_TOK) {
+	if (advance_token(spec->lex) != T_TERMINAL) {
 		/* ERROR */
 		return (ERROR);
 	}
 
-	spec_entry_t* crt_state = add_entry_lexeme(spec, STATE);
+	spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
+	if (!crt_state)
+		{ return (ERROR); }
 	entry->begin_state = GET_INDEX(crt_state);	
 
 	if (advance_token(spec->lex) != T_RPAREN) {
@@ -183,16 +203,21 @@ spec_state_prefix(lexical_spec_t* spec,
 			(*all_state) = true;
 			advance_token(spec->lex);
 		}
-		else if (peek_token(spec->lex) == T_GLOBAL_TOK) {
-			while (peek_token(spec->lex) == T_GLOBAL_TOK) {
+		else if (peek_token(spec->lex) == T_TERMINAL) {
+			while (peek_token(spec->lex) == T_TERMINAL) {
 				advance_token(spec->lex);
 
-				spec_entry_t* crt_state = add_entry_lexeme(spec, STATE);
+				spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
+				if (!crt_state) {
+					del_bitset(state_seen);
+					return (ERROR);
+				}
 				crt_state->is_used = true;
 
 				if (IS_PRESENT(state_seen, GET_INDEX(crt_state))) {
 					warnf(CURRENT_LINE(spec->lex),
-							"State %s already present", crt_state->name);
+								"State %s already present in the state list.",
+								crt_state->name);
 				}
 				else 
 					{ ADD_BITSET(state_seen, GET_INDEX(crt_state)); }
@@ -209,7 +234,7 @@ spec_state_prefix(lexical_spec_t* spec,
 
 		if (advance_token(spec->lex) != T_RPAREN) {
 			errorf(CURRENT_LINE(spec->lex),
-							"Missing a close paren after the state list.");
+				"Missing a close paren after the state list.");
 			del_bitset(state_seen);
 			return (ERROR);
 		}
@@ -221,21 +246,7 @@ spec_state_prefix(lexical_spec_t* spec,
 int
 spec_regex_assign(lexical_spec_t* spec,
 							spec_entry_t* entry, int kind_section) {
-
-	if ((!strcmp(entry->name, "ERROR")) || (!strcmp(entry->name, "EOF"))) {
-			errorf(CURRENT_LINE(spec->lex),
-					"Can't redefine %s. Name reserved for special use.",
-											entry->name);
-			return (T_ERROR);
-	}
-
 	if (peek_token(spec->lex) == T_EQUAL) {
-		if (entry->reg_str) {
-			errorf(CURRENT_LINE(spec->lex),
-								"Redefinning the token %s.", entry->name);
-			return (ERROR);
-		}
-
 		if (kind_section == T_SKIP)
 			{ entry->skip = true; }
 		advance_token(spec->lex);
@@ -263,13 +274,22 @@ spec_regex_assign(lexical_spec_t* spec,
 
 		CURRENT_LINE(spec->lex) += char_in_str(
 				C_LEXEME(spec->lex) + front_space, '\n');
-		entry->reg_str = strdup(C_LEXEME(spec->lex) + front_space);
+		char* reg_str = strdup(C_LEXEME(spec->lex) + front_space);
 
-		if (!entry->reg_str) {
+		if (!reg_str) {
 			errorf(0, "Non enough memory for allocate the regex string.");
 			return (ERROR);
 		}
+		else if (entry->reg_str) {
+			errorf(CURRENT_LINE(spec->lex),
+					"Attempt to re-affect '%s' into the token %s who "
+								"has already a regex '%s'.", reg_str,
+								entry->name, entry->reg_str);
+			FREE(reg_str);
+			return (ERROR);
+		}
 	
+		entry->reg_str = reg_str;
 		if (peek_token(spec->lex) == T_ARROW) {
 			advance_token(spec->lex);
 			if (advance_token(spec->lex) != T_LBRACE) {
@@ -285,16 +305,16 @@ spec_regex_assign(lexical_spec_t* spec,
 				return (ERROR);
 			}
 
-			if (peek_token(spec->lex) == T_COMMA) {
-				advance_token(spec->lex);
-				if (spec_change_state(spec, entry) == ERROR)
-					{ return (ERROR); }
-			}
+		}
+		if (peek_token(spec->lex) == T_COMMA) {
+			advance_token(spec->lex);
+			if (spec_change_state(spec, entry) == ERROR)
+				{ return (ERROR); }
 		}
 	}
 	else {
 		errorf(CURRENT_LINE(spec->lex),
-						"An equal or an arrow must follow the token.");
+				"An equal sign ('=') must follow the token %s.", entry->name);
 		return (ERROR);
 	}
 	return (DONE);
@@ -311,22 +331,17 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 	if (spec_state_prefix(spec, &state_seen, &all_state) == ERROR)
 		{ return (ERROR); }
 
-	if (in_first(spec->lex, T_GLOBAL_TOK, T_LOCAL_TOK, -1)) {
+	if (peek_token(spec->lex) == T_TERMINAL) {
 		spec->miss_regex = false;
+		spec_entry_t* entry = add_entry_lexeme(spec, advance_token(spec->lex));
 
-		int kind_token = advance_token(spec->lex);
-		spec_entry_t* entry = add_entry_lexeme(spec, kind_token);
+		if (!entry)
+			{ return (ERROR); }
 
 		entry->all_state = all_state;
 		entry->valid_state = state_seen;
 
-		if (entry->kind != kind_token) {
-			errorf(CURRENT_LINE(spec->lex),
-								"Redefinning token %s in %s.",
-								entry->name, REGEX_LST_SECT(kind_section));
-			return (ERROR);
-		}
-		else if (spec_regex_assign(spec, entry, kind_section) == ERROR)
+		if (spec_regex_assign(spec, entry, kind_section) == ERROR)
 			{ return (ERROR); }
 		else if (advance_token(spec->lex) != T_SEMI) {
 			errorf(CURRENT_LINE(spec->lex), "Missing a ';' after the regex.");
@@ -336,7 +351,7 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 	}
 	else if (peek_token(spec->lex) != T_RBRACE) {
 		errorf(CURRENT_LINE(spec->lex),
-						"Missing a local or global token in %s section",
+							"Missing a local or global token in %s section",
 							REGEX_LST_SECT(kind_section));
 		return (ERROR);
 	}
@@ -344,33 +359,23 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 }
 
 int
-spec_token_list(lexical_spec_t* spec, int kind_section) {
+spec_state_token_list(lexical_spec_t* spec, int kind_section) {
 	if (peek_token(spec->lex) == T_RBRACE)
 		{ return (DONE); }
-	else if (advance_token(spec->lex) == T_GLOBAL_TOK) {
+	else if (advance_token(spec->lex) == T_TERMINAL) {
 		spec_entry_t* entry = add_entry_lexeme(spec, kind_section);
+		if (!entry)
+			{ return (ERROR); }
+
 		++(entry->count);
-
-		if (kind_section == STATE)
+		if (kind_section == T_STATE)
 			{ entry->is_defined = true; }
-
-		if (entry->reg_str) {
-			errorf(CURRENT_LINE(spec->lex),
-								"Redefinning token %s in %s.",
-								entry->name, TOKEN_LST_SECT(kind_section));
-			return (ERROR);
-		}
-		else if (entry->kind != kind_section) {
-			errorf(CURRENT_LINE(spec->lex),
-					"Redefinning token %s from section %s to %s.", entry->name, 
-					TOKEN_LST_SECT(entry->kind), TOKEN_LST_SECT(kind_section));
-		}
 
 		if (kind_section == T_STATE && peek_token(spec->lex) == T_BARROW) {
 			advance_token(spec->lex);
 			if (advance_token(spec->lex) != T_INITIAL) {
 				errorf(CURRENT_LINE(spec->lex),
-							"Missing $INITIAL after the '=>' in the $STATE.");
+							"Missing $INITIAL after the '=>' in the $T_STATE.");
 				return (ERROR);
 			}
 			if (spec->start_state != -1)
@@ -380,13 +385,13 @@ spec_token_list(lexical_spec_t* spec, int kind_section) {
 
 		if (peek_token(spec->lex) == T_COMMA) {
 			advance_token(spec->lex);
-			return (spec_token_list(spec, kind_section));
+			return (spec_state_token_list(spec, kind_section));
 		}
 	}
 	else {
 		errorf(CURRENT_LINE(spec->lex),
-						"Expected identifier in the %s section.",
-							TOKEN_LST_SECT(kind_section));
+							"Expected identifier in the %s section.",
+							STATE_TOKEN_LST_SECT(kind_section));
 		return (ERROR);
 	}
 	return (DONE);
@@ -402,7 +407,7 @@ spec_token_entry_section(lexical_spec_t* spec) {
 			section_ptr = &spec_regex_list;
 			break;
 		case T_STATE: case T_KEYWORD:
-			section_ptr = &spec_token_list;
+			section_ptr = &spec_state_token_list;
 			break;
 	}
 
@@ -488,12 +493,12 @@ static void
 spec_unused_symbol(lexical_spec_t* spec) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
-		if ((crt_entry->kind == LOCAL) && (!crt_entry->is_used)) {
-			warnf(0, "Local token %s is defined"
-						" but not used.", crt_entry->name);
+		if ((crt_entry->is_frag) && (!crt_entry->is_used)) {
+			warnf(0,
+				"Local token %s is defined but not used.", crt_entry->name);
 		}
-		else if ((crt_entry->kind == KEYWORD) && (crt_entry->count > 1)) {
-			warnf(0, "The token '%s' appear %zu in the $KEYWORD section.",
+		else if ((crt_entry->kind == T_KEYWORD) && (crt_entry->count > 1)) {
+			warnf(0, "The token '%s' appear %zu in the $T_KEYWORD section.",
 					crt_entry->name, crt_entry->count);
 		}
 	}
@@ -501,11 +506,11 @@ spec_unused_symbol(lexical_spec_t* spec) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
 		spec_entry_t* crt_entry = AT_VECTOR(spec->state_vect, i);
 		if (!crt_entry->is_used) {
-			warnf(0, "The state %s is defined"
-						" but not used.", crt_entry->name);
+			warnf(0,
+				"The state %s is defined but not used.", crt_entry->name);
 		}
 		if (crt_entry->count > 1) {
-			warnf(0, "The state '%s' appear %zu in the $STATE section.",
+			warnf(0, "The state '%s' appear %zu in the $T_STATE section.",
 					crt_entry->name, crt_entry->count);
 		}
 	}
@@ -515,7 +520,7 @@ int
 spec_sanity_check(lexical_spec_t* spec) {
 	if (!spec)
 		{ return (ERROR); }
-	else if (compute_regex(spec) == ERROR)
+	else if (build_regex(spec) == ERROR)
 		{ return (ERROR); }
 	else if (detect_no_defined_state(spec) == ERROR)
 		{ return (ERROR); }

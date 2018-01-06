@@ -36,7 +36,7 @@ dependency_macro(lexical_spec_t* spec, spec_entry_t* entry,
 												bitset_t** set_macro) {
 	if (!set_macro)
 		{ return (ERROR); }
-	else if (entry->kind == KEYWORD)
+	else if (entry->kind == T_KEYWORD)
 		{ return (DONE); }
 
 	char const* beg_macro = strchr(entry->reg_str, '{');
@@ -56,8 +56,8 @@ dependency_macro(lexical_spec_t* spec, spec_entry_t* entry,
 					spec_entry_t* crt_entry = (spec_entry_t*)
 										AT_VECTOR(spec->entry_vect, index);
 
-					if ((crt_entry->kind == KEYWORD))
-						{ depend_not_token = KEYWORD; }
+					if ((crt_entry->kind == T_KEYWORD))
+						{ depend_not_token = T_KEYWORD; }
 					else {
 						if (!*set_macro)
 							{ *set_macro = new_bitset(); }
@@ -69,7 +69,7 @@ dependency_macro(lexical_spec_t* spec, spec_entry_t* entry,
 														beg_macro, size);
 					if (index != -1) {
 						find_dependence = true;
-						depend_not_token = STATE;
+						depend_not_token = T_STATE;
 					}
 				}
 
@@ -80,7 +80,7 @@ dependency_macro(lexical_spec_t* spec, spec_entry_t* entry,
 					}
 					else if (depend_not_token != -1) {
 						errorf(0, "Macro name %.*s is a %s.", size, beg_macro,
-											(depend_not_token == KEYWORD)
+											(depend_not_token == T_KEYWORD)
 													? "keyword" : "state" );
 					}
 					del_bitset(*set_macro);
@@ -137,7 +137,7 @@ topological_sort(lexical_spec_t* spec) {
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* crt_entry = (spec_entry_t*)
 										AT_VECTOR(spec->entry_vect, i);
-		if (crt_entry->kind != GLOBAL)
+		if (!((crt_entry->kind == T_TERMINAL) && (!crt_entry->is_frag)))
 			{ continue; }
 		else if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry)))
 			{ continue; }
@@ -157,7 +157,7 @@ topological_sort(lexical_spec_t* spec) {
 }
 
 int
-compute_regex(lexical_spec_t* spec) {
+build_regex(lexical_spec_t* spec) {
 	vector_t* stack_order;
 	int exit_st = DONE;
 
@@ -165,7 +165,7 @@ compute_regex(lexical_spec_t* spec) {
 		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 			spec_entry_t* crt_entry = (spec_entry_t*)
 											AT_VECTOR(spec->entry_vect, i);
-			if ((crt_entry->kind == LOCAL)
+			if ((crt_entry->is_frag)
 					&& (get_index_vector(stack_order, (void*)i, NULL) != -1))
 				{ crt_entry->is_used = true; }
 		}
@@ -174,7 +174,7 @@ compute_regex(lexical_spec_t* spec) {
 			size_t j = (long)AT_VECTOR(stack_order, i);
 			spec_entry_t* crt_entry = (spec_entry_t*)
 											AT_VECTOR(spec->entry_vect, j);
-			if (crt_entry->kind != KEYWORD)
+			if (crt_entry->kind != T_KEYWORD)
 				{ crt_entry->reg = regex_to_ast(spec, crt_entry->reg_str); }
 		}
 	}

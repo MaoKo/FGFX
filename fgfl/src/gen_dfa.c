@@ -39,7 +39,7 @@ gen_token_enum(int filde, lexical_spec_t const* spec) {
 	size_t count = 0;
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		if (entry->kind == GLOBAL || entry->kind == KEYWORD) {
+		if ((!entry->is_frag) && (entry->kind == T_STATE)) {
 			ENUM_TOKEN_LINE(filde, entry->name);
 			++count;
 		}
@@ -108,7 +108,7 @@ gen_skip_table(int filde, lexical_spec_t const* spec, char const* header) {
 
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		if (entry->skip && (entry->kind == GLOBAL))
+		if (entry->skip && (entry->kind == T_TERMINAL && !entry->is_frag))
 			{ PUSH_BACK_VECTOR(skip_table, entry); }
 	}
 	

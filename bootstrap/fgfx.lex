@@ -6,18 +6,16 @@ $SKIP
 
 $TOKEN
 {
-    @LETTER     =  / [a-zA-Z_]                             / ;
-    @DIGIT      =  / [0-9]                                 / ;
-    @IDENT      =  / {LETTER}({LETTER}|{DIGIT})*           / ;
+    LETTER     =  / [a-zA-Z_]                              / -> { $FRAG } ;
+    DIGIT      =  / [0-9]                                  / -> { $FRAG } ;
 
     /* FGFL */
-    LOCAL_TOK   =  / @{IDENT}                              / ;
     EQUAL       =  / =                                     / ;
     REGEX       =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
 	STAR		=  / \*                                    / ;    
 
     /* FGFP */
-    NTER        =  / <{IDENT}('{1,3})?>                    / ;
+    NTER        =  / <{TERMINAL}('{1,3})?>                 / ;
 
     UNION       =  / \|                                    / ;
 
@@ -27,8 +25,8 @@ $TOKEN
     LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
     
     /* Both FGFL & FGFP */
-    DIRECTIVE   =  / ${IDENT}                              / ;
-    GLOBAL_TOK  =  / {IDENT}                               / ;
+    DIRECTIVE   =  / ${TERMINAL}                           / ;
+    TERMINAL    =  / {LETTER}({LETTER}|{DIGIT})*           / ;
 
     ARROW       =  / ->                                    / ;
     BARROW      =  / =>                                    / ;
