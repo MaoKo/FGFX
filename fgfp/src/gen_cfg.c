@@ -13,11 +13,11 @@
 #include "utils.h"
 
 void
-gen_location_token(int filde, vector_t const* path_token) {
+gen_location_token(int filde, cfg_t const* cfg) {
 	dprintf(filde, DEFINE(_ONLY_TOKEN_,) NL);
-	for (size_t i = 0; i < SIZE_VECTOR(path_token); ++i) {
+	for (size_t i = 0; i < SIZE_VECTOR(cfg->token_file); ++i) {
 		dprintf(filde, INCLUDE(%s) NL,
-			(char const*)AT_VECTOR(path_token, i));
+							(char const*)AT_VECTOR(cfg->token_file, i));
 	}
 	dprintf(filde, UNDEF(_ONLY_TOKEN_) NL NL);
 }

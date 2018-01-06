@@ -33,9 +33,10 @@ typedef struct regex_node_t {
 typedef struct edge_t edge_t;
 
 typedef struct state_t {
+	size_t index;
 	int final;
-	unsigned int index_state;
 	edge_t* trans;
+	// if CCLASS
 	bitset_t* class;
 	struct state_t* out_class;
 } state_t;
@@ -50,6 +51,17 @@ typedef struct {
 	edge_t* tail;
 	state_t* head;
 } nfa_frag_t;
+
+/*
+
+typedef struct {
+	bitset_t* set_state;
+	size_t hash_state;
+//	trans_list_t* tr
+	size_t group;
+} dfa_state_t;
+
+*/
 
 typedef struct {
 	size_t index;
@@ -70,8 +82,10 @@ typedef struct {
 			bitset_t* valid_state;
 		};
 		struct { // if KEYWORD & STATE
-			struct // if STATE
-				{ bool is_defined; };
+			struct { // if STATE
+				state_t* belong_state;
+				bool is_defined;
+			};
 			size_t count;
 		};
 	};

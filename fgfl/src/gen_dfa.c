@@ -20,19 +20,33 @@ gen_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
 }
 
 void
-gen_token_enum(int filde, vector_t const* elst) {
+gen_state_enum(int filde, token_spec_t const* spec) {
+	dprintf(filde, ENUM SP BEG_BLOCK NL);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->state); ++i) {
+		token_entry_t* crt_state = (token_entry_t*)AT_VECTOR(spec->state, i);
+		ENUM_STATE_LINE(filde, crt_state->name);
+	}
+	dprintf(filde, END_BLOCK SEMI NL NL);
+
+	token_entry_t* init_state = AT_VECTOR(spec->state, spec->start_state);
+	dprintf(filde, DEFINE(%s, %s%s%s) NL NL,
+						"INITIAL_STATE", STATE_PREFIX, SEP, init_state->name);
+}
+
+void
+gen_token_enum(int filde, token_spec_t const* spec) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	size_t count = 0;
-	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
-		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (entry->kind == GLOBAL || entry->kind == KEYWORD) {
-			ENUM_LINE(filde, entry->name);
+			ENUM_TOKEN_LINE(filde, entry->name);
 			++count;
 		}
 	}
 
-	ENUM_LINE(filde, "ERROR");
-	ENUM_LINE(filde, "EOF");
+	ENUM_TOKEN_LINE(filde, "ERROR");
+	ENUM_TOKEN_LINE(filde, "EOF");
 
 	dprintf(filde, END_BLOCK SEMI NL NL);
 	dprintf(filde, DEFINE(%s, %zu) NL NL, MACRO_TOKEN, count + 2);
@@ -89,13 +103,13 @@ gen_final_table(int filde, vector_t const* final, char const* header) {
 }
 
 void
-gen_skip_table(int filde, vector_t const* elst, char const* header) {
+gen_skip_table(int filde, token_spec_t const* spec, char const* header) {
 	vector_t* skip_table = new_vector();
 	if (!skip_table)
 		{ return; }
 
-	for (size_t i = 0; i < SIZE_VECTOR(elst); ++i) {
-		token_entry_t* entry = (token_entry_t*)AT_VECTOR(elst, i);
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
+		token_entry_t* entry = (token_entry_t*)AT_VECTOR(spec->entry_lst, i);
 		if (entry->skip && (entry->kind == GLOBAL))
 			{ PUSH_BACK_VECTOR(skip_table, entry); }
 	}

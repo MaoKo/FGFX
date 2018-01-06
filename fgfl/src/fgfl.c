@@ -23,7 +23,7 @@ gen_fgfl_file(token_spec_t* spec, char const* base_file) {
 	vector_t* trans = NULL;
 	vector_t* final = NULL;
 
-	build_dfa_table(spec->master, &trans, &final, spec->entry_lst);
+	build_dfa_table(spec, &trans, &final);
 
 #ifdef OPTIMIZE
 	equivalent_state(trans, final);
@@ -31,14 +31,19 @@ gen_fgfl_file(token_spec_t* spec, char const* base_file) {
 
 	gen_require_macro(filde, base_file);
 	gen_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
-	gen_token_enum(filde, spec->entry_lst);
+
+	if (!EMPTY_VECTOR(spec->state))
+		{ gen_state_enum(filde, spec); }
+	gen_token_enum(filde, spec);
 
 	IFNDEF_ONLY_TOKEN(filde);
 
 	gen_dfa_useful_macro(filde);
+
 	gen_state_table(filde, trans, header);
 	gen_final_table(filde, final, header);
-	gen_skip_table(filde, spec->entry_lst, header);
+
+	gen_skip_table(filde, spec, header);
 
 	ENDIF_ONLY_TOKEN(filde);
 

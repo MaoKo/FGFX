@@ -16,7 +16,7 @@
 #define LHS_STR		"LHS"
 #define RHS_STR		"RHS"
 
-void gen_location_token(int, vector_t const*);
+void gen_location_token(int, cfg_t const*);
 void gen_nter_symbol(int, cfg_t const*, size_t, bool);
 void gen_non_terminal_enum(int, cfg_t const*);
 void gen_rhs_table(int, cfg_t const*, char const*);

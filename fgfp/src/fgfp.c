@@ -30,7 +30,7 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 
 	gen_require_macro(filde, base_file);
 
-	gen_location_token(filde, cfg->token_file);
+	gen_location_token(filde, cfg);
 	gen_non_terminal_enum(filde, cfg);	
 
 	gen_production_enum(filde, cfg);

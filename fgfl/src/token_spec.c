@@ -15,10 +15,10 @@
 static void
 del_token_entry(token_entry_t* entry) {
 	if (entry) {
-//		if (entry->phase == AST)	
-//			{ del_regex_node(entry->reg); }
-//		else if (entry->phase == FRAGMENT)
-//			{ FREE_FRAG(entry->frag); }
+		if (entry->phase == AST)	
+			{ del_regex_node(entry->reg); }
+		else if (entry->phase == FRAGMENT)
+			{ FREE_FRAG(entry->frag); }
 		del_bitset(entry->valid_state);
 
 		FREE(entry->name);
@@ -372,8 +372,12 @@ detect_no_defined_state(token_spec_t* spec) {
 
 static int
 check_token_not_prefix(token_spec_t* spec) {
-	if (spec->start_state == -1)
-		{ return (DONE); }
+	if (spec->start_state == -1) {
+		if (EMPTY_VECTOR(spec->state))
+			{ return (DONE); }
+		warnf(0, "Initial state not defined. Default set to state 0.");
+		spec->start_state = 0;
+	}
 
 	int not_prefix = DONE;
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_lst); ++i) {
@@ -384,6 +388,7 @@ check_token_not_prefix(token_spec_t* spec) {
 			not_prefix = ERROR;
 		}
 	}
+
 	return (not_prefix);
 }
 

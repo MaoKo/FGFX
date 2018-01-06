@@ -4,8 +4,8 @@
 
 /* C Identifier token */
 
-$TOKEN {
-
+$TOKEN
+{
 	@ESC_UN		=	/(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})/ ;
 	@LETTER		=	/[A-Za-z_]/ ;
 	@DIGIT		=	/[0-9]/ ;
@@ -21,7 +21,7 @@ $TOKEN {
 
 	/* C String token */
 
-	STR		=	/(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"/ ;
+	STR			=	/(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"/ ;
 
 
 	/* C Punctuation */
@@ -42,13 +42,13 @@ $TOKEN {
 	PLUSPLUS	=	/"++"/	;
 	MINUS		=	/-/	;
 	MINUSMINUS	=	/--/	;
-	DIV		=	/\//	;
-	MUL		=	/\*/	;
-	MOD		=	/%/	;
-	XOR		=	/^/	;
-	ORB		=	/\|/	;
+	DIV			=	/\//	;
+	MUL			=	/\*/	;
+	MOD			=	/%/	;
+	XOR			=	/^/	;
+	ORB			=	/\|/	;
 	ANDB		=	/&/	;
-	ORL		=	/"||"/	;
+	ORL			=	/"||"/	;
 	ANDL		=	/&&/	;
 	TILDE		=	/~/	;
 	ASSIGN		=	/=/	;
@@ -65,8 +65,8 @@ $TOKEN {
 	ANDLE		=	/&&=/	;
 	TILDEE		=	/~=/	;
 
-	EQ		=	/==/	;
-	NEQ		=	/!=/	;
+	EQ			=	/==/	;
+	NEQ			=	/!=/	;
 	LESS		=	/</	;
 	GREAT		=	/>/	;
 	LESSE		=	/<=/	;
@@ -85,30 +85,32 @@ $TOKEN {
 	@U_S		=	/[uU]/ ;
 	@L_S		=	/[lL]/ ;
 	@LL_S		=	/(ll|LL)/ ;
+
 	@INT_S		=	/(({U_S}{L_S}?)|({U_S}{LL_S})|\
-						({L_S}{U_S}?)|({LL_S}{U_S}?))/ ;
+									({L_S}{U_S}?)|({LL_S}{U_S}?))/ ;
+
 	INTEGER		=	/({DEC}|{OCT}|{HEX}){INT_S}?/ ;
 
 	/* C Float */
 
-/*
-@SIGN		=	[-+] ;
-@F_S		=	[flFL] ;
+@SIGN			=	/ [-+] / ;
+@F_S			=	/ [flFL] /;
 
-#@SCF_EXP	=	[eE]{SIGN}?{DIGIT}+
-@BIN_EXP	=	[pP]{SIGN}?{DIGIT}+
+@SCF_EXP		=	/ [eE]{SIGN}?{DIGIT}+ / ;
+@BIN_EXP		=	/ [pP]{SIGN}?{DIGIT}+ / ;
 
-#@D_FRACT	=	({DIGIT}+\.)
+@D_FRACT		=	/ ({DIGIT}+\.) / ;
 
-#@DECF		=	({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?)
-#FLOAT		=	{DECF}
-*/
+@DECF			=	/ ({D_FRACT}{SCF_EXP}?{F_S}?)|({DIGIT}+{SCF_EXP}{F_S}?) / ;
+FLOAT			=	/ {DECF} / ;
 
 };
 
-$SKIP {
+$SKIP
+{
 	/* C Comment */
 	COMMENT		=	/(\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/)/ ;
+
 	/* C Space */
 	SPACE		=	/[ \t\n]+/ ;
 };

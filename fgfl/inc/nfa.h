@@ -15,18 +15,16 @@
 #define PUSH_EDGE(st, ed)		((ed->next = st->trans) , (st->trans = ed))
 #define INIT_EDGE(ed, l, o)		((ed->label = l) , (ed->out_state = o))
 #define	MAX_STATE				(712)
-#define STATE_AT(index)			(record_state[index])
+#define STATE_AT(index)			(AT_VECTOR(record_nfa_state, (size_t)index))
 
 #define MIN_ASCII				(0)
 #define MAX_ASCII				(UCHAR_MAX + 1)
 
 #define EPSILON					(MAX_ASCII + 1)
 
-extern state_t* record_state[MAX_STATE];
+extern vector_t* record_nfa_state;
 
-void del_record(void);
-state_t* state_at(size_t);
-
+void del_nfa_record(void);
 state_t* new_state(void);
 nfa_frag_t* ast_to_nfa(regex_node_t*, int, bool);
 int build_nfa(token_spec_t*);
