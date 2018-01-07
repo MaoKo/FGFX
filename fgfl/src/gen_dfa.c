@@ -111,10 +111,6 @@ gen_state_table(int filde, vector_t const* trans,
 void
 gen_final_table(int filde, vector_t const* final,
 							char const* header, spec_entry_t const* entry) {
-
-	size_t count_final = SIZE_VECTOR(final) / 2;
-	dprintf(filde, DEFINE(SIZE_FINAL_TAB, %zu) NL NL, count_final);
-
 	dprintf(filde, STATIC SP);
 	gen_typedef_name(filde, "final_state", entry);
 	dprintf(filde, NL);
@@ -123,7 +119,9 @@ gen_final_table(int filde, vector_t const* final,
 	dprintf(filde, SEP);
 
 	gen_state_name(filde, entry);
-	dprintf(filde, "final_table[%s][2] = " BEG_BLOCK NL, "SIZE_FINAL_TAB");
+
+	size_t count_final = SIZE_VECTOR(final) / 2;
+	dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, count_final + 1);
 
 	for (size_t i = 0; i < count_final; ++i) {
 		dprintf(filde,	TAB BEG_BLOCK SP "%ld" COMMA SP
@@ -131,6 +129,7 @@ gen_final_table(int filde, vector_t const* final,
 						(long)AT_VECTOR(final, i*2),
 						(char const*)AT_VECTOR(final, i*2+1));
 	}
+	dprintf(filde, TAB BEG_BLOCK SP "0" SP END_BLOCK COMMA NL);
 	dprintf(filde, END_BLOCK SEMI NL NL);
 }
 

@@ -9,7 +9,7 @@ enum {
 	T_EQUAL,
 	T_REGEX,
 	T_STAR,
-	T_NTER,
+	T_NON_TERMINAL,
 	T_UNION,
 	T_LBRACK,
 	T_RBRACK,
@@ -102,10 +102,8 @@ fgfx_state_table[42][256] = {
 /*  41 */	{[62]=37},
 };
 
-#define SIZE_FINAL_TAB	22
-
 static final_state_t
-fgfx_final_table[SIZE_FINAL_TAB][2] = {
+fgfx_final_table[23][2] = {
 	{ 2, 	T_SPACE },
 	{ 5, 	T_LPAREN },
 	{ 6, 	T_RPAREN },
@@ -126,8 +124,9 @@ fgfx_final_table[SIZE_FINAL_TAB][2] = {
 	{ 30, 	T_LITERAL },
 	{ 31, 	T_REGEX },
 	{ 34, 	T_REGEX },
-	{ 37, 	T_NTER },
+	{ 37, 	T_NON_TERMINAL },
 	{ 39, 	T_COMMENT },
+	{ 0 },
 };
 
 static int

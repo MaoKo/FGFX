@@ -1,44 +1,44 @@
 $SKIP
 {
-    SPACE       =  / [ \t\n]+                              / ;
-    COMMENT     =  / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
+    SPACE        =  / [ \t\n]+                              / ;
+    COMMENT      =  / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
 };
 
 $TOKEN
 {
-    LETTER     =  / [a-zA-Z_]                              / -> { $FRAG } ;
-    DIGIT      =  / [0-9]                                  / -> { $FRAG } ;
+    LETTER       =  / [a-zA-Z_]                             / -> { $FRAG } ;
+    DIGIT        =  / [0-9]                                 / -> { $FRAG } ;
 
     /* FGFL */
-    EQUAL       =  / =                                     / ;
-    REGEX       =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
-	STAR		=  / \*                                    / ;    
+    EQUAL        =  / =                                     / ;
+    REGEX        =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
+	STAR		 =  / \*                                    / ;    
 
     /* FGFP */
-    NTER        =  / <{TERMINAL}('{1,3})?>                 / ;
+    NON_TERMINAL =  / <{TERMINAL}('{1,3})?>                 / ;
 
-    UNION       =  / \|                                    / ;
+    UNION        =  / \|                                    / ;
 
-    LBRACK      =  / \[                                    / ;
-    RBRACK      =  / \]                                    / ;
+    LBRACK       =  / \[                                    / ;
+    RBRACK       =  / \]                                    / ;
 
-    LITERAL     =  / '([^\n\\'"]|\\[\\'"])+'               / ;
+    LITERAL      =  / '([^\n\\'"]|\\[\\'"])+'               / ;
     
     /* Both FGFL & FGFP */
-    DIRECTIVE   =  / ${TERMINAL}                           / ;
-    TERMINAL    =  / {LETTER}({LETTER}|{DIGIT})*           / ;
+    DIRECTIVE    =  / ${TERMINAL}                           / ;
+    TERMINAL     =  / {LETTER}({LETTER}|{DIGIT})*           / ;
 
-    ARROW       =  / ->                                    / ;
-    BARROW      =  / =>                                    / ;
+    ARROW        =  / ->                                    / ;
+    BARROW       =  / =>                                    / ;
 
-    SEMI        =  / ;                                     / ;
-    COMMA       =  / ,                                     / ;
+    SEMI         =  / ;                                     / ;
+    COMMA        =  / ,                                     / ;
 
-    LBRACE      =  / \{                                    / ;
-    RBRACE      =  / \}                                    / ;
+    LBRACE       =  / \{                                    / ;
+    RBRACE       =  / \}                                    / ;
 
-    LPAREN      =  / \(                                    / ;
-    RPAREN      =  / \)                                    / ;
+    LPAREN       =  / \(                                    / ;
+    RPAREN       =  / \)                                    / ;
 };
 
 $KEYWORD

@@ -158,9 +158,11 @@ in_first(lexer_t* lex, ...) {
 
 int
 is_final_state(int state) {
-	for (size_t i = 0; i < SIZE_FINAL_TAB; ++i) {
-		if (fgfx_final_table[i][0] == state)
+	size_t i = 0;
+	while (*fgfx_final_table[i]) {
+		if (*fgfx_final_table[i]== state)
 			{ return (fgfx_final_table[i][1]); }
+		++i;
 	}
 	return (T_ERROR);
 }

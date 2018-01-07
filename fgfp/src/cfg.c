@@ -30,7 +30,7 @@ static void
 free_symbol(symbol_t* sym) {
 	if (sym) {
 		FREE(sym->name);
-		if (sym->kind == NON_TERMINAL) {
+		if (sym->kind == T_NON_TERMINAL) {
 			del_bitset(sym->first);
 			del_bitset(sym->follow);
 			del_bitset(sym->prod_lst);
@@ -72,7 +72,7 @@ cmp_symbol_name(symbol_t const* sym, char const* name) {
 
 static symbol_t*
 add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
-	vector_t* dest = (kind == NON_TERMINAL)
+	vector_t* dest = (kind == T_NON_TERMINAL)
 						? cfg->non_terminal : cfg->terminal;
 	if (crt_lexeme) {
 		int index = get_index_vector(dest, crt_lexeme, &cmp_symbol_name);
@@ -112,10 +112,10 @@ add_symbol_cfg(cfg_t* cfg, int kind, char const* crt_lexeme) {
 	}
 
 /*
-	if (kind == NON_TERMINAL)
+	if (kind == T_NON_TERMINAL)
 		{ *strchr(sym->name, '>') = EOS; }
 
-	//vector_t** dst = (kind == NON_TERMINAL)
+	//vector_t** dst = (kind == T_NON_TERMINAL)
 	//? cfg->non_terminal : cfg->terminal;
 	//size_t hs = hash_str(sym->name) % HASH_SIZE;
 	//else
@@ -145,7 +145,7 @@ augment_grammar(cfg_t* cfg) {
 	if (!cfg)
 		{ return; }
 
-	symbol_t* start = add_symbol_cfg(cfg, NON_TERMINAL, "$START");
+	symbol_t* start = add_symbol_cfg(cfg, T_NON_TERMINAL, "$START");
 	start->is_defined = true;
 
 	production_t* prod = new_production(start, cfg);
@@ -410,7 +410,7 @@ cfg_production_list(cfg_t* cfg) {
 static int
 follow_prod(cfg_t* cfg) {
 	symbol_t* symbol_lhs = add_symbol_cfg(cfg,
-							NON_TERMINAL, C_LEXEME(cfg->lex));
+							T_NON_TERMINAL, C_LEXEME(cfg->lex));
 
 	if (peek_token(cfg->lex) == T_ARROW) {
 		advance_token(cfg->lex);
@@ -441,7 +441,7 @@ follow_prod(cfg_t* cfg) {
 int
 cfg_production(cfg_t* cfg) {
 	char const* next;
-	if ((next = "nonterminal", advance_token(cfg->lex) != NON_TERMINAL)
+	if ((next = "nonterminal", advance_token(cfg->lex) != T_NON_TERMINAL)
 			|| (next = NULL, follow_prod(cfg) == ERROR)
 			|| (next = ";", advance_token(cfg->lex) != T_SEMI)) {
 		if (next) {
@@ -514,7 +514,7 @@ cfg_mimic(cfg_t* cfg, production_t* crt_prod) {
 int
 cfg_opt_list(cfg_t* cfg, production_t* prod) {
 	if (in_first(cfg->lex, T_LBRACK, T_LBRACE,
-								NON_TERMINAL, T_TERMINAL, T_LITERAL, -1))
+								T_NON_TERMINAL, T_TERMINAL, T_LITERAL, -1))
 		{ return (cfg_list(cfg, prod)); }
 	else if (peek_token(cfg->lex) == T_EMPTY)
 		{ advance_token(cfg->lex); }
@@ -533,7 +533,7 @@ cfg_list(cfg_t* cfg, production_t* prod) {
 	if (cfg_atom(cfg, prod) == ERROR)
 		{ return (ERROR); }
 	while (in_first(cfg->lex, T_LBRACK, T_LBRACE,
-								NON_TERMINAL, T_TERMINAL, T_LITERAL, -1)) {
+								T_NON_TERMINAL, T_TERMINAL, T_LITERAL, -1)) {
 		if (cfg_atom(cfg, prod) == ERROR)
 			{ return (ERROR); }
 	}
@@ -603,7 +603,7 @@ enclosed_element(cfg_t* cfg, production_t* prod) {
 		return (exit_st);
 	}
 
-	symbol_t* opt_nter = add_symbol_cfg(cfg, NON_TERMINAL, NULL);
+	symbol_t* opt_nter = add_symbol_cfg(cfg, T_NON_TERMINAL, NULL);
 
 	opt_nter->is_defined = true;
 	opt_nter->spec_kind = kind;

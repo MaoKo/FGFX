@@ -49,11 +49,10 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 		{ gen_state_enum(filde, spec); }
 	gen_token_enum(filde, spec);
 
-	IFNDEF_ONLY_TOKEN(filde);
-
-	gen_dfa_useful_macro(filde);
-
 	if (!spec->miss_regex) {
+		IFNDEF_ONLY_TOKEN(filde);
+		gen_dfa_useful_macro(filde);
+
 		if (!active_state)
 			{ gen_dfa_final_tables(filde, spec, spec->master, header, NULL); }
 		else {
@@ -66,9 +65,9 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 		}
 		del_nfa_record();
 		gen_skip_table(filde, spec, header);
-	}
 
-	ENDIF_ONLY_TOKEN(filde);
+		ENDIF_ONLY_TOKEN(filde);
+	}
 
 	gen_endif(filde, base_file);
 	FREE(header);

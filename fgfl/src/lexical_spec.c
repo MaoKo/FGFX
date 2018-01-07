@@ -506,6 +506,11 @@ check_validity_token(lexical_spec_t* spec) {
 	return (exit_st);
 }
 
+static void
+del_useless_state(lexical_spec_t* spec, size_t base) {
+	erase_vector(spec->state_vect, base);
+}
+
 static int
 check_validity_state(lexical_spec_t* spec) {
 	if (spec->start_state == -1) {
@@ -526,11 +531,13 @@ check_validity_state(lexical_spec_t* spec) {
 		if (!crt_state->is_used) {
 			warnf(0, "The state %s is defined but not used.",
 								crt_state->name);
+			del_useless_state(spec, GET_INDEX(crt_state));
 		}
 		if (!crt_state->is_reach
 				&& ((size_t)spec->start_state != GET_INDEX(crt_state))) {
 			warnf(0, "The state %s is actualy unreachable.",
 								crt_state->name);
+			del_useless_state(spec, GET_INDEX(crt_state));
 		}
 		if (crt_state->count > 1) {
 			warnf(0, "The state '%s' appear %zu in the $STATE section.",

@@ -7,10 +7,8 @@
 #include "fgfx.lex.h"
 #undef	_ONLY_TOKEN_
 
-#define NON_TERMINAL			T_NTER
-
 #define IS_TERMINAL(symbol)		((symbol)->kind == T_TERMINAL)
-#define IS_NON_TERMINAL(symbol)	((symbol)->kind == NON_TERMINAL)
+#define IS_NON_TERMINAL(symbol)	((symbol)->kind == T_NON_TERMINAL)
 #define IS_LITERAL(symbol)		((symbol)->kind == T_LITERAL)
 
 #define IS_EOF(symbol)			((symbol)->is_eof)
