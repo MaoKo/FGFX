@@ -31,6 +31,8 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Remove unreachable state
 	.	Handle when the number of state is 1
 	.	Check useless $BEGIN
+	.	Handle empty regex
+	.	Gen change state table ( $BEGIN )
 	.	Create the grammar and the lexical specification for regex
 	.	Learn MarkDown :)
 

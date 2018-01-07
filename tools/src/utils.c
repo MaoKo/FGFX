@@ -83,6 +83,18 @@ char_in_str(char const* base_str, char c) {
 	return (count);
 }
 
+void
+readjust_index(vector_t* vect, size_t base, void(*dealloc)(void*)) {
+	if (base >= SIZE_VECTOR(vect))
+		{ return; }
+	(*dealloc)(AT_VECTOR(vect, base));
+	erase_vector(vect, base);
+	for (size_t i = base; i < SIZE_VECTOR(vect); ++i) {
+		obj_index_t* obj = (obj_index_t*)AT_VECTOR(vect, i);
+		--(obj->index);
+	}
+}
+
 trans_list_t*
 new_trans_list(unsigned int input, unsigned int state) {
 	trans_list_t* list = NEW(trans_list_t, 1);

@@ -15,10 +15,10 @@
 static void
 del_spec_entry(spec_entry_t* entry) {
 	if (entry) {
-		if (entry->kind != T_STATE) {
-			if (entry->phase == AST)	
+		if (entry->kind == T_TERMINAL) {
+			if (entry->is_frag)	
 				{ del_regex_node(entry->reg); }
-			else if (entry->phase == FRAGMENT)
+			else
 				{ FREE_FRAG(entry->frag); }
 			del_bitset(entry->valid_state);
 		}
@@ -113,10 +113,8 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 		return (NULL);
 	}
 
-	if (entry->kind == T_TERMINAL) {
-		entry->phase = AST;
-		entry->begin_state = -1;
-	}
+	if (entry->kind == T_TERMINAL)
+		{ entry->begin_state = -1; }
 
 	entry->index = SIZE_VECTOR(src_vect);
 	PUSH_BACK_VECTOR(src_vect, entry);
@@ -460,25 +458,25 @@ parse_lexical_spec(int filde) {
 	return (crt_spec);
 }
 
+static inline void
+set_used_state(spec_entry_t* crt_state) {
+	crt_state->is_used = true;
+}
+
 static int
 check_validity_token(lexical_spec_t* spec) {
 	bool state_present = !EMPTY_VECTOR(spec->state_vect);
 	int exit_st = DONE;
 
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+	for (int i = SIZE_VECTOR(spec->entry_vect) - 1; i >= 0; --i) {
 		spec_entry_t* crt_entry = (spec_entry_t*)
-										AT_VECTOR(spec->entry_vect, i);
+									AT_VECTOR(spec->entry_vect, (size_t)i);
 
 		if (crt_entry->kind == T_TERMINAL) {
-			if (crt_entry->is_frag) {
-				if (!crt_entry->is_used) {
-					warnf(0, "Local token %s is defined but not used.",
-										crt_entry->name);
-				}
-				if (crt_entry->begin_state != -1) {
-					warnf(0, "Useless to do a $BEGIN on local token %s.",
-										crt_entry->name);
-				}
+			if (crt_entry->all_state) {
+				foreach_vector(spec->state_vect, &set_used_state);
+				add_range_bitset(crt_entry->valid_state,
+										0, SIZE_VECTOR(spec->state_vect));
 			}
 			if (state_present) {
 				if (!crt_entry->valid_state) {
@@ -489,13 +487,27 @@ check_validity_token(lexical_spec_t* spec) {
 					}
 				}
 				else if (crt_entry->begin_state != -1
-							&& IS_PRESENT(crt_entry->valid_state,
-								(size_t)crt_entry->begin_state)) {
+						&& (count_elt_bitset(crt_entry->valid_state) == 1)
+						&& (IS_PRESENT(crt_entry->valid_state,(size_t)
+												crt_entry->begin_state))) {
+
 					warnf(0, "Useless to do a $BEGIN on state %s when"
 									" this state is already active.",
 									((spec_entry_t*)AT_VECTOR(spec->state_vect,
 									(size_t)crt_entry->begin_state))->name);
 				}
+			}
+			if (crt_entry->is_frag) {
+				if (!crt_entry->is_used) {
+					warnf(0, "Local token %s is defined but not used.",
+										crt_entry->name);
+				}
+				if (crt_entry->begin_state != -1) {
+					warnf(0, "Useless to do a $BEGIN on local token %s.",
+										crt_entry->name);
+				}
+				readjust_index(spec->entry_vect,
+						(size_t)i, (void(*)(void*))&del_spec_entry);
 			}
 		}
 		else if ((crt_entry->kind == T_KEYWORD) && (crt_entry->count > 1)) {
@@ -506,10 +518,12 @@ check_validity_token(lexical_spec_t* spec) {
 	return (exit_st);
 }
 
+/*
 static void
 del_useless_state(lexical_spec_t* spec, size_t base) {
 	erase_vector(spec->state_vect, base);
 }
+*/
 
 static int
 check_validity_state(lexical_spec_t* spec) {
@@ -531,13 +545,13 @@ check_validity_state(lexical_spec_t* spec) {
 		if (!crt_state->is_used) {
 			warnf(0, "The state %s is defined but not used.",
 								crt_state->name);
-			del_useless_state(spec, GET_INDEX(crt_state));
+//			del_useless_state(spec, GET_INDEX(crt_state));
 		}
 		if (!crt_state->is_reach
 				&& ((size_t)spec->start_state != GET_INDEX(crt_state))) {
 			warnf(0, "The state %s is actualy unreachable.",
 								crt_state->name);
-			del_useless_state(spec, GET_INDEX(crt_state));
+//			del_useless_state(spec, GET_INDEX(crt_state));
 		}
 		if (crt_state->count > 1) {
 			warnf(0, "The state '%s' appear %zu in the $STATE section.",

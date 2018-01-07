@@ -48,15 +48,12 @@ enum {
 
 #define TOTAL_TOKEN	40
 
-#ifndef _ONLY_TOKEN_
+#ifndef _ONLY_STATE_TOKEN_
 
 #define START_STATE	1
 #define DEAD_STATE	0
 
-typedef	uint8_t	dfa_state_t;
-typedef	uint8_t	final_state_t;
-
-static dfa_state_t
+static uint8_t
 fgfx_state_table[42][256] = {
 /*   0 */	{},
 /*   1 */	{[125]=19, [124]=18, [123]=17, [97 ... 122]=14, [95]=14, [93]=16, [91]=15, [65 ... 90]=14, [61]=13, [60]=12, [59]=11, [47]=10, [45]=9, [44]=8, [42]=7, [41]=6, [40]=5, [39]=4, [36]=3, [32]=2, [9 ... 10]=2},
@@ -102,7 +99,7 @@ fgfx_state_table[42][256] = {
 /*  41 */	{[62]=37},
 };
 
-static final_state_t
+static uint8_t
 fgfx_final_table[23][2] = {
 	{ 2, 	T_SPACE },
 	{ 5, 	T_LPAREN },
@@ -129,12 +126,12 @@ fgfx_final_table[23][2] = {
 	{ 0 },
 };
 
-static int
+static int8_t
 fgfx_skip_table[3] = {
 	T_SPACE,
 	T_COMMENT,
 	-1,
 };
 
-#endif /* _ONLY_TOKEN_ */
+#endif /* _ONLY_STATE_TOKEN_ */
 #endif /* _FGFX_LEX_H_ */

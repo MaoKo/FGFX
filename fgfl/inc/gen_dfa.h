@@ -4,8 +4,16 @@
 #include "fgfl.h"
 #include "vector.h"
 
-#define IFNDEF_ONLY_TOKEN(x)	dprintf(x, "#ifndef _ONLY_TOKEN_" NL NL)
-#define ENDIF_ONLY_TOKEN(x)		dprintf(x, "#endif /* _ONLY_TOKEN_ */" NL)
+#define STATE_TOKEN_STR			"_ONLY_STATE_TOKEN_"
+
+#define IFNDEF_ONLY_STATE_TOKEN(x)	dprintf(x, "#ifndef " STATE_TOKEN_STR NL NL)
+#define ENDIF_ONLY_STATE_TOKEN(x)	dprintf(x, "#endif /* "\
+											STATE_TOKEN_STR " */" NL)
+
+#define DFA_START_STATE(x)		dprintf(x, DEFINE(START_STATE, 1) NL)
+#define DFA_DEAD_STATE(x)		dprintf(x, DEFINE(DEAD_STATE, 0) NL NL)
+
+#define DFA_MACRO(x)			(DFA_START_STATE(x), DFA_DEAD_STATE(x))
 
 #define ENUM_LINE(f, x, p)		dprintf(f, TAB p SEP "%s" COMMA NL, x)
 
@@ -22,6 +30,6 @@ void gen_dfa_typedef(int, vector_t const*,
 void gen_state_table(int, vector_t const*, char const*, spec_entry_t const*);
 void gen_final_table(int, vector_t const*, char const*, spec_entry_t const*);
 void gen_skip_table(int, lexical_spec_t const* spec, char const*);
-void gen_dfa_useful_macro(int);
+void gen_change_state(int, char const*, lexical_spec_t*);
 
 #endif /* GEN_DFA_H */

@@ -24,8 +24,6 @@ gen_dfa_final_tables(int filde, lexical_spec_t* spec, state_t* master,
 	equivalent_state(trans, final);
 #endif /* OPTIMIZE */
 
-	gen_dfa_typedef(filde, trans, final, entry);
-
 	gen_state_table(filde, trans, header, entry);
 	gen_final_table(filde, final, header, entry);
 
@@ -50,8 +48,11 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 	gen_token_enum(filde, spec);
 
 	if (!spec->miss_regex) {
-		IFNDEF_ONLY_TOKEN(filde);
-		gen_dfa_useful_macro(filde);
+		IFNDEF_ONLY_STATE_TOKEN(filde);
+		if (active_state)
+			{ gen_change_state(filde, header, spec); }
+
+		DFA_MACRO(filde);
 
 		if (!active_state)
 			{ gen_dfa_final_tables(filde, spec, spec->master, header, NULL); }
@@ -66,7 +67,7 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 		del_nfa_record();
 		gen_skip_table(filde, spec, header);
 
-		ENDIF_ONLY_TOKEN(filde);
+		ENDIF_ONLY_STATE_TOKEN(filde);
 	}
 
 	gen_endif(filde, base_file);

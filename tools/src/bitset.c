@@ -81,6 +81,14 @@ _add_bitset(bitset_t* bs, size_t n) {
 	return (ADD_BITSET(bs, n));
 }
 
+void
+add_range_bitset(bitset_t* bs, size_t min, size_t max) {
+	if (max < min)
+		{ return; }
+	for (size_t i = min; i <= max; ++i)
+		{ ADD_BITSET(bs, i); }
+}
+
 bool
 is_empty_bitset(bitset_t const* bs) {
 	if (!bs)

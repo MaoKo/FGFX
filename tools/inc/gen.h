@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // Format Character
 #define TAB				"\t"
@@ -46,7 +47,7 @@
 #define SHORT			(16)
 #define LONG			(32)
 
-uint8_t min_size_type(size_t);
+uint8_t min_size_type(size_t, bool);
 void gen_include_macro(int, char const*);
 void gen_require_macro(int, char const*);
 void gen_endif(int, char const*);

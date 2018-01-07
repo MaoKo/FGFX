@@ -76,7 +76,6 @@ typedef struct {
 
 			bool skip;
 
-			enum { NONE, AST, FRAGMENT, } phase;
 			union {
 				regex_node_t* reg;
 				nfa_frag_t* frag;

@@ -3,9 +3,9 @@
 
 #include "fgfl.h"
 
-#define	_ONLY_TOKEN_
+#define	_ONLY_STATE_TOKEN_
 #include "fgfx.lex.h"
-#undef	_ONLY_TOKEN_
+#undef	_ONLY_STATE_TOKEN_
 
 #define KIND_IN2_STR(x)			((x == T_TERMINAL) ? "TERMINAL" :\
 									((x == T_KEYWORD) ? "KEYWORD" : "STATE"))

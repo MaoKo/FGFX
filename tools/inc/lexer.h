@@ -23,6 +23,6 @@ void del_lexer(lexer_t*);
 long advance_token(lexer_t*);
 int peek_token(lexer_t*);
 bool in_first(lexer_t*, ...);
-int is_final_state(int);
+size_t is_final_state(int);
 
 #endif /* LEXER_H */

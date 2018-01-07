@@ -76,7 +76,7 @@ get_next_token(lexer_t* lex) {
 	return (last_match);
 }
 
-static inline int
+static inline bool
 allow_skip(int token) {
 	for (size_t i = 0; fgfx_skip_table[i] != -1; ++i) {
 		if (token == fgfx_skip_table[i])
@@ -156,7 +156,7 @@ in_first(lexer_t* lex, ...) {
 	return (false);
 }
 
-int
+size_t
 is_final_state(int state) {
 	size_t i = 0;
 	while (*fgfx_final_table[i]) {

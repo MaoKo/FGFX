@@ -71,6 +71,7 @@ bitset_t* new_bitset(void);
 void del_bitset(bitset_t*);
 bitset_t* dup_bitset(bitset_t const*);
 _SETTYPE _add_bitset(bitset_t*, size_t);
+void add_range_bitset(bitset_t*, size_t, size_t);
 bool is_empty_bitset(bitset_t const*);
 bool eq_bitset(bitset_t const*, bitset_t const*);
 bitset_t* _op_bitset(int, bitset_t*, bitset_t*);

@@ -3,9 +3,9 @@
 
 #include "fgfp.h"
 
-#define _ONLY_TOKEN_
+#define _ONLY_STATE_TOKEN_
 #include "fgfx.lex.h"
-#undef	_ONLY_TOKEN_
+#undef	_ONLY_STATE_TOKEN_
 
 #define IS_TERMINAL(symbol)		((symbol)->kind == T_TERMINAL)
 #define IS_NON_TERMINAL(symbol)	((symbol)->kind == T_NON_TERMINAL)

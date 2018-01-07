@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "vector.h"
+
 //Allocation Macro
 #define NEW(type, size)		(type*)_pmalloc(sizeof(type) * size)
 #define REALLOC(ptr, size)	_prealloc(ptr, size)
@@ -30,6 +32,10 @@ typedef struct gen_list_t {
 	struct gen_list_t* next;
 } gen_list_t;
 
+typedef struct obj_index_t {
+	size_t index;
+} obj_index_t;
+
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
 char const* get_filename(char const*);
@@ -38,6 +44,7 @@ size_t count_front(char const*, int(*)(int));
 size_t count_back(char const*, int(*)(int));
 size_t char_in_str(char const*, char);
 trans_list_t* new_trans_list(unsigned int, unsigned int);
+void readjust_index(vector_t*, size_t, void(*)(void*));
 size_t size_gen_list(gen_list_t const*);
 void redirect_trans_list(trans_list_t*, unsigned int, unsigned int);
 void append_trans_list(trans_list_t*, trans_list_t*);

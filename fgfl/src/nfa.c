@@ -205,10 +205,8 @@ ast_to_nfa(spec_entry_t* crt_entry) {
 	int exit_st = DONE;
 	if ((crt_entry->frag = dfs_ast(root)) == NULL)
 		{ exit_st = ERROR; }
-	else {
-		STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1);
-		crt_entry->phase = FRAGMENT;
-	}
+	else
+		{ STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1); }
 	del_regex_node(root);
 	return (exit_st);
 }
@@ -224,7 +222,7 @@ build_nfa(lexical_spec_t* spec) {
 
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		if ((entry->kind != T_TERMINAL) || (entry->is_frag))
+		if (entry->kind == T_KEYWORD)
 			{ continue; }
 		else if (ast_to_nfa(entry) == ERROR)
 			{ return (ERROR); }

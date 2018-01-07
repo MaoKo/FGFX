@@ -6,10 +6,11 @@
 #include "gen.h"
 
 uint8_t
-min_size_type(size_t size) {
-	if (size <= UCHAR_MAX)
+min_size_type(size_t size, bool unsign) {
+	if ((unsign && size <= UCHAR_MAX) || (!unsign && size <= SCHAR_MAX))
 		{ return (BYTE); }
-	else if (size > UCHAR_MAX && size <= USHRT_MAX)
+	else if ((unsign && size > UCHAR_MAX && size <= USHRT_MAX)
+			|| (!unsign && size > SCHAR_MAX && size <= SHRT_MAX))
 		{ return (SHORT); }
 	return (LONG);
 }

@@ -45,7 +45,7 @@ void
 clear_vector(vector_t* vect) {
 	if (!vect)
 		{ return; }
-	bzero(vect->body, sizeof(void*) * vect->alloc);
+	memset(vect->body, 0, sizeof(void*) * vect->alloc);
 	vect->index = 0;
 }
 
