@@ -21,13 +21,16 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	More accurate handle of error in FGFX (FGFP done)
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
-	.	Improve the algorithm for constructing the LALR parsing table
+	.	Improve the algorithm for constructing the
+			LALR parsing table
+			DFA transition table
+
 	.	Add error recovery mechanism
 	.	Add parser and lexer in the template dir
 	.	Add in FGFP ( ... | ... )
 	.	Remove unreachable state
 	.	Handle when the number of state is 1
+	.	Check useless $BEGIN
 	.	Create the grammar and the lexical specification for regex
-	.	Changing example in example/lex directory
 	.	Learn MarkDown :)
 

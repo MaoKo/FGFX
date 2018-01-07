@@ -110,8 +110,10 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 		return (NULL);
 	}
 
-	if (entry->kind == T_TERMINAL)
-		{ entry->phase = AST; }
+	if (entry->kind == T_TERMINAL) {
+		entry->phase = AST;
+		entry->begin_state = -1;
+	}
 
 	entry->index = SIZE_VECTOR(src_vect);
 	PUSH_BACK_VECTOR(src_vect, entry);
@@ -184,6 +186,8 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 	if (!crt_state)
 		{ return (ERROR); }
 	entry->begin_state = GET_INDEX(crt_state);	
+	if (!entry->is_frag)
+		{ crt_state->is_reach = true; }
 
 	if (advance_token(spec->lex) != T_RPAREN) {
 		/* ERROR */
@@ -454,21 +458,53 @@ parse_lexical_spec(int filde) {
 }
 
 static int
-detect_no_defined_state(lexical_spec_t* spec) {
-	int not_defined = DONE;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+check_validity_token(lexical_spec_t* spec) {
+	bool state_present = !EMPTY_VECTOR(spec->state_vect);
+	int exit_st = DONE;
+
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* crt_entry = (spec_entry_t*)
-											AT_VECTOR(spec->state_vect, i);
-		if (!crt_entry->is_defined) {
-			errorf(0, "The state %s is used but not defined.", crt_entry->name);
-			not_defined = ERROR;
+										AT_VECTOR(spec->entry_vect, i);
+
+		if (crt_entry->kind == T_TERMINAL) {
+			if (crt_entry->is_frag) {
+				if (!crt_entry->is_used) {
+					warnf(0, "Local token %s is defined but not used.",
+										crt_entry->name);
+				}
+				if (crt_entry->begin_state != -1) {
+					warnf(0, "Useless to do a $BEGIN on local token %s.",
+										crt_entry->name);
+				}
+			}
+			if (state_present) {
+				if (!crt_entry->valid_state) {
+					if (!crt_entry->all_state) {
+						errorf(0, "Token %s is not prefixed by any state.",
+											crt_entry->name);
+						exit_st = ERROR;
+					}
+				}
+				else if (crt_entry->begin_state != -1
+							&& IS_PRESENT(crt_entry->valid_state,
+								(size_t)crt_entry->begin_state)) {
+					warnf(0, "Useless to do a $BEGIN on state %s when"
+									" this state is already active.",
+									((spec_entry_t*)AT_VECTOR(spec->state_vect,
+									(size_t)crt_entry->begin_state))->name);
+				}
+			}
+		}
+		else if ((crt_entry->kind == T_KEYWORD) && (crt_entry->count > 1)) {
+			warnf(0, "The token '%s' appear %zu in the $KEYWORD section.",
+					crt_entry->name, crt_entry->count);
 		}
 	}
-	return (not_defined);
+	return (exit_st);
 }
 
 static int
-check_token_not_prefix(lexical_spec_t* spec) {
+check_validity_state(lexical_spec_t* spec) {
 	if (spec->start_state == -1) {
 		if (EMPTY_VECTOR(spec->state_vect))
 			{ return (DONE); }
@@ -476,44 +512,34 @@ check_token_not_prefix(lexical_spec_t* spec) {
 		spec->start_state = 0;
 	}
 
-	int not_prefix = DONE;
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
-		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
-		if (!crt_entry->valid_state && !crt_entry->all_state) {
-			errorf(0, "Token %s is not prefixed by any state.",
-													crt_entry->name);
-			not_prefix = ERROR;
-		}
-	}
-
-	return (not_prefix);
-}
-
-static void
-spec_unused_symbol(lexical_spec_t* spec) {
-	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
-		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
-		if ((crt_entry->is_frag) && (!crt_entry->is_used)) {
-			warnf(0,
-				"Local token %s is defined but not used.", crt_entry->name);
-		}
-		else if ((crt_entry->kind == T_KEYWORD) && (crt_entry->count > 1)) {
-			warnf(0, "The token '%s' appear %zu in the $T_KEYWORD section.",
-					crt_entry->name, crt_entry->count);
-		}
-	}
-
+	int exit_st = DONE;
 	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
-		spec_entry_t* crt_entry = AT_VECTOR(spec->state_vect, i);
-		if (!crt_entry->is_used) {
-			warnf(0,
-				"The state %s is defined but not used.", crt_entry->name);
+		spec_entry_t* crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, i);
+		if (!crt_state->is_defined) {
+			errorf(0, "The state %s is used but not defined.",
+								crt_state->name);
+			exit_st = ERROR;
 		}
-		if (crt_entry->count > 1) {
-			warnf(0, "The state '%s' appear %zu in the $T_STATE section.",
-					crt_entry->name, crt_entry->count);
+		if (!crt_state->is_used) {
+			warnf(0, "The state %s is defined but not used.",
+								crt_state->name);
+		}
+		if (!crt_state->is_reach
+				&& ((size_t)spec->start_state != GET_INDEX(crt_state))) {
+			warnf(0, "The state %s is actualy unreachable.",
+								crt_state->name);
+		}
+		if (crt_state->count > 1) {
+			warnf(0, "The state '%s' appear %zu in the $STATE section.",
+								crt_state->name, crt_state->count);
 		}
 	}
+	if (exit_st != ERROR && SIZE_VECTOR(spec->state_vect) == 1) {
+		warnf(0, "Useless to have only 1 state.");
+		POP_BACK_VECTOR(spec->state_vect);
+		return (DONE);
+	}
+	return (exit_st);
 }
 
 int
@@ -522,12 +548,10 @@ spec_sanity_check(lexical_spec_t* spec) {
 		{ return (ERROR); }
 	else if (build_regex(spec) == ERROR)
 		{ return (ERROR); }
-	else if (detect_no_defined_state(spec) == ERROR)
+	else if (check_validity_token(spec) == ERROR)
 		{ return (ERROR); }
-	else if (check_token_not_prefix(spec))
+	else if (check_validity_state(spec) == ERROR)
 		{ return (ERROR); }
-	spec_unused_symbol(spec);
-
 	return (DONE);
 }
 

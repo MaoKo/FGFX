@@ -81,11 +81,11 @@ $TOKEN
 
 	/* C Int */
 
-	DEC		=	/([1-9][0-9]*)/ -> { $FRAG };
-	OCT		=	/(0[0-7]*)/ -> { $FRAG };
-	HEX		=	/(0[xX][0-9a-fA-F]+)/ -> { $FRAG };
-	U_S		=	/[uU]/ -> { $FRAG };
-	L_S		=	/[lL]/ -> { $FRAG };
+	DEC			=	/([1-9][0-9]*)/ -> { $FRAG };
+	OCT			=	/(0[0-7]*)/ -> { $FRAG };
+	HEX			=	/(0[xX][0-9a-fA-F]+)/ -> { $FRAG };
+	U_S			=	/[uU]/ -> { $FRAG };
+	L_S			=	/[lL]/ -> { $FRAG };
 	LL_S		=	/(ll|LL)/ -> { $FRAG };
 
 	INT_S		=	/(({U_S}{L_S}?)|({U_S}{LL_S})|\
@@ -94,9 +94,7 @@ $TOKEN
 	INTEGER		=	/({DEC}|{OCT}|{HEX}){INT_S}?/ ;
 
 	/* C Float */
-	DIGIT		=	/[0-9]/	 -> { $FRAG };
 	SIGN		=	/[-+]/	 -> { $FRAG };
-
 	F_S			=	/[flFL]/ -> { $FRAG };
 
 	SCF_EXP		=	/[eE]{SIGN}?{DIGIT}+/ -> { $FRAG };

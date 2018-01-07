@@ -97,6 +97,7 @@ static int
 recur_node_topsort(lexical_spec_t* spec, spec_entry_t* crt_entry,
 			size_t index_entry, vector_t* stack_order, bitset_t* seen_reg) {
 
+	crt_entry->is_used = true;
 	if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry))) {
 		if (GET_INDEX(crt_entry) == index_entry) {
 			errorf(0, "Stack overflow. Cycle detected for regex %s.",
@@ -162,14 +163,6 @@ build_regex(lexical_spec_t* spec) {
 	int exit_st = DONE;
 
 	if ((stack_order = topological_sort(spec))) {
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
-			spec_entry_t* crt_entry = (spec_entry_t*)
-											AT_VECTOR(spec->entry_vect, i);
-			if ((crt_entry->is_frag)
-					&& (get_index_vector(stack_order, (void*)i, NULL) != -1))
-				{ crt_entry->is_used = true; }
-		}
-
 		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
 			size_t j = (long)AT_VECTOR(stack_order, i);
 			spec_entry_t* crt_entry = (spec_entry_t*)

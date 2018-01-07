@@ -90,6 +90,7 @@ typedef struct {
 			struct { // if STATE
 				state_t* belong_state;
 				bool is_defined;
+				bool is_reach;
 			};
 			size_t count;
 		};
