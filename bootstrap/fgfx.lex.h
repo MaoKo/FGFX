@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-typedef	uint8_t	dfa_state_t;
-typedef	uint8_t	final_state_t;
-
 enum {
 	T_SPACE,
 	T_COMMENT,
@@ -55,6 +52,9 @@ enum {
 
 #define START_STATE	1
 #define DEAD_STATE	0
+
+typedef	uint8_t	dfa_state_t;
+typedef	uint8_t	final_state_t;
 
 static dfa_state_t
 fgfx_state_table[42][256] = {

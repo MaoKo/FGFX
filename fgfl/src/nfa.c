@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
@@ -139,8 +138,8 @@ ast_union(regex_node_t* root) {
 	nfa_frag_t* right = dfs_ast(root->right);	
 
 	if (attach_tail(start, left, right, NULL))
-
 		{ /* TODO ERROR */ }
+
 	state_t* final = new_state();
 
 	if (make_transition(left->head, EPSILON, final)
@@ -199,12 +198,19 @@ dfs_ast(regex_node_t* root) {
 	return (NULL);
 }
 
-nfa_frag_t*
-ast_to_nfa(regex_node_t* root, int priority, bool igcase) {
-	crt_igcase = igcase;
-	nfa_frag_t* frag = dfs_ast(root);
-	STATE_FINAL(frag->head, priority);
-	return (frag);
+int
+ast_to_nfa(spec_entry_t* crt_entry) {
+	crt_igcase = crt_entry->is_igcase;
+	regex_node_t* root = crt_entry->reg;
+	int exit_st = DONE;
+	if ((crt_entry->frag = dfs_ast(root)) == NULL)
+		{ exit_st = ERROR; }
+	else {
+		STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1);
+		crt_entry->phase = FRAGMENT;
+	}
+	del_regex_node(root);
+	return (exit_st);
 }
 
 int
@@ -212,23 +218,37 @@ build_nfa(lexical_spec_t* spec) {
 	if (!spec)
 		{ return (ERROR); }
 
-//	if (spec->start_state == -1) {
-		spec->master = new_state();
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
-			spec_entry_t* entry = (spec_entry_t*)
-										AT_VECTOR(spec->entry_vect, i);
-			if ((entry->kind == T_TERMINAL) && (!entry->is_frag)) {
-				regex_node_t* ast = entry->reg;
-				entry->frag = ast_to_nfa(ast, i + 1, entry->is_igcase);
+	bool active_state = (spec->start_state != -1);
+	if (!active_state)
+		{ spec->master = new_state(); }
 
-				del_regex_node(ast);
-
-				entry->phase = FRAGMENT;
-				if (attach_tail(spec->master, entry->frag, NULL))
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
+		if ((entry->kind != T_TERMINAL) || (entry->is_frag))
+			{ continue; }
+		else if (ast_to_nfa(entry) == ERROR)
+			{ return (ERROR); }
+		else if (!entry->is_frag) {
+			if (!active_state) {
+				if (attach_tail(spec->master, entry->frag, NULL) == ERROR)
 					{ return (ERROR); }
 			}
+			else {
+				int i;
+				while ((i = IT_NEXT(entry->valid_state)) != IT_NULL) {
+					spec_entry_t* crt_state = (spec_entry_t*)
+									AT_VECTOR(spec->state_vect, (size_t)i);
+					if (!crt_state->st_master)
+						{ crt_state->st_master = new_state(); }
+
+					if (attach_tail(crt_state->st_master,
+											entry->frag, NULL) == ERROR)
+						{ return (ERROR); }
+				}
+				IT_RESET(entry->valid_state);
+			}
 		}
-//	}
+	}
 
 	return (DONE);
 }

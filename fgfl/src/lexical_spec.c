@@ -13,14 +13,15 @@
 #include "utils.h"
 
 static void
-del_token_entry(spec_entry_t* entry) {
+del_spec_entry(spec_entry_t* entry) {
 	if (entry) {
-		if (entry->phase == AST)	
-			{ del_regex_node(entry->reg); }
-		else if (entry->phase == FRAGMENT)
-			{ FREE_FRAG(entry->frag); }
-		del_bitset(entry->valid_state);
-
+		if (entry->kind != T_STATE) {
+			if (entry->phase == AST)	
+				{ del_regex_node(entry->reg); }
+			else if (entry->phase == FRAGMENT)
+				{ FREE_FRAG(entry->frag); }
+			del_bitset(entry->valid_state);
+		}
 		FREE(entry->name);
 		FREE(entry->reg_str);
 	}
@@ -48,10 +49,12 @@ new_lexical_spec(int filde) {
 void
 del_lexical_spec(lexical_spec_t* spec) {
 	if (spec) {
-		for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i)
-			{ del_token_entry((spec_entry_t*)AT_VECTOR(spec->entry_vect, i)); }
+		foreach_vector(spec->entry_vect, &del_spec_entry);
+		foreach_vector(spec->state_vect, &del_spec_entry);
+	
 		del_vector(spec->entry_vect);
 		del_vector(spec->state_vect);
+
 		del_lexer(spec->lex);
 	}
 	FREE(spec);
@@ -106,7 +109,7 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 	entry->name = strdup(C_LEXEME(spec->lex));
 
 	if (!entry->name) {
-		del_token_entry(entry);
+		del_spec_entry(entry);
 		return (NULL);
 	}
 
@@ -534,10 +537,10 @@ check_validity_state(lexical_spec_t* spec) {
 								crt_state->name, crt_state->count);
 		}
 	}
-	if (exit_st != ERROR && SIZE_VECTOR(spec->state_vect) == 1) {
-		warnf(0, "Useless to have only 1 state.");
+	if ((exit_st != ERROR) && (SIZE_VECTOR(spec->state_vect) == 1)) {
+		warnf(0, "Useless to have only 1 state. It's an implicit state.");
 		POP_BACK_VECTOR(spec->state_vect);
-		return (DONE);
+		spec->start_state = -1;
 	}
 	return (exit_st);
 }

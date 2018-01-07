@@ -11,15 +11,6 @@
 #include "nfa.h"
 
 void
-gen_dfa_typedef(int filde, size_t size_trans, size_t size_final) {
-	dprintf(filde, INCLUDE_SYS(stdint.h) NL NL);
-	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "dfa_state_t" SEMI NL,
-			min_size_type(size_trans));
-	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB "final_state_t" SEMI NL NL,
-			min_size_type(size_final));
-}
-
-void
 gen_state_enum(int filde, lexical_spec_t const* spec) {
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
@@ -39,7 +30,7 @@ gen_token_enum(int filde, lexical_spec_t const* spec) {
 	size_t count = 0;
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		if ((!entry->is_frag) && (entry->kind == T_STATE)) {
+		if (!entry->is_frag) {
 			ENUM_TOKEN_LINE(filde, entry->name);
 			++count;
 		}
@@ -52,13 +43,48 @@ gen_token_enum(int filde, lexical_spec_t const* spec) {
 	dprintf(filde, DEFINE(%s, %zu) NL NL, MACRO_TOKEN, count + 2);
 }
 
-void
-gen_state_table(int filde, vector_t const* trans, char const* header) {
-	dprintf(filde, STATIC SP "dfa_state_t" NL);
-	gen_verbatim_file(filde, header);
+static inline void
+gen_state_name(int filde, spec_entry_t const* entry) {
+	char const* sep = ((entry) ? SEP : "");
+	char const* name = ((entry) ? entry->name : "");
+	dprintf(filde, "%s%s", name, sep);
+}
 
-	dprintf(filde, "_state_table[%zu][%d] = " BEG_BLOCK NL,
-			SIZE_VECTOR(trans), MAX_ASCII);
+static inline void
+gen_typedef_name(int filde, char const* type_name, spec_entry_t const* entry) {
+	gen_state_name(filde, entry);
+	dprintf(filde, "%s_t", type_name);
+}
+
+void
+gen_dfa_typedef(int filde, vector_t const* trans,
+							vector_t const* final, spec_entry_t const* entry) {
+
+	size_t size_trans = SIZE_VECTOR(trans);
+	size_t size_final = SIZE_VECTOR(final);
+
+	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB, min_size_type(size_trans));
+	gen_typedef_name(filde, "dfa_state", entry);
+	dprintf(filde, SEMI NL);
+
+	dprintf(filde, TYPEDEF TAB "uint%u_t" TAB, min_size_type(size_final));
+	gen_typedef_name(filde, "final_state", entry);
+	dprintf(filde, SEMI NL NL);
+}
+
+void
+gen_state_table(int filde, vector_t const* trans,
+							char const* header, spec_entry_t const* entry) {
+	dprintf(filde, STATIC SP);
+	gen_typedef_name(filde, "dfa_state", entry);
+	dprintf(filde, NL);
+
+	gen_verbatim_file(filde, header);
+	dprintf(filde, SEP);
+
+	gen_state_name(filde, entry);
+	dprintf(filde, "state_table[%zu][%d] = " BEG_BLOCK NL,
+								SIZE_VECTOR(trans), MAX_ASCII);
 
 	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i) {
 		trans_list_t const* list = (trans_list_t*)AT_VECTOR(trans, i);
@@ -83,16 +109,24 @@ gen_state_table(int filde, vector_t const* trans, char const* header) {
 }
 
 void
-gen_final_table(int filde, vector_t const* final, char const* header) {
+gen_final_table(int filde, vector_t const* final,
+							char const* header, spec_entry_t const* entry) {
+
 	size_t count_final = SIZE_VECTOR(final) / 2;
 	dprintf(filde, DEFINE(SIZE_FINAL_TAB, %zu) NL NL, count_final);
 
-	dprintf(filde, STATIC SP "final_state_t" NL);
-	gen_verbatim_file(filde, header);
+	dprintf(filde, STATIC SP);
+	gen_typedef_name(filde, "final_state", entry);
+	dprintf(filde, NL);
 
-	dprintf(filde, "_final_table[%s][2] = " BEG_BLOCK NL, "SIZE_FINAL_TAB");
+	gen_verbatim_file(filde, header);
+	dprintf(filde, SEP);
+
+	gen_state_name(filde, entry);
+	dprintf(filde, "final_table[%s][2] = " BEG_BLOCK NL, "SIZE_FINAL_TAB");
+
 	for (size_t i = 0; i < count_final; ++i) {
-		dprintf(filde, TAB BEG_BLOCK SP "%ld" COMMA SP
+		dprintf(filde,	TAB BEG_BLOCK SP "%ld" COMMA SP
 						TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
 						(long)AT_VECTOR(final, i*2),
 						(char const*)AT_VECTOR(final, i*2+1));

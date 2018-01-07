@@ -12,6 +12,28 @@
 #include "error.h"
 #include "utils.h"
 
+static void
+gen_dfa_final_tables(int filde, lexical_spec_t* spec, state_t* master,
+									char const* header, spec_entry_t* entry) {
+	vector_t* trans = NULL;
+	vector_t* final = NULL;
+
+	build_dfa_table(master, spec, &trans, &final);
+
+#ifdef OPTIMIZE
+	equivalent_state(trans, final);
+#endif /* OPTIMIZE */
+
+	gen_dfa_typedef(filde, trans, final, entry);
+
+	gen_state_table(filde, trans, header, entry);
+	gen_final_table(filde, final, header, entry);
+
+	foreach_vector(trans, &del_trans_list);
+	del_vector(trans);
+	del_vector(final);
+}
+
 static int 
 gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 	char const* header = strjoin(base_file, ".h");
@@ -20,19 +42,10 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 	if (filde == -1)
 		{ return (ERROR); }
 
-	vector_t* trans = NULL;
-	vector_t* final = NULL;
-
-	build_dfa_table(spec, &trans, &final);
-
-#ifdef OPTIMIZE
-	equivalent_state(trans, final);
-#endif /* OPTIMIZE */
-
 	gen_require_macro(filde, base_file);
-	gen_dfa_typedef(filde, SIZE_VECTOR(trans), SIZE_VECTOR(final));
 
-	if (!EMPTY_VECTOR(spec->state_vect))
+	bool active_state = (spec->start_state != -1);
+	if (active_state)
 		{ gen_state_enum(filde, spec); }
 	gen_token_enum(filde, spec);
 
@@ -40,22 +53,26 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 
 	gen_dfa_useful_macro(filde);
 
-	gen_state_table(filde, trans, header);
-	gen_final_table(filde, final, header);
-
-	gen_skip_table(filde, spec, header);
+	if (!spec->miss_regex) {
+		if (!active_state)
+			{ gen_dfa_final_tables(filde, spec, spec->master, header, NULL); }
+		else {
+			for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+				spec_entry_t* crt_state = (spec_entry_t*)
+										AT_VECTOR(spec->state_vect, i);
+				gen_dfa_final_tables(filde, spec,
+								crt_state->st_master, header, crt_state);
+			}
+		}
+		del_nfa_record();
+		gen_skip_table(filde, spec, header);
+	}
 
 	ENDIF_ONLY_TOKEN(filde);
 
 	gen_endif(filde, base_file);
-
-	for (size_t i = 0; i < SIZE_VECTOR(trans); ++i)
-		{ del_trans_list(AT_VECTOR(trans, i)); }
-
-	del_vector(trans);
-	del_vector(final);
-
 	FREE(header);
+
 	if (close(filde) == -1)
 		{ return (ERROR); }
 

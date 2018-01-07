@@ -1,4 +1,11 @@
+$STATE
+{
+	ABC,
+	DEF => $INITIAL,
+};
+
 $TOKEN
 {
-B	=	/  / ;
+	( DEF ) B = / A /, ( $BEGIN ABC );
+	( ABC ) C = / A /;
 };

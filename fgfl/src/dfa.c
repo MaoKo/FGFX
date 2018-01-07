@@ -114,9 +114,11 @@ build_state_table(state_t* master, vector_t** rstates) {
 static vector_t*
 build_final_table(vector_t* states, vector_t* elst) {
 	vector_t* final = new_vector();
+
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
 		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
 		int min_tok = 0;
+
 		int it;
 		while ((it = IT_NEXT(set_state)) != IT_NULL) {
 			state_t* crt_state = STATE_AT(it);
@@ -136,17 +138,15 @@ build_final_table(vector_t* states, vector_t* elst) {
 }
 
 void
-build_dfa_table(lexical_spec_t* spec, vector_t** trans, vector_t** final) {
+build_dfa_table(state_t* master, lexical_spec_t* spec,
+									vector_t** trans, vector_t** final) {
 	vector_t* states = NULL;
 
-	*trans = build_state_table(spec->master, &states);
+	*trans = build_state_table(master, &states);
 	*final = build_final_table(states, spec->entry_vect);
 
-	for (size_t i = 0; i < SIZE_VECTOR(states); ++i)
-		{ del_bitset((bitset_t*)AT_VECTOR(states, i)); }
-
+	foreach_vector(states, &del_bitset);
 	del_vector(states);
-	del_nfa_record();
 }
 
 #ifdef OPTIMIZE
@@ -193,8 +193,7 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 				int fs2 = get_index_vector(finalt, (void*)j, NULL);
 
 				bool final = (fs1 >= 0 && fs2 >= 0) &&
-					(AT_VECTOR(finalt, fs1 + 1)
-					== AT_VECTOR(finalt, fs2 + 1));
+					(AT_VECTOR(finalt, fs1 + 1) == AT_VECTOR(finalt, fs2 + 1));
 			
 				bool nonfinal = (fs1 == -1 && fs2 == -1);
 		
