@@ -25,10 +25,10 @@ get_next_token(void) {
 	int state = START_STATE;
 	beg_lexeme = stream;
 	while (*stream && (state != DEAD_STATE)) {
-		state = /* NAME PREFIX */state_table[state][*stream];
+		state = /* NAME PREFIX */state_table[state][(int)*stream];
 		size_t i = 0;
-		while (*/* NAME PREFIX */final_table[i]) {
-			if (*/* NAME PREFIX */final_table[i] == state)
+		while (* /* NAME PREFIX */final_table[i]) {
+			if (* /* NAME PREFIX */final_table[i] == state)
 				{ last_match = /* NAME PREFIX */final_table[i][1]; }
 			++i;		
 		}

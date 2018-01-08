@@ -83,9 +83,9 @@ _add_bitset(bitset_t* bs, size_t n) {
 
 void
 add_range_bitset(bitset_t* bs, size_t min, size_t max) {
-	if (max < min)
+	if (max <= min)
 		{ return; }
-	for (size_t i = min; i <= max; ++i)
+	for (size_t i = min; i < max; ++i)
 		{ ADD_BITSET(bs, i); }
 }
 

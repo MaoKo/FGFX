@@ -13,8 +13,6 @@
 #include "gen_ll.h"
 #include "gen_cfg.h"
 
-#include "lalr.h"
-
 #include "gen.h"
 #include "error.h"
 #include "bitset.h"
@@ -59,6 +57,7 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 
 	gen_action_enum(filde);
 	gen_lr_useful_macro(filde);
+
 	gen_action_table(filde, cfg, lr1_states, header);
 	gen_goto_table(filde, cfg, lr1_states, header);
 
