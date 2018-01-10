@@ -14,12 +14,12 @@
 
 void
 gen_location_token(int filde, cfg_t const* cfg) {
-	dprintf(filde, DEFINE(_ONLY_TOKEN_,) NL);
+	dprintf(filde, DEFINE(_ONLY_STATE_TOKEN_,) NL);
 	for (size_t i = 0; i < SIZE_VECTOR(cfg->token_file); ++i) {
-		dprintf(filde, INCLUDE(%s) NL,
-							(char const*)AT_VECTOR(cfg->token_file, i));
+		dprintf(filde, INCLUDE(%s) NL, (char const*)
+								AT_VECTOR(cfg->token_file, i));
 	}
-	dprintf(filde, UNDEF(_ONLY_TOKEN_) NL NL);
+	dprintf(filde, UNDEF(_ONLY_STATE_TOKEN_) NL NL);
 }
 
 void
@@ -139,6 +139,7 @@ count_max_follow(vector_t const* vnter) {
 	size_t max_follow = 0;
 	for (size_t i = 0; i < SIZE_VECTOR(vnter) - 1; ++i) {
 		symbol_t* nter = (symbol_t*)AT_VECTOR(vnter, i);
+
 		size_t count_nter = count_elt_bitset(nter->follow);
 		if (count_nter > max_follow)
 			{ max_follow = count_nter; }

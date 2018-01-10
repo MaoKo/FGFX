@@ -44,7 +44,10 @@ typedef struct symbol_t {
 			bitset_t* follow;
 			bitset_t* prod_lst;
 			// (Optional & List) elements
-			enum { OPT, LST } spec_kind;
+			enum {
+				OPT, LST
+			} spec_kind;
+
 			struct symbol_t* special;
 			size_t depth;
 			size_t spec_nth;
@@ -78,7 +81,7 @@ typedef struct {
 	size_t index;
 	lr0_item_t* core;
 	bitset_t* lookahead;
-	vector_t* non_kernel_look;
+//	vector_t* non_kernel_look;
 } lr1_item_t;
 
 typedef struct {

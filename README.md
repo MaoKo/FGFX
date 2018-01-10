@@ -6,8 +6,8 @@ I attempt to fix this.
 The goal of FGFP is to create from a grammar description a LALR(1) parsing table.
 Also for speed, maybe, I replace the Vector with Hash.
 I also no free memory or only a subset. I try to fix this as soon as possible.
-I want to, before anything, create the LR(1) automata and after merging similar state with same LR(0) items.
-It's seem dumb because I can use the technique of propagate and spontaneous lookahead drawn from the Dragon Book.
+For constructing the LALR parsing table, I use the step-by-step approach, which
+whenever I found similar LR(0) state, I merge them.
 But I prefer do that, if the user want to conserve the LR(1) table.
 
 ### How to make? ###
@@ -18,7 +18,7 @@ After you can do: ./efgfl example/lex/token_c.lex
 Which create a file called token_c.h.lex ready for lexing.
 
 ### TODO ###
-	.	More accurate handle of error in FGFX (FGFP done)
+	.	More accurate handle of error in FGFX (FGFP (95%), FGFL(80%))
 	.	Optimizing FOLLOW set
 	.	Handle if file already exist
 	.	Improve the algorithm for constructing the

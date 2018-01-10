@@ -1,0 +1,49 @@
+$EXTERN
+{
+	'straight_line.lex.h',
+};
+
+$PRODUCTION
+{
+	<Stm>		->	<Stm> ';' <Stm>
+				|	ID ':=' <Exp>
+				|	PRINT '(' <ExpList> ')'
+				;
+
+	<Exp>		->	'(' <Stm> ',' <Exp> ')'
+				|	<Exp> '+' <Exp>
+				|	<Exp> '-' <Exp>
+				|	<Exp> '*' <Exp>
+				|	<Exp> '/' <Exp>
+				|	'+' <Exp> ( $MIMIC UNARY )
+				|	'-' <Exp> ( $MIMIC UNARY )
+				|	'(' <Exp> ')'
+				|	ID
+				|	NUM
+				;
+
+	<ExpList>	->	<Exp> ',' <ExpList>
+				|	<Exp>
+				;
+};
+
+$PRECEDENCE
+{
+	$LEFT ('+', '-' ,),
+	$LEFT ('*', '/' ,),
+	$LEFT (';'      ,),
+	$LEFT (UNARY    ,),
+};
+
+$ALIAS
+{
+	(SEMI   => ';'  ,),
+	(ASSIGN => ':=' ,),
+	(LPAREN => '('  ,),
+	(RPAREN => ')'  ,),
+	(COMMA  => ','  ,),
+	(PLUS   => '+'  ,),
+	(MINUS  => '-'  ,),
+	(MUL    => '*'  ,),
+	(DIV    => '/'  ,),
+};

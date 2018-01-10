@@ -9,7 +9,7 @@
 static int
 adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	if (!bs || new_size <= bs->nwords)
-		{ return (0); }
+		{ return (DONE); }
 	int oldsize = _BYTE_SETTYPE(bs->nwords);
 
 	bs->nwords = new_size;
@@ -22,7 +22,7 @@ adjust_bitset(bitset_t* bs, unsigned short new_size) {
 	memset(chunk, 0, _BYTE_SETTYPE(new_size));
 
 	if (!chunk)
-		{ return (-1); }
+		{ return (ERROR); }
 	if (bs->map == bs->defmap) {
 		bs->map	= chunk;
 		memcpy(bs->map, bs->defmap, oldsize);
@@ -32,8 +32,7 @@ adjust_bitset(bitset_t* bs, unsigned short new_size) {
 		FREE(bs->map);
 		bs->map = chunk;
 	}
-	// TODO: understand bug of memset
-	return (0);
+	return (DONE);
 }
 
 bitset_t*

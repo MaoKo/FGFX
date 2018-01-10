@@ -149,7 +149,7 @@ new_kernel(bitset_t* kernel_item, symbol_t* symbol, size_t hash_item) {
 		{ record_kernel[hash_item] = new_vector(); }
 	else {
 		int index_ker_lr0 = get_index_vector(record_kernel[hash_item],
-							kernel_item, &cmp_kernel_lr0);
+								kernel_item, &cmp_kernel_lr0);
 
 		if (index_ker_lr0 != -1) {
 			prev = (kernel_t*)AT_VECTOR(record_kernel[hash_item],
@@ -197,8 +197,10 @@ del_kernel(kernel_t* kernel) {
 
 static void
 del_lr1_item(lr1_item_t* item) {
-	if (item) {  }
-		{ del_bitset(item->lookahead); }
+	if (item) { 
+		del_bitset(item->lookahead);
+//		del_vector(item->non_kernel_look);
+	}
 	FREE(item);
 }
 
@@ -229,7 +231,7 @@ del_record_item(void) {
 	}
 }
 
-void del_record(void) {
+void del_lalr_record(void) {
 	del_record_item();
 	del_record_kernel();
 }
@@ -340,13 +342,8 @@ merge_lr1_state(lr1_state_t* st1, lr1_state_t* st2) {
 		{ return; }
 
 	bitset_t* new_item = new_bitset();
-	
-	// Fix me
-	// TODO check why i must do that
-	IT_RESET(st1->items);
-	IT_RESET(st2->items);
-
 	int i;
+
 	while ((i = IT_NEXT(st1->items)) != IT_NULL) {
 		lr1_item_t* st1_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
 		int j;
@@ -737,7 +734,14 @@ build_lalr1_states(cfg_t const* cfg) {
 				lr1_state_t* next_state = new_lr1_state(next);
 				if (find) {
 					if (cmp_lr1_state(cmp_item->items, next_state->items)) {
+						size_t back;
+						if ((size_t)i == index) {
+							back = IT_BACK(state->items);
+							IT_RESET(state->items);
+						}
 						merge_lr1_state(cmp_item, next_state);
+						if ((size_t)i == index)
+							{ IT_SET(state->items, back); }
 						change = true;
 					}
 					del_lr1_state(next_state);

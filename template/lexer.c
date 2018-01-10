@@ -10,6 +10,8 @@
 char const* stream = NULL;
 char const* beg_lexeme = NULL;
 
+size_t size_lexeme = 0;
+
 int peek = -1;
 
 static int
@@ -35,6 +37,7 @@ get_next_token(void) {
 		if (state != DEAD_STATE)
 			{ ++stream; }
 	}
+	size_lexeme = (stream - beg_lexeme);
 	return (last_match);
 }
 

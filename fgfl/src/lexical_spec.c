@@ -18,7 +18,7 @@ del_spec_entry(spec_entry_t* entry) {
 		if (entry->kind == T_TERMINAL) {
 			if (entry->is_frag)	
 				{ del_regex_node(entry->reg); }
-			else
+			else if (entry->frag)
 				{ FREE_FRAG(entry->frag); }
 			del_bitset(entry->valid_state);
 		}
