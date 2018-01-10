@@ -26,7 +26,6 @@ extern vector_t* record_nfa_state;
 
 void del_nfa_record(void);
 state_t* new_state(void);
-int ast_to_nfa(spec_entry_t*);
 int build_nfa(lexical_spec_t*);
 
 #endif /* NFA_H */

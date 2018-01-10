@@ -171,15 +171,16 @@ spec_regex_property(lexical_spec_t* spec, spec_entry_t* entry) {
 int
 spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 	if (advance_token(spec->lex) != T_LPAREN) {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex),
+							"Missing an open paren in the begin construct.");
 		return (ERROR);
 	}
 	if (advance_token(spec->lex) != T_BEGIN) {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex), "Missing the $BEGIN directive.");
 		return (ERROR);
 	}
 	if (advance_token(spec->lex) != T_TERMINAL) {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex), "A token name must follow the $BEGIN.");
 		return (ERROR);
 	}
 
@@ -191,7 +192,8 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 		{ crt_state->is_reach = true; }
 
 	if (advance_token(spec->lex) != T_RPAREN) {
-		/* ERROR */
+		errorf(CURRENT_LINE(spec->lex),
+							"Missing a close paren in the begin construct.");
 		return (ERROR);
 	}
 	return (DONE);	

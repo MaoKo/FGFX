@@ -7,6 +7,5 @@
 
 size_t size_ident(char const*);
 vector_t* topological_sort(lexical_spec_t*);
-int build_regex(lexical_spec_t*);
 
 #endif /* PREPROCESS_REGEX_H */

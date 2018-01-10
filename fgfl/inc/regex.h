@@ -25,7 +25,7 @@
 #define ALONE_S			true
 #define MULTI_S			false
 
-regex_node_t* regex_to_ast(lexical_spec_t*, char const*);
+int build_regex(lexical_spec_t*);
 void del_regex_node(regex_node_t*);
 
 #endif /* REGEX_H */

@@ -44,7 +44,7 @@ void compute_reduce_op(cfg_t const*, vector_t*);
 void print_lr0_item(lr0_item_t*);
 void print_lr1_item(cfg_t const*, lr1_item_t*);
 void print_state(cfg_t const*, bitset_t*);
-void print_debug_report(cfg_t const*, vector_t const*);
+void print_report(cfg_t const*, vector_t const*);
 #endif /* PRINT_DEBUG */
 
 #endif /* LR_H */

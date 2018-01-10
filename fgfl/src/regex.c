@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "preprocess_regex.h"
 #include "regex.h"
 #include "lexical_spec.h"
 #include "lexer.h"
@@ -386,7 +387,7 @@ dot_regex(void) {
 	return (node_ast(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }
 
-regex_node_t*
+static regex_node_t*
 regex_to_ast(lexical_spec_t* token_spec, char const* regex_str) {
 	if (!token_spec || !regex_str)
 		{ return (NULL); }
@@ -395,6 +396,27 @@ regex_to_ast(lexical_spec_t* token_spec, char const* regex_str) {
 	peek_c = -1;
 	escaped = false;
 	return (reg_expr());
+}
+
+int
+build_regex(lexical_spec_t* spec) {
+	vector_t* stack_order;
+	int exit_st = DONE;
+
+	if ((stack_order = topological_sort(spec))) {
+		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
+			size_t j = (long)AT_VECTOR(stack_order, i);
+			spec_entry_t* crt_entry = (spec_entry_t*)
+											AT_VECTOR(spec->entry_vect, j);
+			if (crt_entry->kind != T_KEYWORD)
+				{ crt_entry->reg = regex_to_ast(spec, crt_entry->reg_str); }
+		}
+	}
+	else
+		{ exit_st = ERROR; }
+
+	del_vector(stack_order);
+	return (exit_st);
 }
 
 static bool

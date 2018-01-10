@@ -61,7 +61,7 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 	gen_action_table(filde, cfg, lr1_states, header);
 	gen_goto_table(filde, cfg, lr1_states, header);
 
-//	print_debug_report(cfg, lr1_states);
+//	print_report(cfg, lr1_states);
 
 	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);

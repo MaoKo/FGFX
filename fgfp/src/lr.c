@@ -713,13 +713,16 @@ build_lalr1_states(cfg_t const* cfg) {
 	PUSH_BACK_VECTOR(stack_todo_state, start_state);
 
 	while (!EMPTY_VECTOR(stack_todo_state)) {
+//		printf("SIZE VECTOR %zu\n", SIZE_VECTOR(lr1_states));
+
 		lr1_state_t* state = (lr1_state_t*)BACK_VECTOR(stack_todo_state);
 		POP_BACK_VECTOR(stack_todo_state);
 
-		bool do_merging = false;
-		int j;
+		bitset_t* target_item = dup_bitset(state->items);
+		bool self_merging = false;
 
-		while ((j = IT_NEXT(state->items)) != IT_NULL) {
+		int j;
+		while ((j = IT_NEXT(target_item)) != IT_NULL) {
 			bitset_t* next = move_dot_next(cfg, state, j);
 			if (next == NULL_BITSET)
 				{ continue; }
@@ -742,16 +745,9 @@ build_lalr1_states(cfg_t const* cfg) {
 			lr1_state_t* next_state = new_lr1_state(next);
 			if (find) {
 				if (cmp_lr1_state(cmp_item->items, next_state->items)) {
-					size_t back;
-					if (state == cmp_item) {
-						back = IT_BACK(state->items);
-						IT_RESET(state->items);
-					}
-					cmp_item->merged = merge_lr1_state(cmp_item, next_state);
-					if (state == cmp_item) {
-						IT_SET(state->items, back);
-						if (cmp_item->merged)
-							{ do_merging = true; }
+					if (merge_lr1_state(cmp_item, next_state)) {
+						cmp_item->merged = true;
+						self_merging = (cmp_item == state);
 					}
 					PUSH_BACK_VECTOR(stack_todo_state, cmp_item);
 				}
@@ -765,9 +761,9 @@ build_lalr1_states(cfg_t const* cfg) {
 			if (state->first_reach)
 				{ (*(state->last_move))->state = index; }
 		}
-		IT_RESET(state->items);
+		del_bitset(target_item);
 
-		state->merged = do_merging;
+		state->merged = self_merging;
 		state->first_reach = false;
 	}
 
@@ -1001,13 +997,16 @@ print_lr1_item(cfg_t const* cfg, lr1_item_t* lr1_item) {
 
 void
 print_state(cfg_t const* cfg, bitset_t* item_set) {
+	int back = IT_BACK(item_set);
+	IT_RESET(item_set);
+
 	int i;
 	while ((i = IT_NEXT(item_set)) != IT_NULL) {
 		lr1_item_t* crt_item = (lr1_item_t*)AT_VECTOR(record_lr1_item, i);
 		print_lr1_item(cfg, crt_item);
 		puts("");
 	}
-	IT_RESET(item_set);
+	IT_SET(item_set, back);
 }
 
 static void
@@ -1026,7 +1025,7 @@ print_move(cfg_t const* cfg, trans_list_t* list, int kind) {
 }
 
 void
-print_debug_report(cfg_t const* cfg, vector_t const* lr1_states) {
+print_report(cfg_t const* cfg, vector_t const* lr1_states) {
 	for (size_t i = 0; i < SIZE_VECTOR(lr1_states); ++i) {
 		printf("===== State %zu =====\n", i);
 		lr1_state_t* state = AT_VECTOR(lr1_states, i);
