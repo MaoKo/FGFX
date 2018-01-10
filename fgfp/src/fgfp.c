@@ -53,8 +53,6 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 		{ PRINT_IF_0(filde); }
 
 	vector_t* lr1_states = build_lalr1_states(cfg);
-
-#if 0
 	compute_reduce_op(cfg, lr1_states);
 
 	gen_action_enum(filde);
@@ -62,7 +60,8 @@ gen_fgfp_file(cfg_t const* cfg, char const* base_file) {
 
 	gen_action_table(filde, cfg, lr1_states, header);
 	gen_goto_table(filde, cfg, lr1_states, header);
-#endif
+
+//	print_debug_report(cfg, lr1_states);
 
 	foreach_vector(lr1_states, &del_lr1_state);
 	del_vector(lr1_states);

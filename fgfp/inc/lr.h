@@ -33,7 +33,7 @@ enum {
 void del_lr1_state(lr1_state_t*);
 void del_lalr_record(void);
 int new_item(production_t const*, list_rhs_t const*, bitset_t const*);
-void merge_lr1_state(lr1_state_t*, lr1_state_t*);
+bool merge_lr1_state(lr1_state_t*, lr1_state_t*);
 bitset_t* closure(cfg_t const*, bitset_t*);
 bitset_t* goto_lr(cfg_t const*, bitset_t*, symbol_t const*);
 int cmp_lr0_state(bitset_t*, bitset_t*);

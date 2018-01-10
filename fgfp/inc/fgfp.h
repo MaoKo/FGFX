@@ -98,6 +98,7 @@ typedef struct {
 	trans_list_t* shift_lst;
 	trans_list_t* goto_lst;
 	trans_list_t* reduces;
+	bool merged;
 	bool accept;
 	trans_list_t** last_move;
 	bool first_reach;

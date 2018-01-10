@@ -332,14 +332,14 @@ merge_lr1_item(lr1_item_t const* llr, lr1_item_t const* rlr) {
 	return (index);
 }
 
-void
+bool
 merge_lr1_state(lr1_state_t* st1, lr1_state_t* st2) {
 	if (!st1 || !st2)
-		{ return; }
+		{ return (false); }
 
 	if (st1->hash_items != st2->hash_items
 			|| cmp_lr0_state(st1->items, st2->items))
-		{ return; }
+		{ return (false); }
 
 	bitset_t* new_item = new_bitset();
 	int i;
@@ -360,8 +360,15 @@ merge_lr1_state(lr1_state_t* st1, lr1_state_t* st2) {
 	}
 	IT_RESET(st1->items);
 
+	if (eq_bitset(st1->items, new_item)) {
+		del_bitset(new_item);
+		return (false);
+	}
+
 	del_bitset(st1->items);
 	st1->items = new_item;
+
+	return (true);
 }
 
 static void
@@ -674,7 +681,7 @@ move_dot_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 		action->next = *(state->last_move);
 		*(state->last_move) = action;
 	}
-	else
+	else if (!state->merged)
 		{ return (NULL_BITSET); }
 
 	int back = IT_BACK(state->items);
@@ -691,74 +698,78 @@ build_lalr1_states(cfg_t const* cfg) {
 	if (!cfg)
 		{ return (NULL_VECT); }
 
-	bitset_t* start_state = new_bitset();
+	bitset_t* start_bitset = new_bitset();
 
 	production_t* start_prod = BACK_VECTOR(cfg->productions);
-	ADD_BITSET(start_state, (size_t)new_lr1_item(start_prod,
+	ADD_BITSET(start_bitset, (size_t)new_lr1_item(start_prod,
 									start_prod->rhs_element, NULL_BITSET));
 
 	vector_t* lr1_states = new_vector();
-	PUSH_BACK_VECTOR(lr1_states, new_lr1_state(closure(cfg, start_state)));
+	lr1_state_t* start_state = new_lr1_state(closure(cfg, start_bitset));
 
-	bool change;
-	do {
-		change = false;
-		for (int i = SIZE_VECTOR(lr1_states) - 1; i >= 0; --i) {
-//			printf("SIZE %zu\n", SIZE_VECTOR(lr1_states));
+	PUSH_BACK_VECTOR(lr1_states, start_state);
 
-			lr1_state_t* state = (lr1_state_t*)AT_VECTOR(lr1_states, i);
-			if (!state->first_reach)
-				{ break; }
+	vector_t* stack_todo_state = new_vector();
+	PUSH_BACK_VECTOR(stack_todo_state, start_state);
 
-			int j;
-			while ((j = IT_NEXT(state->items)) != IT_NULL) {
-				bitset_t* next = move_dot_next(cfg, state, j);
-				if (next == NULL_BITSET)
-					{ continue; }
+	while (!EMPTY_VECTOR(stack_todo_state)) {
+		lr1_state_t* state = (lr1_state_t*)BACK_VECTOR(stack_todo_state);
+		POP_BACK_VECTOR(stack_todo_state);
 
-				size_t hash_test = hash_lr1_item(next);
-				size_t index;
+		bool do_merging = false;
+		int j;
 
-				lr1_state_t* cmp_item = NULL;
-				bool find = false;
+		while ((j = IT_NEXT(state->items)) != IT_NULL) {
+			bitset_t* next = move_dot_next(cfg, state, j);
+			if (next == NULL_BITSET)
+				{ continue; }
 
-				for (index = 0; index < SIZE_VECTOR(lr1_states); ++index) {
-					cmp_item = (lr1_state_t*)AT_VECTOR(lr1_states, index);
-					if (cmp_item->hash_items == hash_test
-								&& !cmp_lr0_state(cmp_item->items, next)) {
-						find = true;
-						break;
-					}
+			size_t hash_test = hash_lr1_item(next);
+			size_t index;
+
+			lr1_state_t* cmp_item = NULL;
+			bool find = false;
+
+			for (index = 0; index < SIZE_VECTOR(lr1_states); ++index) {
+				cmp_item = (lr1_state_t*)AT_VECTOR(lr1_states, index);
+				if (cmp_item->hash_items == hash_test
+							&& !cmp_lr0_state(cmp_item->items, next)) {
+					find = true;
+					break;
 				}
-
-				lr1_state_t* next_state = new_lr1_state(next);
-				if (find) {
-					if (cmp_lr1_state(cmp_item->items, next_state->items)) {
-						size_t back;
-						if ((size_t)i == index) {
-							back = IT_BACK(state->items);
-							IT_RESET(state->items);
-						}
-						merge_lr1_state(cmp_item, next_state);
-						if ((size_t)i == index)
-							{ IT_SET(state->items, back); }
-						change = true;
-					}
-					del_lr1_state(next_state);
-				}
-				else {
-					PUSH_BACK_VECTOR(lr1_states, next_state);
-					change = true;
-				}
-
-				if (state->first_reach)
-					{ (*(state->last_move))->state = index; }
 			}
 
-			IT_RESET(state->items);
-			state->first_reach = false;
+			lr1_state_t* next_state = new_lr1_state(next);
+			if (find) {
+				if (cmp_lr1_state(cmp_item->items, next_state->items)) {
+					size_t back;
+					if (state == cmp_item) {
+						back = IT_BACK(state->items);
+						IT_RESET(state->items);
+					}
+					cmp_item->merged = merge_lr1_state(cmp_item, next_state);
+					if (state == cmp_item) {
+						IT_SET(state->items, back);
+						if (cmp_item->merged)
+							{ do_merging = true; }
+					}
+					PUSH_BACK_VECTOR(stack_todo_state, cmp_item);
+				}
+				del_lr1_state(next_state);
+			}
+			else {
+				PUSH_BACK_VECTOR(stack_todo_state, next_state);
+				PUSH_BACK_VECTOR(lr1_states, next_state);
+			}
+
+			if (state->first_reach)
+				{ (*(state->last_move))->state = index; }
 		}
-	} while (change);
+		IT_RESET(state->items);
+
+		state->merged = do_merging;
+		state->first_reach = false;
+	}
 
 #if 0
 	puts("== KERNEL ==");
