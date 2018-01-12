@@ -20,7 +20,7 @@ del_spec_entry(spec_entry_t* entry) {
 				{ del_regex_node(entry->reg); }
 			else if (entry->frag)
 				{ FREE_FRAG(entry->frag); }
-			del_bitset(entry->valid_state);
+			del_trans_list(entry->state_begin_lst);
 		}
 		FREE(entry->name);
 		FREE(entry->reg_str);
@@ -113,16 +113,13 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 		return (NULL);
 	}
 
-	if (entry->kind == T_TERMINAL)
-		{ entry->begin_state = -1; }
-
 	entry->index = SIZE_VECTOR(src_vect);
 	PUSH_BACK_VECTOR(src_vect, entry);
 
 	return (entry);
 }
 
-static int spec_state_prefix(lexical_spec_t*, bitset_t**, bool*);
+static int spec_state_prefix(lexical_spec_t*, trans_list_t**, bool*);
 static int spec_regex_assign(lexical_spec_t*, spec_entry_t*, int);
 
 static int spec_regex_property(lexical_spec_t*, spec_entry_t*);
@@ -179,17 +176,92 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 		errorf(CURRENT_LINE(spec->lex), "Missing the $BEGIN directive.");
 		return (ERROR);
 	}
-	if (advance_token(spec->lex) != T_TERMINAL) {
-		errorf(CURRENT_LINE(spec->lex), "A token name must follow the $BEGIN.");
+
+	int kind = peek_token(spec->lex);
+	bool valid_kind = !((kind != T_TERMINAL)
+									&& (kind != T_ALL) && (kind != T_NONE));
+
+	if (!valid_kind) {
+		errorf(CURRENT_LINE(spec->lex),
+							"Either a token name, $ALL or "
+							"$NONE must follow the $BEGIN.");
 		return (ERROR);
 	}
 
-	spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
-	if (!crt_state)
-		{ return (ERROR); }
-	entry->begin_state = GET_INDEX(crt_state);	
-	if (!entry->is_frag)
-		{ crt_state->is_reach = true; }
+	bool seen_all = false;
+
+	size_t count_pos = 0;
+	size_t count_none = 0;
+
+	while (valid_kind) {
+		advance_token(spec->lex);
+		if (kind == T_ALL)
+			{ seen_all = true; }
+		else if (kind == T_NONE)
+			{ ++count_none; }
+
+		if (seen_all) {
+			if (!count_pos) {
+				errorf(CURRENT_LINE(spec->lex), "There must be a state name"
+							" before the $ALL directive.");
+				return (ERROR);
+			}
+			else if (kind != T_ALL) {
+				errorf(CURRENT_LINE(spec->lex),
+						"A state name can't follow the $ALL directive.");
+				return (ERROR);
+			}
+		}
+		trans_list_t* equiv_state = trans_list_at(
+										entry->state_begin_lst, count_pos);
+
+		if (!equiv_state) {
+			errorf(CURRENT_LINE(spec->lex),
+						"More begin move than the number of state.");
+			return (ERROR);
+		}
+		else if (kind == T_TERMINAL) {
+			spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
+			if (!crt_state)
+				{ return (ERROR); }
+			else if (!entry->is_frag)
+				{ crt_state->is_reach = true; }
+			equiv_state->state = GET_INDEX(crt_state);
+		}
+		else if (seen_all) {
+			int prev_index = (trans_list_at(entry->state_begin_lst,
+												count_pos - 1))->state;
+			while (equiv_state) {
+				equiv_state->state = prev_index;
+				equiv_state = equiv_state->next;
+			}
+		}
+
+		if (peek_token(spec->lex) == T_COMMA)
+			{ advance_token(spec->lex); }
+		++count_pos;
+
+		kind = peek_token(spec->lex);
+		valid_kind = !((kind != T_TERMINAL)
+									&& (kind != T_ALL) && (kind != T_NONE));
+	}
+
+	if (count_none == ((seen_all) ? count_pos - 1 : count_pos)) {
+		warnf(CURRENT_LINE(spec->lex), "The $BEGIN directive us useless"
+				" because it goes always to the $NONE directive.");
+	}
+
+	// TODO
+#if 0
+			else {
+				if (equiv_state->input == equiv_state->state) {
+					warnf(0, "Useless to do a $BEGIN on state %s when"
+								" this state is already active.",
+								((spec_entry_t*)AT_VECTOR(spec->state_vect,
+								(size_t)equiv_state->state))->name);
+				}
+			}
+#endif
 
 	if (advance_token(spec->lex) != T_RPAREN) {
 		errorf(CURRENT_LINE(spec->lex),
@@ -201,10 +273,10 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
 int
 spec_state_prefix(lexical_spec_t* spec,
-								bitset_t** valid_state, bool* all_state) {
+								trans_list_t** state_seen, bool* all_state) {
 	if (peek_token(spec->lex) == T_LPAREN) {
+		trans_list_t* state_lst = NULL;
 		advance_token(spec->lex);
-		bitset_t* state_seen = new_bitset();
 
 		if (peek_token(spec->lex) == T_STAR) {
 			(*all_state) = true;
@@ -216,18 +288,23 @@ spec_state_prefix(lexical_spec_t* spec,
 
 				spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
 				if (!crt_state) {
-					del_bitset(state_seen);
+					del_trans_list(state_lst);
 					return (ERROR);
 				}
 				crt_state->is_used = true;
 
-				if (IS_PRESENT(state_seen, GET_INDEX(crt_state))) {
+				if (cmp_input_trans_list(state_lst,
+												GET_INDEX(crt_state)) != -1) {
 					warnf(CURRENT_LINE(spec->lex),
 								"State %s already present in the state list.",
 								crt_state->name);
 				}
-				else 
-					{ ADD_BITSET(state_seen, GET_INDEX(crt_state)); }
+				trans_list_t* new_lst = new_trans_list(GET_INDEX(crt_state),
+											NONE_BEGIN, NULL);
+				if (!state_lst)
+					{ state_lst = new_lst; }
+				else
+					{ append_trans_list(state_lst, new_lst); }
 
 				if (peek_token(spec->lex) == T_COMMA)
 					{ advance_token(spec->lex); }
@@ -235,17 +312,17 @@ spec_state_prefix(lexical_spec_t* spec,
 		}
 		else {
 			errorf(CURRENT_LINE(spec->lex),
-				"Only a state list or the '*' must follow the open paren.");
+					"Only a state list or the '*' must follow the open paren.");
 			return (ERROR);
 		}
 
 		if (advance_token(spec->lex) != T_RPAREN) {
 			errorf(CURRENT_LINE(spec->lex),
-				"Missing a close paren after the state list.");
-			del_bitset(state_seen);
+					"Missing a close paren after the state list.");
+			del_trans_list(state_lst);
 			return (ERROR);
 		}
-		(*valid_state) = state_seen;
+		(*state_seen) = state_lst;
 	}
 	return (DONE);
 }
@@ -333,7 +410,7 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 		{ return (DONE); }
 
 	bool all_state = false;
-	bitset_t* state_seen = NULL;
+	trans_list_t* state_seen = NULL;
 
 	if (spec_state_prefix(spec, &state_seen, &all_state) == ERROR)
 		{ return (ERROR); }
@@ -346,7 +423,7 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 			{ return (ERROR); }
 
 		entry->all_state = all_state;
-		entry->valid_state = state_seen;
+		entry->state_begin_lst = state_seen;
 
 		if (spec_regex_assign(spec, entry, kind_section) == ERROR)
 			{ return (ERROR); }
@@ -382,7 +459,7 @@ spec_state_token_list(lexical_spec_t* spec, int kind_section) {
 			advance_token(spec->lex);
 			if (advance_token(spec->lex) != T_INITIAL) {
 				errorf(CURRENT_LINE(spec->lex),
-							"Missing $INITIAL after the '=>' in the $T_STATE.");
+							"Missing $INITIAL after the '=>' in the $STATE.");
 				return (ERROR);
 			}
 			if (spec->start_state != -1)
@@ -477,39 +554,30 @@ check_validity_token(lexical_spec_t* spec) {
 		if (crt_entry->kind == T_TERMINAL) {
 			if (crt_entry->all_state) {
 				foreach_vector(spec->state_vect, &set_used_state);
-				add_range_bitset(crt_entry->valid_state,
-										0, SIZE_VECTOR(spec->state_vect));
+//				add_range_bitset(crt_entry->valid_state,
+//										0, SIZE_VECTOR(spec->state_vect));
 			}
-			if (state_present) {
-				if (!crt_entry->valid_state) {
+
+			if (crt_entry->is_frag) {
+				if (!crt_entry->is_used) {
+					warnf(0, "Local token %s is defined but not used.",
+										crt_entry->name);
+				}
+				if (crt_entry->state_begin_lst) {
+					warnf(0, "Useless to do a $BEGIN on local token %s.",
+										crt_entry->name);
+				}
+				readjust_index(spec->entry_vect,
+						(size_t)i, (void(*)(void*))&del_spec_entry);
+			}
+			else if (state_present) {
+				if (!crt_entry->state_begin_lst) {
 					if (!crt_entry->all_state) {
 						errorf(0, "Token %s is not prefixed by any state.",
 											crt_entry->name);
 						exit_st = ERROR;
 					}
 				}
-				else if (crt_entry->begin_state != -1
-						&& (count_elt_bitset(crt_entry->valid_state) == 1)
-						&& (IS_PRESENT(crt_entry->valid_state,(size_t)
-												crt_entry->begin_state))) {
-
-					warnf(0, "Useless to do a $BEGIN on state %s when"
-									" this state is already active.",
-									((spec_entry_t*)AT_VECTOR(spec->state_vect,
-									(size_t)crt_entry->begin_state))->name);
-				}
-			}
-			if (crt_entry->is_frag) {
-				if (!crt_entry->is_used) {
-					warnf(0, "Local token %s is defined but not used.",
-										crt_entry->name);
-				}
-				if (crt_entry->begin_state != -1) {
-					warnf(0, "Useless to do a $BEGIN on local token %s.",
-										crt_entry->name);
-				}
-				readjust_index(spec->entry_vect,
-						(size_t)i, (void(*)(void*))&del_spec_entry);
 			}
 		}
 		else if ((crt_entry->kind == T_KEYWORD) && (crt_entry->count > 1)) {
@@ -589,8 +657,8 @@ print_token_entry(lexical_spec_t* spec) {
 		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
 		printf("Token %s, is_igcase %d, is_frag %d.\n",
 					crt_entry->name, crt_entry->is_igcase, crt_entry->is_frag);
-		if (crt_entry->valid_state)
-			{ print_bitset(crt_entry->valid_state); }
+//		if (crt_entry->valid_state)
+//			{ print_bitset(crt_entry->valid_state); }
 	}
 }
 

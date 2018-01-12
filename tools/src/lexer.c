@@ -122,6 +122,8 @@ advance_token(lexer_t* lex) {
 			{ (void*)T_LEFT,		"$LEFT" },
 			{ (void*)T_RIGHT,		"$RIGHT" },
 			{ (void*)T_NONASSOC,	"$NONASSOC" },
+			{ (void*)T_ALL,			"$ALL" },
+			{ (void*)T_NONE,		"$NONE" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

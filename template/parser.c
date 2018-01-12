@@ -43,13 +43,19 @@ lr_parser(char const* stream) {
 												[lhs_symbol] ^ _GOTO;
 
 			//Place to put semantic action
-			int tmp_val = value_stack[value_top - 1];
+			int nb_symbol = /* NAME PREFIX */rhs_prod_table[kind ^ _REDUCE];
+			if (!nb_symbol)
+				{ ++value_top; }
 
+			int tmp_val = value_stack[value_top - 1];
 			switch (kind ^ _REDUCE) {
 				/* You can insert here, your semantic action */
+				/* case NAME_PROD: ... */
 			}
-			value_top -= /* NAME PREFIX */rhs_prod_table[kind ^ _REDUCE];
-			value_stack[value_top++] = tmp_val;
+			if (nb_symbol) {
+				value_top -= nb_symbol;
+				value_stack[value_top++] = tmp_val;
+			}
 		}
 		else {
 			int error_accept = ERROR_SLOT;

@@ -675,10 +675,9 @@ move_dot_next(cfg_t const* cfg, lr1_state_t* state, int index) {
 		state->last_move  = &(state->goto_lst);
 	}
 
-	bool find = cmp_input_trans_list(*(state->last_move), input);
+	bool find = (cmp_input_trans_list(*(state->last_move), input) != -1);
 	if (!find) {
-		trans_list_t* action = new_trans_list(input, 0);
-		action->next = *(state->last_move);
+		trans_list_t* action = new_trans_list(input, 0, *(state->last_move));
 		*(state->last_move) = action;
 	}
 	else if (!state->merged)
@@ -899,8 +898,9 @@ add_reduce(cfg_t const* cfg, lr1_state_t* state, lr1_item_t* item,
 	trans_list_t* reduce_list = NULL;
 
 	while ((i = IT_NEXT(src_symbol)) != IT_NULL) {
-		trans_list_t* next = new_trans_list(i, REDUCE(PROD(CORE(item))->index));
-		next->next = reduce_list;
+		trans_list_t* next = new_trans_list(i,
+								REDUCE(PROD(CORE(item))->index), reduce_list);
+//		next->next = reduce_list;
 		reduce_list = next;
 	}
 

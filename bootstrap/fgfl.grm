@@ -36,7 +36,14 @@ $PRODUCTION
 	<opt_state_list>	->	TERMINAL [ '=>' '$INITIAL' ]
 								[ ',' <opt_state_list> ] | $EMPTY ;
 
-	<change_state>		->	'(' '$BEGIN' TERMINAL ')' ;
+	<change_state>		->	'(' '$BEGIN' <change_list> ')' ;
+
+	<change_list>		->	<change_state_atom> [ ',' <opt_change_list> ] ;
+	<opt_change_list>	->	<change_state_atom> [ ',' <opt_change_list> ]
+						|	$EMPTY
+						;
+
+	<change_state_atom>	->	TERMINAL | '$NONE' | '$ALL' ;
 
 	<FGFL> = $START;
 };
@@ -51,6 +58,8 @@ $ALIAS
 	(BEGIN		=> '$BEGIN')	,
 	(FRAG		=> '$FRAG')		,
 	(INITIAL	=> '$INITIAL')	,
+	(ALL		=> '$ALL')		,
+	(NONE		=> '$NONE')		,
 
 	(EQUAL		=> '=')			,
 

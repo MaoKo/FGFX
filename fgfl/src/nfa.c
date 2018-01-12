@@ -232,18 +232,31 @@ build_nfa(lexical_spec_t* spec) {
 					{ return (ERROR); }
 			}
 			else {
-				int i;
-				while ((i = IT_NEXT(entry->valid_state)) != IT_NULL) {
-					spec_entry_t* crt_state = (spec_entry_t*)
-									AT_VECTOR(spec->state_vect, (size_t)i);
-					if (!crt_state->st_master)
-						{ crt_state->st_master = new_state(); }
+				trans_list_t* it_lst = entry->state_begin_lst;
+				bitset_t* seen_state = new_bitset();
 
-					if (attach_tail(crt_state->st_master,
-											entry->frag, NULL) == ERROR)
-						{ return (ERROR); }
+				bool tail_error = false;
+
+				while (it_lst) {
+					if (!IS_PRESENT(seen_state, (size_t)it_lst->input)) {
+						ADD_BITSET(seen_state, (size_t)it_lst->input);
+						spec_entry_t* crt_state = (spec_entry_t*)
+							AT_VECTOR(spec->state_vect, (size_t)it_lst->input);
+
+						if (!crt_state->st_master)
+							{ crt_state->st_master = new_state(); }
+
+						if (attach_tail(crt_state->st_master,
+												entry->frag, NULL) == ERROR) {
+							tail_error = true;
+							break;
+						}
+					}
+					it_lst = it_lst->next;
 				}
-				IT_RESET(entry->valid_state);
+				del_bitset(seen_state);
+				if (tail_error)
+					{ return (ERROR); }
 			}
 		}
 	}

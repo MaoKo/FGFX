@@ -33,8 +33,8 @@ build_ll1_table(cfg_t const* cfg) {
 			int k;
 			while ((k = IT_NEXT(prod->select_set)) != IT_NULL) {
 				trans_list_t* lst = new_trans_list(((symbol_t*)
-									AT_VECTOR(cfg->terminal, k))->index, j);
-				lst->next = BACK_VECTOR(ll_table);
+									AT_VECTOR(cfg->terminal, k))->index,
+									j, BACK_VECTOR(ll_table));
 				BACK_VECTOR(ll_table) = lst;
 			}
 
@@ -44,7 +44,8 @@ build_ll1_table(cfg_t const* cfg) {
 				{ continue; }
 			while ((k = IT_NEXT(prod->symbol_lhs->follow)) != IT_NULL) {
 				trans_list_t* lst = new_trans_list(((symbol_t*)
-								AT_VECTOR(cfg->terminal, k))->index, j);
+								AT_VECTOR(cfg->terminal, k))->index,
+								j, BACK_VECTOR(ll_table));
 				lst->next = BACK_VECTOR(ll_table);
 				BACK_VECTOR(ll_table) = lst;
 			}

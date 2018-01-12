@@ -12,14 +12,18 @@
 
 void
 gen_state_enum(int filde, lexical_spec_t const* spec) {
+	size_t size_state = SIZE_VECTOR(spec->state_vect);
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
-	for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
+
+	for (size_t i = 0; i < size_state; ++i) {
 		spec_entry_t* crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, i);
 		ENUM_STATE_LINE(filde, crt_state->name);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
 
 	spec_entry_t* init_state = AT_VECTOR(spec->state_vect, spec->start_state);
+
+	dprintf(filde, DEFINE(%s, %zu) NL, MACRO_STATE, size_state);
 	dprintf(filde, DEFINE(%s, %s%s%s) NL NL,
 						"INIT_STATE", STATE_PREFIX, SEP, init_state->name);
 }
@@ -59,8 +63,8 @@ gen_state_table(int filde, vector_t const* trans,
 	dprintf(filde, SEP);
 	gen_state_name(filde, entry);
 
-	dprintf(filde, "state_table[%zu][%d] = " BEG_BLOCK NL,
-								size_trans, MAX_ASCII);
+	dprintf(filde, "state_table[%zu][%d] = "
+									BEG_BLOCK NL, size_trans, MAX_ASCII);
 
 	for (size_t i = 0; i < size_trans; ++i) {
 		trans_list_t const* list = (trans_list_t*)AT_VECTOR(trans, i);
@@ -115,22 +119,43 @@ gen_change_state(int filde, char const* header, lexical_spec_t* spec) {
 							min_size_type(size_entry, false));
 
 	gen_verbatim_file(filde, header);
-	dprintf(filde, "_begin_table[%s] = " BEG_BLOCK NL, MACRO_TOKEN);
+	dprintf(filde, "_begin_table[%s][%s] = "
+								BEG_BLOCK NL, MACRO_TOKEN, MACRO_STATE);
+
 	for (size_t i = 0; i < size_entry; ++i) {
 		spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		dprintf(filde, TAB);
-		if ((crt_entry->kind == T_TERMINAL)
-							&& (crt_entry->begin_state != -1)) {
-			dprintf(filde, STATE_PREFIX SEP "%s",
-									((spec_entry_t*)AT_VECTOR(spec->state_vect,
-									crt_entry->begin_state))->name);
+		bool already_print = false;
+
+		if ((crt_entry->kind == T_TERMINAL)) {
+			trans_list_t* it_lst = crt_entry->state_begin_lst;
+			while (it_lst) {
+				if (it_lst->state != NONE_BEGIN) {
+					if (!already_print) {
+						dprintf(filde, TAB);
+						already_print = true;
+					}
+				
+					spec_entry_t* in_state = ((spec_entry_t*)AT_VECTOR(
+									spec->state_vect, (size_t)it_lst->input));
+
+					spec_entry_t* out_state = ((spec_entry_t*)AT_VECTOR(
+									spec->state_vect, (size_t)it_lst->state));
+		
+					dprintf(filde, "[" TOKEN_PREFIX SEP "%s]", crt_entry->name);
+					dprintf(filde, "[" STATE_PREFIX SEP "%s]", in_state->name);
+
+					dprintf(filde, " = " STATE_PREFIX SEP "%s"
+												COMMA SP, out_state->name);
+				}
+				it_lst = it_lst->next;
+			}
+			if (already_print)
+				{ dprintf(filde, NL); }
 		}
-		else
-			{ dprintf(filde, "-1"); }
-		dprintf(filde, COMMA NL);
 	}
-	dprintf(filde, TAB "-1" COMMA NL); // for T_ERROR
-	dprintf(filde, TAB "-1" COMMA NL); // for T_EOF
+
+//	dprintf(filde, TAB "-1" COMMA NL); // for T_ERROR
+//	dprintf(filde, TAB "-1" COMMA NL); // for T_EOF
 
 	dprintf(filde, END_BLOCK SEMI NL NL);
 }

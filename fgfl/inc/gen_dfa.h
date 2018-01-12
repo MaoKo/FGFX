@@ -20,6 +20,8 @@
 #define ENUM_TOKEN_LINE(f, x)	ENUM_LINE(f, x, TOKEN_PREFIX)
 #define ENUM_STATE_LINE(f, x)	ENUM_LINE(f, x, STATE_PREFIX)
 
+#define MACRO_STATE				"TOTAL_STATE"
+
 #define TOKEN_PREFIX			"T"
 #define STATE_PREFIX			"S"
 

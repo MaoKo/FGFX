@@ -1,25 +1,41 @@
 $STATE
 {
-	INITIAL,
-	BEG_CLASS,
-	BODY_CLASS
-	CURLY,
+	GLOBAL => $INITIAL,
+	STRING,
+	FINITE_SEQ,
+	BEG_CCL,
+	BODY_CCL,
 };
 
 $TOKEN
 {
-	@LETTER = / [A-Za-z_]+ / ;
+	( GLOBAL ) UNION = / \| / ;
+	( GLOBAL ) STAR = / \* / ;
+	( GLOBAL ) PLUS = / \+ / ;
+	( GLOBAL ) QUES = / \? / ;
+	( GLOBAL ) LPAREN = / \( / ;
+	( GLOBAL ) RPAREN = / \) / ;
+	( GLOBAL ) DOT = / \. / ;
 
-	( INITIAL ) LBRACK = / \[ / ;
-	( INITIAL ) LBRACE = / \{ / ;
+	( GLOBAL, STRING ) QUOTE = / \" /, ( $BEGIN STRING, GLOBAL ) ;
 
-	( CURLY ) DIGIT  = / [0-9]+ / ;
-	( CURLY ) IDENT  = / {LETTER}({LETTER}|{DIGIT})*  /;
-	( CURLY ) RBRACE = / } / ;
+	LETTER = / [a-zA-Z_]+ / -> { $FRAG } ;
+	( GLOBAL ) BOUND_NAME = / \{{LETTER}({LETTER}|{DIGIT})*\} /;
+	
+	( GLOBAL ) LBRACE = / \{ /, ( $BEGIN FINITE_SEQ ) ;
+	( FINITE_SEQ ) DIGIT = / [0-9]+ / ;
+	( FINITE_SEQ ) COMMA = / , / ;
+	( FINITE_SEQ ) RBRACE = / \} /, ( $BEGIN GLOBAL ) ;
 
-	( BEG_CLASS, INITIAL ) CARET = / ^ / ;
-	( BEG_CLASS, BODY_CLASS ) RBRACK = / ] / ;
+	( GLOBAL ) DIFF_CLASS = / "{-}" / ;
+	( GLOBAL ) UNION_CLASS = / "{+}" / ;
 
-	// last rule for catch all other char
-	( * ) CHAR = / (.|\n) / ;
+	( GLOBAL ) LBRACK = / \[ /, ( $BEGIN BEG_CCL ) ;
+	( BEG_CCL ) CARET = / ^ /, ( $BEGIN BODY_CCL ) ;
+
+	( BODY_CCL ) HYPHEN = / - / ;
+	( BODY_CCL ) RBRACK = / \] /, ( $BEGIN GLOBAL ) ;
+
+	( STRING, BEG_CCL, BODY_CCL ) CHAR = / .|\\(.|\n) /,
+			( $BEGIN $NONE, BODY_CCL, $NONE ) ;
 };

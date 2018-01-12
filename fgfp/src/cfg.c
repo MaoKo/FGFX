@@ -581,7 +581,7 @@ add_recursive(cfg_t* cfg, symbol_t* opt_nter, size_t base_index) {
 static int
 enclosed_element(cfg_t* cfg, production_t* prod) {
 	static size_t special_pos = 0;
-	int kind = (advance_token(cfg->lex) == T_LBRACK) ? OPT : LST;
+	int kind = ((advance_token(cfg->lex) == T_LBRACK) ? OPT : LST);
 
 	int greater_depth = (LHS(prod)->depth > 2);
 	int empty_opt = ((peek_token(cfg->lex) == T_RBRACK)

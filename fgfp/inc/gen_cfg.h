@@ -8,7 +8,8 @@
 
 #define OPT_STR		"OPT"
 #define LST_STR		"LST"
-#define GRP_STR		"GRP"
+
+//#define GRP_STR	"GRP"
 
 #define NTER_PREFIX	"N"
 #define PROD_PREFIX	"P"

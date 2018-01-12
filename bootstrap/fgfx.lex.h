@@ -32,6 +32,8 @@ enum {
 	T_BEGIN,
 	T_FRAG,
 	T_INITIAL,
+	T_ALL,
+	T_NONE,
 	T_EXTERN,
 	T_PRODUCTION,
 	T_ALIAS,
@@ -46,7 +48,7 @@ enum {
 	T_EOF,
 };
 
-#define TOTAL_TOKEN	40
+#define TOTAL_TOKEN	42
 
 #ifndef _ONLY_STATE_TOKEN_
 

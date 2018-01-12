@@ -8,6 +8,7 @@
 #include "bitset.h"
 #include "buffer.h"
 #include "lexer.h"
+#include "utils.h"
 
 typedef struct regex_node_t {
 	enum {
@@ -82,7 +83,9 @@ typedef struct {
 			};
 
 			bool all_state;
-			bitset_t* valid_state;
+			trans_list_t* state_begin_lst;
+
+			// TODO Remove that
 			int begin_state;
 		};
 		struct { // if KEYWORD & STATE

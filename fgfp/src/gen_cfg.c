@@ -31,7 +31,7 @@ gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 	size_t spec_nth = 0;
 
 	if (symbol->special) {
-		dprintf(filde, ((symbol->kind == OPT) ? OPT_STR : LST_STR));
+		dprintf(filde, ((symbol->spec_kind == OPT) ? OPT_STR : LST_STR));
 		if (sep)
 			{ dprintf(filde, SEP); }
 		

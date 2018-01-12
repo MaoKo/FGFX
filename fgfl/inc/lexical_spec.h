@@ -14,6 +14,7 @@
 #define STATE_TOKEN_LST_SECT(x)	((x == T_STATE) ?  "$STATE" : "$KEYWORD")
 
 #define USED_ENTRY(entry)		(entry->is_used = true)
+#define NONE_BEGIN				(-1)
 
 lexical_spec_t* parse_lexical_spec(int);
 void del_lexical_spec(lexical_spec_t*);

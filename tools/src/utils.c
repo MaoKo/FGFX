@@ -96,13 +96,13 @@ readjust_index(vector_t* vect, size_t base, void(*dealloc)(void*)) {
 }
 
 trans_list_t*
-new_trans_list(unsigned int input, unsigned int state) {
+new_trans_list(int input, int state, trans_list_t* tail) {
 	trans_list_t* list = NEW(trans_list_t, 1);
 	if (!list)
 		{ return (NULL); }
 	list->input = input;
 	list->state = state;
-	list->next = NULL;
+	list->next = tail;
 	return (list);
 }
 
@@ -117,8 +117,7 @@ size_gen_list(gen_list_t const* list) {
 }
 
 void
-redirect_trans_list(trans_list_t* list, unsigned int change,
-										unsigned int base) {
+redirect_trans_list(trans_list_t* list, int change, int base) {
 	while (list) {
 		if (list->state == base)
 			{ list->state = change; }
@@ -166,14 +165,30 @@ del_trans_list(trans_list_t* list) {
 	}
 }
 
-bool
-cmp_input_trans_list(trans_list_t const* list, unsigned int input) {
+trans_list_t*
+trans_list_at(trans_list_t* base, size_t at) {
+	size_t count_index = 0;
+	while (count_index < at) {
+		if (!base)
+			{ return (NULL); }
+		++count_index;
+		base = base->next;
+	}
+	return (base);
+}
+
+int
+cmp_input_trans_list(trans_list_t const* list, int input) {
+	if (!list)
+		{ return (-1); }
+	size_t count_index = 0;
 	while (list) {
 		if (list->input == input)
-			{ return (true); }
+			{ return (count_index); }
+		++count_index;
 		list = list->next;
 	}
-	return (false);
+	return (-1);
 }
 
 bool
