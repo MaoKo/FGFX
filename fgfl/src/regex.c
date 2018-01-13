@@ -46,6 +46,7 @@ new_regex_node(int kind, ...) {
 	if (kind != AST_SYMBOL) {
 		node->left = va_arg(args, regex_node_t*);
 		node->right = va_arg(args, regex_node_t*);
+		node->look_sym = false;
 	}
 	else {
 		node->alone = va_arg(args, int);

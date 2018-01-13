@@ -16,9 +16,9 @@ static void
 del_spec_entry(spec_entry_t* entry) {
 	if (entry) {
 		if (entry->kind == T_TERMINAL) {
-			if (entry->is_frag)	
+			if (entry->active == REGEX)	
 				{ del_regex_node(entry->reg); }
-			else if (entry->frag)
+			else if (entry->active == NFA && entry->frag)
 				{ FREE_FRAG(entry->frag); }
 			del_trans_list(entry->state_begin_lst);
 		}
@@ -117,6 +117,11 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 	if (!entry->name) {
 		del_spec_entry(entry);
 		return (NULL);
+	}
+
+	if (entry->kind == T_TERMINAL) {
+		entry->default_state = -1;
+		entry->active = REGEX;
 	}
 
 	entry->index = SIZE_VECTOR(src_vect);
@@ -354,6 +359,7 @@ spec_regex_assign(lexical_spec_t* spec,
 			return (ERROR);
 		}
 
+
 		unget_c_buffer(LAST_LEXEME(spec->lex), 1);
 		size_t save_space = 0;
 
@@ -366,12 +372,14 @@ spec_regex_assign(lexical_spec_t* spec,
 		unget_c_buffer(LAST_LEXEME(spec->lex), count_back(C_LEXEME(spec->lex),
 			&is_tab_or_space) - save_space);
 
+#if 0
 		size_t front_space = count_front(C_LEXEME(spec->lex) + 1,
 												&is_tab_or_space) + 1;
 
 		CURRENT_LINE(spec->lex) += char_in_str(
 				C_LEXEME(spec->lex) + front_space, '\n');
-		char* reg_str = strdup(C_LEXEME(spec->lex) + front_space);
+#endif
+		char* reg_str = strdup(C_LEXEME(spec->lex));
 
 		if (!reg_str) {
 			errorf(0, "Non enough memory for allocate the regex string.");
@@ -589,12 +597,10 @@ check_validity_token(lexical_spec_t* spec) {
 						(size_t)i, (void(*)(void*))&del_spec_entry);
 			}
 			else if (state_present) {
-				if (!crt_entry->state_begin_lst) {
-					if (!crt_entry->all_state) {
-						errorf(0, "Token %s is not prefixed by any state.",
-											crt_entry->name);
-						exit_st = ERROR;
-					}
+				if (!crt_entry->state_begin_lst && !crt_entry->all_state) {
+					warnf(0, "Token %s is not prefixed by any state.",
+												crt_entry->name);
+					crt_entry->default_state = spec->start_state;
 				}
 			}
 		}
@@ -660,9 +666,9 @@ spec_sanity_check(lexical_spec_t* spec) {
 		{ return (ERROR); }
 	else if (build_regex(spec) == ERROR)
 		{ return (ERROR); }
-	else if (check_validity_token(spec) == ERROR)
-		{ return (ERROR); }
 	else if (check_validity_state(spec) == ERROR)
+		{ return (ERROR); }
+	else if (check_validity_token(spec) == ERROR)
 		{ return (ERROR); }
 	return (DONE);
 }

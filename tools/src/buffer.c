@@ -43,7 +43,7 @@ del_buffer(buffer_t* buf) {
 static int
 extend_buffer(buffer_t* buf) {
 	if (!buf)
-		{ return (-1); }
+		{ return (ERROR); }
 	if (buf->index + 1 >= buf->alloc) {
 		size_t new_sz = round_up(buf->index + 1);
 		char* nw_body = (char*)REALLOC(buf->body, new_sz);
@@ -83,7 +83,7 @@ write_buffer(buffer_t* buf, char const* str) {
 int
 append_buffer(buffer_t* buf, buffer_t const* src) {
 	if (!buf || !src)
-		{ return (-1); }
+		{ return (ERROR); }
 	return (write_buffer(buf, src->body));
 }
 

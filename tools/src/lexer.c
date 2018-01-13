@@ -1,4 +1,3 @@
-
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -37,22 +36,51 @@ del_lexer(lexer_t* lex) {
 	FREE(lex);
 }
 
+static size_t
+is_final_state(int state, uint8_t (*final_table)[2]) {
+	size_t i = 0;
+	while (*final_table[i]) {
+		if (*final_table[i] == state)
+			{ return (final_table[i][1]); }
+		++i;
+	}
+	return (T_ERROR);
+}
+
 static int
 get_next_token(lexer_t* lex) {
+	static uint8_t (*state_table)[256] = NULL;
+	static uint8_t (*final_table)[2] = NULL;
+
+	static int crt_state = INIT_STATE;
+
 	int state = START_STATE;
 	int last_match = T_ERROR;
 	int rd = 0;
 
 	if (lex->carry_nl)
 		{ ++(lex->lineno); }
+	lex->carry_nl = false;
 
 	append_buffer(lex->last_lexeme, lex->push_back);
 	reset_buffer(lex->push_back);
 
+	switch (crt_state) {
+		case S_GLOBAL:
+			state_table = fgfx_GLOBAL_state_table;
+			final_table = fgfx_GLOBAL_final_table;
+			break;
+
+		case S_SEEN_REGEX:
+			state_table = fgfx_SEEN_REGEX_state_table;
+			final_table = fgfx_SEEN_REGEX_final_table;
+			break;
+	}
+
 	for (size_t i = 0; i < SIZE_BUFFER(lex->last_lexeme); ++i) {
-		state = fgfx_state_table[state][(int)CHAR_AT(lex->last_lexeme, i)];
-		if (is_final_state(state) != T_ERROR)
-			{ last_match = is_final_state(state); }
+		state = state_table[state][(int)CHAR_AT(lex->last_lexeme, i)];
+		if (is_final_state(state, final_table) != T_ERROR)
+			{ last_match = is_final_state(state, final_table); }
 	}
 
 	int first_read = true;
@@ -63,9 +91,9 @@ get_next_token(lexer_t* lex) {
 				{ return (T_EOF); }
 			break;
 		}
-		state = fgfx_state_table[state][rd];
-		if (is_final_state(state) != T_ERROR)
-			{ last_match = is_final_state(state); }
+		state = state_table[state][rd];
+		if (is_final_state(state, final_table) != T_ERROR)
+			{ last_match = is_final_state(state, final_table); }
 		write_char_buffer(lex->last_lexeme, rd);
 		first_read = false;
 		if (rd == '\n') {
@@ -84,6 +112,9 @@ get_next_token(lexer_t* lex) {
 		unget_c_buffer(lex->last_lexeme, 1);
 		write_char_buffer(lex->push_back, rd);
 	}
+
+	if (fgfx_begin_table[last_match][crt_state])
+		{ crt_state = fgfx_begin_table[last_match][crt_state]; }
 	return (last_match);
 }
 
@@ -135,6 +166,7 @@ advance_token(lexer_t* lex) {
 			{ (void*)T_NONASSOC,	"$NONASSOC" },
 			{ (void*)T_ALL,			"$ALL" },
 			{ (void*)T_NONE,		"$NONE" },
+//			{ (void*)T_REJECT,		"$REJECT" },
 		};
 		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))
@@ -167,16 +199,5 @@ in_first(lexer_t* lex, ...) {
 	}
 	va_end(args);
 	return (false);
-}
-
-size_t
-is_final_state(int state) {
-	size_t i = 0;
-	while (*fgfx_final_table[i]) {
-		if (*fgfx_final_table[i]== state)
-			{ return (fgfx_final_table[i][1]); }
-		++i;
-	}
-	return (T_ERROR);
 }
 

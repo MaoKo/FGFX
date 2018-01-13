@@ -1,44 +1,56 @@
-$SKIP
+$STATE
 {
-    SPACE        =  / [ \t\n]+                              / ;
-    COMMENT      =  / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
+	GLOBAL => $INITIAL,
+	SEEN_REGEX,
 };
 
 $TOKEN
 {
-    LETTER       =  / [a-zA-Z_]                             / -> { $FRAG } ;
-    DIGIT        =  / [0-9]                                 / -> { $FRAG } ;
+    LETTER = / [a-zA-Z_] / -> { $FRAG } ;
+    DIGIT  = / [0-9]     / -> { $FRAG } ;
 
     /* FGFL */
-    EQUAL        =  / =                                     / ;
-    REGEX        =  / \/([^\/\\\n]|\\(.|\n))*\/             / ;
-	STAR		 =  / \*                                    / ;    
+
+    EQUAL = /  = / ;
+	STAR  = / \* / ;
+   
+    ( SEEN_REGEX ) REGEX = / ([^\/\\\n]|\\(.|\n))* / ;
 
     /* FGFP */
-    NON_TERMINAL =  / <{TERMINAL}('{1,3})?>                 / ;
 
-    UNION        =  / \|                                    / ;
+    NON_TERMINAL =  / <{TERMINAL}('{1,3})?>   / ;
+    LITERAL      =  / '([^\n\\'"]|\\[\\'"])+' / ;
 
-    LBRACK       =  / \[                                    / ;
-    RBRACK       =  / \]                                    / ;
+    UNION  = / \| / ;
 
-    LITERAL      =  / '([^\n\\'"]|\\[\\'"])+'               / ;
+    LBRACK = / \[ / ;
+    RBRACK = / \] / ;
     
     /* Both FGFL & FGFP */
-    DIRECTIVE    =  / ${TERMINAL}                           / ;
-    TERMINAL     =  / {LETTER}({LETTER}|{DIGIT})*           / ;
 
-    ARROW        =  / ->                                    / ;
-    BARROW       =  / =>                                    / ;
+    DIRECTIVE = / ${TERMINAL}                 / ;
+    TERMINAL  = / {LETTER}({LETTER}|{DIGIT})* / ;
 
-    SEMI         =  / ;                                     / ;
-    COMMA        =  / ,                                     / ;
+	ARROW  = / -> / ;
+    BARROW = / => / ;
 
-    LBRACE       =  / \{                                    / ;
-    RBRACE       =  / \}                                    / ;
+    SEMI   =  / ; / ;
+    COMMA  =  / , / ;
 
-    LPAREN       =  / \(                                    / ;
-    RPAREN       =  / \)                                    / ;
+    LBRACE = / \{ / ;
+    RBRACE = / \} / ;
+
+    LPAREN = / \( / ;
+    RPAREN = / \) / ;
+};
+
+$SKIP
+{
+	( GLOBAL ) BEG_REGEX     = / \/[ \t]* /, ( $BEGIN SEEN_REGEX ) ;
+	( SEEN_REGEX ) END_REGEX = / [ \t]*\/ /, ( $BEGIN GLOBAL     ) ;
+
+    SPACE   = / [ \t\n]+                              / ;
+    COMMENT = / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
 };
 
 $KEYWORD
@@ -46,6 +58,9 @@ $KEYWORD
 	// FGFL
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
 	BEGIN, FRAG, INITIAL, ALL, NONE,
+
+	/* TODO */
+	REJECT,
 
 	// FGFP
     EXTERN, PRODUCTION, ALIAS, PRECEDENCE, MIMIC,

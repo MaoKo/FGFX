@@ -211,7 +211,53 @@ ast_to_nfa(spec_entry_t* crt_entry) {
 	else
 		{ STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1); }
 	del_regex_node(root);
+	crt_entry->active = NFA;
 	return (exit_st);
+}
+
+static int
+build_nfa_entry(bool active_state, lexical_spec_t* spec, spec_entry_t* entry) {
+	if (!active_state) {
+		if (attach_tail(spec->master, entry->frag, NULL) == ERROR)
+			{ return (ERROR); }
+	}
+	else {
+		trans_list_t* it_lst = entry->state_begin_lst;
+		if (!it_lst) {
+			spec_entry_t* start_state = (spec_entry_t*)
+						AT_VECTOR(spec->state_vect, entry->default_state);
+			if (!start_state->st_master)
+				{ start_state->st_master = new_state(); }
+			if (attach_tail(start_state->st_master,entry->frag, NULL) == ERROR)
+				{ return (ERROR); }
+		}
+		else {
+			bitset_t* seen_state = new_bitset();
+			bool tail_error = false;
+
+			while (it_lst) {
+				if (!IS_PRESENT(seen_state, (size_t)it_lst->input)) {
+					ADD_BITSET(seen_state, (size_t)it_lst->input);
+					spec_entry_t* crt_state = (spec_entry_t*)
+						AT_VECTOR(spec->state_vect, (size_t)it_lst->input);
+
+					if (!crt_state->st_master)
+						{ crt_state->st_master = new_state(); }
+
+					if (attach_tail(crt_state->st_master,
+											entry->frag, NULL) == ERROR) {
+						tail_error = true;
+						break;
+					}
+				}
+				it_lst = it_lst->next;
+			}
+			del_bitset(seen_state);
+			if (tail_error)
+				{ return (ERROR); }
+		}
+	}
+	return (DONE);
 }
 
 int
@@ -229,39 +275,9 @@ build_nfa(lexical_spec_t* spec) {
 			{ continue; }
 		else if (ast_to_nfa(entry) == ERROR)
 			{ return (ERROR); }
-		else if (!entry->is_frag) {
-			if (!active_state) {
-				if (attach_tail(spec->master, entry->frag, NULL) == ERROR)
-					{ return (ERROR); }
-			}
-			else {
-				trans_list_t* it_lst = entry->state_begin_lst;
-				bitset_t* seen_state = new_bitset();
-
-				bool tail_error = false;
-
-				while (it_lst) {
-					if (!IS_PRESENT(seen_state, (size_t)it_lst->input)) {
-						ADD_BITSET(seen_state, (size_t)it_lst->input);
-						spec_entry_t* crt_state = (spec_entry_t*)
-							AT_VECTOR(spec->state_vect, (size_t)it_lst->input);
-
-						if (!crt_state->st_master)
-							{ crt_state->st_master = new_state(); }
-
-						if (attach_tail(crt_state->st_master,
-												entry->frag, NULL) == ERROR) {
-							tail_error = true;
-							break;
-						}
-					}
-					it_lst = it_lst->next;
-				}
-				del_bitset(seen_state);
-				if (tail_error)
-					{ return (ERROR); }
-			}
-		}
+		else if (!entry->is_frag
+					&& (build_nfa_entry(active_state, spec, entry) == ERROR))
+			{ return (ERROR); }
 	}
 
 	return (DONE);

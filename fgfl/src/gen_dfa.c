@@ -15,6 +15,7 @@ gen_state_enum(int filde, lexical_spec_t const* spec) {
 	size_t size_state = SIZE_VECTOR(spec->state_vect);
 	dprintf(filde, ENUM SP BEG_BLOCK NL);
 
+	dprintf(filde, TAB DUMMY_STR COMMA NL);
 	for (size_t i = 0; i < size_state; ++i) {
 		spec_entry_t* crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, i);
 		ENUM_STATE_LINE(filde, crt_state->name);
@@ -23,7 +24,7 @@ gen_state_enum(int filde, lexical_spec_t const* spec) {
 
 	spec_entry_t* init_state = AT_VECTOR(spec->state_vect, spec->start_state);
 
-	dprintf(filde, DEFINE(%s, %zu) NL, MACRO_STATE, size_state);
+	dprintf(filde, DEFINE(%s, %zu) NL, MACRO_STATE, size_state + 1);
 	dprintf(filde, DEFINE(%s, %s%s%s) NL NL,
 						"INIT_STATE", STATE_PREFIX, SEP, init_state->name);
 }

@@ -80,11 +80,13 @@ typedef struct {
 			bool use_look;
 			bool skip;
 
+			enum { REGEX, NFA } active;
 			union {
 				regex_node_t* reg;
 				nfa_frag_t* frag;
 			};
 
+			int default_state;
 			bool all_state;
 			trans_list_t* state_begin_lst;
 		};

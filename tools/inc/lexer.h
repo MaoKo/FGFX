@@ -2,6 +2,8 @@
 #define LEXER_H
 
 #include <stdbool.h>
+#include <stdint.h>
+
 #include "buffer.h"
 
 #define FILDE_LEX(lex)		((lex)->filde)
@@ -27,6 +29,5 @@ void del_lexer(lexer_t*);
 long advance_token(lexer_t*);
 int peek_token(lexer_t*);
 bool in_first(lexer_t*, ...);
-size_t is_final_state(int);
 
 #endif /* LEXER_H */
