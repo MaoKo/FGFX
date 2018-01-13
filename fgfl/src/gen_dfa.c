@@ -53,21 +53,21 @@ gen_state_name(int filde, spec_entry_t const* entry) {
 }
 
 void
-gen_state_table(int filde, vector_t const* trans,
-							char const* header, spec_entry_t const* entry) {
-	size_t size_trans = SIZE_VECTOR(trans);
+gen_state_table(int filde, lexical_spec_t const* spec,
+							char const* header, spec_entry_t const* state) {
+	size_t size_trans = SIZE_VECTOR(spec->trans);
 
 	dprintf(filde, STATIC SP "uint%u_t" NL, min_size_type(size_trans, true));
 	gen_verbatim_file(filde, header);
 
 	dprintf(filde, SEP);
-	gen_state_name(filde, entry);
+	gen_state_name(filde, state);
 
 	dprintf(filde, "state_table[%zu][%d] = "
 									BEG_BLOCK NL, size_trans, MAX_ASCII);
 
 	for (size_t i = 0; i < size_trans; ++i) {
-		trans_list_t const* list = (trans_list_t*)AT_VECTOR(trans, i);
+		trans_list_t const* list = (trans_list_t*)AT_VECTOR(spec->trans, i);
 		dprintf(filde, "/* %3zu */" TAB BEG_BLOCK, i);
 		while (list) {
 			trans_list_t const* next = list->next;
@@ -89,24 +89,51 @@ gen_state_table(int filde, vector_t const* trans,
 }
 
 void
-gen_final_table(int filde, vector_t const* final,
-							char const* header, spec_entry_t const* entry) {
-	size_t size_final = SIZE_VECTOR(final);
-	
-	dprintf(filde, STATIC SP "uint%u_t" NL, min_size_type(size_final, true));
+gen_middle_table(int filde, lexical_spec_t const* spec,
+							char const* header, spec_entry_t const* state) {
+	if (!spec->middle)
+		{ return; }
+
+	size_t size_middle = SIZE_VECTOR(spec->middle);
+
+	dprintf(filde, STATIC SP "uint8_t" NL);
 	gen_verbatim_file(filde, header);
 
 	dprintf(filde, SEP);
-	gen_state_name(filde, entry);
+	gen_state_name(filde, state);
+
+	dprintf(filde, "middle_table[%zu] = " BEG_BLOCK NL,
+											SIZE_VECTOR(spec->trans));
+
+	for (size_t i = 0; i < size_middle; ++i) {
+		long beg_state = (long)AT_VECTOR(spec->middle, i);
+		dprintf(filde, TAB "[%ld]=true" COMMA NL, beg_state);
+	}
+	dprintf(filde, END_BLOCK SEMI NL NL);
+}
+
+void
+gen_final_table(int filde, lexical_spec_t const* spec,
+							char const* header, spec_entry_t const* state) {
+	size_t size_final = SIZE_VECTOR(spec->final);
+	
+	dprintf(filde, STATIC SP "uint%u_t" NL,
+								min_size_type(SIZE_VECTOR(spec->trans), true));
+	gen_verbatim_file(filde, header);
+
+	dprintf(filde, SEP);
+	gen_state_name(filde, state);
 
 	size_t count_final = size_final / 2;
 	dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, count_final + 1);
 
 	for (size_t i = 0; i < count_final; ++i) {
+		long final_state = (long)AT_VECTOR(spec->final, i*2);
+		char const* token_name = (char const*)AT_VECTOR(spec->final, (i*2) + 1);
+
 		dprintf(filde,	TAB BEG_BLOCK SP "%ld" COMMA SP
-						TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
-						(long)AT_VECTOR(final, i*2),
-						(char const*)AT_VECTOR(final, i*2+1));
+							TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
+							final_state, token_name);
 	}
 	dprintf(filde, TAB BEG_BLOCK SP "0" SP END_BLOCK COMMA NL);
 	dprintf(filde, END_BLOCK SEMI NL NL);
@@ -161,34 +188,40 @@ gen_change_state(int filde, char const* header, lexical_spec_t* spec) {
 }
 
 void
-gen_skip_table(int filde, lexical_spec_t const* spec, char const* header) {
-	vector_t* skip_table = new_vector();
-	if (!skip_table)
+gen_terminated_table(int filde, lexical_spec_t const* spec,
+											char const* header, size_t kind) {
+	vector_t* dst_vect = new_vector();
+	if (!dst_vect)
 		{ return; }
 
 	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-		if (entry->skip && (entry->kind == T_TERMINAL && !entry->is_frag))
-			{ PUSH_BACK_VECTOR(skip_table, entry); }
+		if ((entry->kind == T_TERMINAL) && (!entry->is_frag)) {
+			if (kind == SKIP_TABLE && entry->skip)
+				{ PUSH_BACK_VECTOR(dst_vect, entry); }
+			else if (kind == LOOK_TABLE && entry->use_look)
+				{ PUSH_BACK_VECTOR(dst_vect, entry); }
+		}
 	}
-	
-	size_t size_skip_table = SIZE_VECTOR(skip_table);
-	if (size_skip_table) {
+
+	size_t size_table = SIZE_VECTOR(dst_vect);
+	if (size_table) {
 		dprintf(filde, STATIC SP "int%u_t" NL,
-								min_size_type(size_skip_table, false));
+								min_size_type(size_table, false));
 
 		gen_verbatim_file(filde, header);
-		dprintf(filde, "_skip_table[%zu] = " BEG_BLOCK NL,
-					size_skip_table + 1);
+		dprintf(filde, "_%s_table[%zu] = " BEG_BLOCK NL,
+				((kind == SKIP_TABLE) ? "skip" : "look"), size_table + 1);
 
-		for (size_t i = 0; i < size_skip_table; ++i) {
-			spec_entry_t* entry = (spec_entry_t*)
-					AT_VECTOR(skip_table, i);
+		for (size_t i = 0; i < size_table; ++i) {
+			spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(dst_vect, i);
 			dprintf(filde, TAB TOKEN_PREFIX SEP "%s" COMMA NL, entry->name);
 		}
 		dprintf(filde, TAB "-1" COMMA NL END_BLOCK SEMI NL NL);
 	}
-	else
-		{ dprintf(filde, DEFINE(SKIP_TABLE_NOT_DEFINE,) NL NL); }
-	del_vector(skip_table);
+	else {
+		dprintf(filde, DEFINE(%s_TABLE_NOT_DEFINE,) NL NL,
+								((kind == SKIP_TABLE) ? "SKIP" : "LOOK"));
+	}
+	del_vector(dst_vect);
 }

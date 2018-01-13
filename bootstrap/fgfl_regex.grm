@@ -5,14 +5,16 @@ $EXTERN
 
 $PRODUCTION
 {
-	<regex>			->	[ '^' ] [ <regex_union> ] [ '$' ] ;
+	<regex>			->	/* [ '^' ] */ [ <regex_look> ] /* [ '$' ] */ ;
 
+	<regex_look>	->	<regex_union> [ '/' <regex_union> ] ;
+	
 	<regex_union>	->	<regex_cat>
-						{ '|' <regex_cat> } => ( $RIGHT ) ;
+							{ '|' <regex_cat> } => ( $RIGHT ) ;
 	<regex_cat>		->	<regex_closure>
-						{ <regex_closure> } => ( $RIGHT ) ;
+							{ <regex_closure> } => ( $RIGHT ) ;
 	<regex_closure>	->	<regex_atom>
-						{ '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
+							{ '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
 
 	<finite_seq>	->	'{' DIGIT [ ',' [ DIGIT ] ] '}' ;
 
@@ -35,6 +37,7 @@ $PRODUCTION
 
 $ALIAS
 {
+	(LOOK	=>  '/')	,
 	(UNION	=>  '|')	,
 	(STAR	=>  '*')	,
 	(PLUS	=>  '+')	,
@@ -50,5 +53,5 @@ $ALIAS
 	(HYPHEN	=>  '-')	,
 	(COMMA	=>  ',')	,
 	(DOT	=>  '.')	,
-	(QUOTE	=> '\"')	,
+	(QUOTE	=>  '\"')	,
 };

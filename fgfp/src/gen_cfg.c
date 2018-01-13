@@ -53,7 +53,7 @@ gen_nter_symbol(int filde, cfg_t const* cfg, size_t index, bool sep) {
 			{ write(filde, symbol->name + i, 1); }
 	}
 	if (depth)
-		{ dprintf(filde, SEP "%zu" SEP "%zu", depth, spec_nth); }
+		{ dprintf(filde, SEP "%zu" SEP "%zu", spec_nth, depth); }
 }
 
 void

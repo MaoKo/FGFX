@@ -19,9 +19,10 @@ static bool escaped = false;
 
 // Static Prototype
 
-static regex_node_t* reg_expr(void);
-static regex_node_t* reg_term(void);
-static regex_node_t* reg_fact(void);
+static regex_node_t* reg_look(void);
+static regex_node_t* reg_union(void);
+static regex_node_t* reg_cat(void);
+static regex_node_t* reg_closure(void);
 static regex_node_t* reg_atom(void);
 static regex_node_t* reg_quote(void);
 static regex_node_t* reg_range(void);
@@ -36,7 +37,7 @@ static int get_c(void);
 // Node Function
 
 static regex_node_t*
-node_ast(int kind, ...) {
+new_regex_node(int kind, ...) {
 	regex_node_t* node = NEW(regex_node_t, 1);
 	if (!node)
 		{ return (NULL); }
@@ -72,19 +73,19 @@ del_regex_node(regex_node_t* node) {
 }
 
 static regex_node_t*
-cpy_node_ast(regex_node_t* root) {
+cpy_regex_node(regex_node_t* root) {
 	if (root) {
 		if (root->kind_ast != AST_SYMBOL) {
-			regex_node_t* left = cpy_node_ast(root->left);
-			regex_node_t* right = cpy_node_ast(root->right);
-			return (node_ast(root->kind_ast, left, right));
+			regex_node_t* left = cpy_regex_node(root->left);
+			regex_node_t* right = cpy_regex_node(root->right);
+			return (new_regex_node(root->kind_ast, left, right));
 		}
 		else { 
 			if (root->alone) {
-				return (node_ast(AST_SYMBOL,
+				return (new_regex_node(AST_SYMBOL,
 						ALONE_S, root->symbol)); }
 			else {
-				return (node_ast(AST_SYMBOL, MULTI_S,
+				return (new_regex_node(AST_SYMBOL, MULTI_S,
 						dup_bitset(root->cclass)));
 			}
 		}
@@ -93,12 +94,12 @@ cpy_node_ast(regex_node_t* root) {
 }
 
 static regex_node_t*
-cpy_concat_node_ast(regex_node_t* root, size_t size) {
+cpy_concat_regex_node(regex_node_t* root, size_t size) {
 	if (!size)
-		{ return (node_ast(AST_SYMBOL, EPSILON)); }
+		{ return (new_regex_node(AST_SYMBOL, EPSILON)); }
 	regex_node_t* atom = root;
 	for (size_t i = 1; i < size; ++i)
-		{ root = node_ast(AST_CONCAT, root, cpy_node_ast(atom)); }
+		{ root = new_regex_node(AST_CONCAT, root, cpy_regex_node(atom)); }
 	return (root);
 }
 
@@ -206,7 +207,7 @@ is_metachar(int symbl) {
 		case REG_UNION: case REG_LPAREN: case REG_RPAREN:
 		case REG_LBRACK: case REG_KLEENE: case REG_PKLEENE:
 		case REG_OKLEENE: case REG_LBRACE: case REG_DQUOTE:
-		case REG_DOT: return (!escaped);
+		case REG_DOT: case '@': return (!escaped);
 	}
 	return (false);
 } 
@@ -314,11 +315,11 @@ bound_name(regex_node_t* root) {
 	if (index != -1) {
 		spec_entry_t* entry = (spec_entry_t*)
 			AT_VECTOR(local_spec->entry_vect, index);
-		rep_node = cpy_node_ast(entry->reg);
+		rep_node = cpy_regex_node(entry->reg);
 		USED_ENTRY(entry);
 	}
 	if (rep_node)
-		{ rep_node = node_ast(AST_CONCAT, root, rep_node); }
+		{ rep_node = new_regex_node(AST_CONCAT, root, rep_node); }
 	else {
 		fprintf(stderr, "Error (%d): Undefined name %s.\n",
 			CURRENT_LINE(local_spec->lex), BODY_BUFFER(bound));
@@ -331,22 +332,21 @@ bound_name(regex_node_t* root) {
 static regex_node_t*
 finite_seq(regex_node_t* root) {
 	int start = str2int();
-	regex_node_t* rep_node = cpy_concat_node_ast(root, start);
+	regex_node_t* rep_node = cpy_concat_regex_node(root, start);
 	if (match(REG_COMMA)) {
 		if (isdigit(peek())) {
 			int until = str2int();
 			if (until < start)
 				{ /* ERROR */ }	
 			for (int i = start + 1; i <= until; ++i) {
-				root = cpy_node_ast(root);
-				rep_node = node_ast(AST_UNION, rep_node,
-						cpy_concat_node_ast(root, i));
+				root = cpy_regex_node(root);
+				rep_node = new_regex_node(AST_UNION, rep_node,
+										cpy_concat_regex_node(root, i));
 			}
 		}
 		else {
-			rep_node = node_ast(AST_CONCAT, rep_node,
-					node_ast(AST_CLOSURE,
-					cpy_node_ast(rep_node), NULL));
+			rep_node = new_regex_node(AST_CONCAT, rep_node, new_regex_node(AST_CLOSURE,
+									cpy_regex_node(rep_node), NULL));
 		}
 	}
 	return (rep_node);
@@ -384,7 +384,7 @@ static inline regex_node_t*
 dot_regex(void) {
 	bitset_t* newl = new_bitset();
 	ADD_BITSET(newl, '\n');
-	return (node_ast(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
+	return (new_regex_node(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }
 
 static regex_node_t*
@@ -395,7 +395,7 @@ regex_to_ast(lexical_spec_t* token_spec, char const* regex_str) {
 	local_spec = token_spec;
 	peek_c = -1;
 	escaped = false;
-	return (reg_expr());
+	return (reg_look());
 }
 
 int
@@ -436,42 +436,53 @@ is_in_follow(int alone, ...) {
 }
 
 static regex_node_t*
-reg_expr(void) {
-	regex_node_t* root = reg_term();
-	while (is_in_follow(REG_UNION, -1)) {
+reg_look(void) {
+	regex_node_t* root = reg_union();
+	if (peek() == '@') {
 		advance();
-		root = node_ast(AST_UNION, root, reg_term());
+		root = new_regex_node(AST_CONCAT, root, reg_union());
+		root->look_sym = true;
 	}
 	return (root);
 }
 
 static regex_node_t*
-reg_term(void) {
-	regex_node_t* root = reg_fact();
-	while (!is_in_follow(REG_UNION, REG_RPAREN, -1) && !is_end())
-		{ root = node_ast(AST_CONCAT, root, reg_fact()); }
+reg_union(void) {
+	regex_node_t* root = reg_cat();
+	while (is_in_follow(REG_UNION, -1)) {
+		advance();
+		root = new_regex_node(AST_UNION, root, reg_cat());
+	}
 	return (root);
 }
 
 static regex_node_t*
-reg_fact(void) {
+reg_cat(void) {
+	regex_node_t* root = reg_closure();
+	while (!is_in_follow(REG_UNION, REG_RPAREN, '@', -1) && !is_end())
+		{ root = new_regex_node(AST_CONCAT, root, reg_closure()); }
+	return (root);
+}
+
+static regex_node_t*
+reg_closure(void) {
 	regex_node_t* root = reg_atom();
 	while (is_in_follow(REG_KLEENE, REG_PKLEENE,
 					REG_OKLEENE, REG_LBRACE, -1)) {
 		int closure_kind = advance();
 		switch (closure_kind) {
 			case REG_PKLEENE:
-				root = node_ast(AST_CONCAT, root,
-						node_ast(AST_CLOSURE,
-						cpy_node_ast(root), NULL));
+				root = new_regex_node(AST_CONCAT, root,
+						new_regex_node(AST_CLOSURE,
+						cpy_regex_node(root), NULL));
 				break;
 			case REG_OKLEENE:
-				root = node_ast(AST_UNION, root,
-						node_ast(AST_SYMBOL, ALONE_S,
+				root = new_regex_node(AST_UNION, root,
+						new_regex_node(AST_SYMBOL, ALONE_S,
 						EPSILON));
 				break;
 			case REG_KLEENE:
-				root = node_ast(AST_CLOSURE, root, NULL);
+				root = new_regex_node(AST_CLOSURE, root, NULL);
 				break;
 			case REG_LBRACE: root = curly_regex(root);
 				break;
@@ -483,16 +494,16 @@ reg_fact(void) {
 static regex_node_t*
 reg_atom(void) {
 	if (!is_metachar(peek()) && peek() != EOS)
-		{ return (node_ast(AST_SYMBOL, ALONE_S, advance())); }
+		{ return (new_regex_node(AST_SYMBOL, ALONE_S, advance())); }
 	else if (match(REG_LPAREN)) { 
-		regex_node_t* expr = reg_expr();
+		regex_node_t* expr = reg_union();
 		expected(REG_RPAREN);
 		return (expr);
 	}
 	else if (match(REG_LBRACK)) { return (reg_range()); }
 	else if (match(REG_DOT)) { return (dot_regex()); }
 	else if (match(REG_DQUOTE)) { return (reg_quote()); }
-	return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
+	return (new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
 }
 
 static regex_node_t*
@@ -500,15 +511,15 @@ reg_quote(void) {
 	regex_node_t* root_concat = NULL;
 	while (!is_in_follow(REG_DQUOTE, -1) && !is_end()) {
 		int c = advance();
-		regex_node_t* symbol = node_ast(AST_SYMBOL, ALONE_S, c);
+		regex_node_t* symbol = new_regex_node(AST_SYMBOL, ALONE_S, c);
 		if (!root_concat)
 			{ root_concat = symbol; }
 		else
-			{ root_concat = node_ast(AST_CONCAT, root_concat, symbol); }
+			{ root_concat = new_regex_node(AST_CONCAT, root_concat, symbol); }
 	}
 	advance();
 	if (!root_concat)
-		{ root_concat = node_ast(AST_SYMBOL, ALONE_S, EPSILON); }
+		{ root_concat = new_regex_node(AST_SYMBOL, ALONE_S, EPSILON); }
 	expected(REG_DQUOTE);
 	return (root_concat);
 }
@@ -539,11 +550,11 @@ reg_range(void) {
 	advance();
 	if (is_empty_bitset(range) && !negate) {
 		del_bitset(range);
-		return (node_ast(AST_SYMBOL, ALONE_S, EPSILON));
+		return (new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
 	}
 
 	if (negate)
 		{ COMPL_BITSET(range); }
 	expected(REG_RBRACK);
-	return (node_ast(AST_SYMBOL, MULTI_S, range));
+	return (new_regex_node(AST_SYMBOL, MULTI_S, range));
 }

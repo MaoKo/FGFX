@@ -160,6 +160,9 @@ ast_concat(regex_node_t* root) {
 	if (attach_tail(left->head, right, NULL))
 		{ /* TODO ERROR */ }
 
+	if (root->look_sym)
+		{ left->head->beg_look = true; }
+
 	left->head = right->head;
 	FREE_FRAG(right);
 

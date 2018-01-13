@@ -64,8 +64,8 @@ dfa_edge(bitset_t* states, int symbol) {
 }
 
 static vector_t*
-build_state_table(state_t* master, vector_t** rstates) {
-	vector_t* states = (*rstates) = new_vector();
+build_state_table(state_t* master, vector_t** return_states) {
+	vector_t* states = (*return_states) = new_vector();
 	
 	bitset_t* start = new_bitset();
 	ADD_BITSET(start, GET_INDEX(master));
@@ -112,6 +112,25 @@ build_state_table(state_t* master, vector_t** rstates) {
 }
 
 static vector_t*
+build_middle_table(vector_t* states) {
+	vector_t* middle = NULL_VECT;
+	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
+		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
+		int j;
+		while ((j = IT_NEXT(set_state)) != IT_NULL) {
+			state_t* crt_state = STATE_AT(j);
+			if (crt_state->beg_look) {
+				if (!middle)
+					{ middle = new_vector(); }
+				PUSH_BACK_VECTOR(middle, (void*)i);
+			}
+		}
+		IT_RESET(set_state);
+	}
+	return (middle);
+}
+
+static vector_t*
 build_final_table(vector_t* states, vector_t* elst) {
 	vector_t* final = new_vector();
 
@@ -138,18 +157,28 @@ build_final_table(vector_t* states, vector_t* elst) {
 }
 
 void
-build_dfa_table(state_t* master, lexical_spec_t* spec,
-									vector_t** trans, vector_t** final) {
+build_dfa_table(state_t* master, lexical_spec_t* spec) {
+	if (spec->trans) {
+		foreach_vector(spec->trans, &del_trans_list);
+		del_vector(spec->trans);
+	}
+
+	if (spec->middle)
+		{ del_vector(spec->middle); }
+	if (spec->final)
+		{ del_vector(spec->final); }
+
 	vector_t* states = NULL;
 
-	*trans = build_state_table(master, &states);
-	*final = build_final_table(states, spec->entry_vect);
+	spec->trans = build_state_table(master, &states);
+	spec->middle = build_middle_table(states);
+	spec->final = build_final_table(states, spec->entry_vect);
 
 	foreach_vector(states, &del_bitset);
 	del_vector(states);
 }
 
-#ifdef OPTIMIZE
+#ifdef DFA_OPTIMIZE
 
 static void
 redirect_transition(vector_t* trans, long s1, long s2) {
@@ -207,4 +236,4 @@ equivalent_state(vector_t* trans, vector_t* finalt) {
 	} while (repeat);
 }
 
-#endif /* OPTIMIZE */
+#endif /* DFA_OPTIMIZE */

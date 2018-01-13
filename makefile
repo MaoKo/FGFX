@@ -3,7 +3,7 @@
 CC			:=	cc
 INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
 CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) -g
-CC_MACRO	:=	-DOPTIMIZE -DPRINT_DEBUG
+CC_MACRO	:=	-DDFA_OPTIMIZE -DPRINT_DEBUG
 LD_FLAGS	:=	# -pg
 
 include tools/makefile

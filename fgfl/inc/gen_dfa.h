@@ -25,13 +25,25 @@
 #define TOKEN_PREFIX			"T"
 #define STATE_PREFIX			"S"
 
+#define GEN_SKIP_TABLE(f, s, h)	gen_terminated_table(f, s, h, SKIP_TABLE)
+#define GEN_LOOK_TABLE(f, s, h)	gen_terminated_table(f, s, h, LOOK_TABLE)
+
+enum {
+	LOOK_TABLE,
+	SKIP_TABLE,
+};
+
 void gen_state_enum(int, lexical_spec_t const*);
 void gen_token_enum(int, lexical_spec_t const*);
 void gen_dfa_typedef(int, vector_t const*,
 							vector_t const*, spec_entry_t const*);
-void gen_state_table(int, vector_t const*, char const*, spec_entry_t const*);
-void gen_final_table(int, vector_t const*, char const*, spec_entry_t const*);
-void gen_skip_table(int, lexical_spec_t const* spec, char const*);
+void gen_state_table(int, lexical_spec_t const*,
+							char const*, spec_entry_t const*);
+void gen_middle_table(int, lexical_spec_t const*,
+							char const*, spec_entry_t const*);
+void gen_final_table(int, lexical_spec_t const*,
+							char const*, spec_entry_t const*);
 void gen_change_state(int, char const*, lexical_spec_t*);
+void gen_terminated_table(int, lexical_spec_t const*, char const*, size_t);
 
 #endif /* GEN_DFA_H */

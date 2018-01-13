@@ -37,7 +37,8 @@ gen_require_macro(int filde, char const* header) {
 	dprintf(filde, NL "#define ");
 	gen_include_macro(filde, header);
 	dprintf(filde, NL NL);
-	dprintf(filde, INCLUDE_SYS(stdint.h) NL NL);
+	dprintf(filde, INCLUDE_SYS(stdint.h) NL);
+	dprintf(filde, INCLUDE_SYS(stdbool.h) NL NL);
 }
 
 void

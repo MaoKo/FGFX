@@ -14,22 +14,14 @@
 
 static void
 gen_dfa_final_tables(int filde, lexical_spec_t* spec, state_t* master,
-									char const* header, spec_entry_t* entry) {
-	vector_t* trans = NULL;
-	vector_t* final = NULL;
-
-	build_dfa_table(master, spec, &trans, &final);
-
-#ifdef OPTIMIZE
-	equivalent_state(trans, final);
-#endif /* OPTIMIZE */
-
-	gen_state_table(filde, trans, header, entry);
-	gen_final_table(filde, final, header, entry);
-
-	foreach_vector(trans, &del_trans_list);
-	del_vector(trans);
-	del_vector(final);
+									char const* header, spec_entry_t* state) {
+	build_dfa_table(master, spec);
+#ifdef DFA_OPTIMIZE
+	equivalent_state(spec->trans, spec->final);
+#endif /* DFA_OPTIMIZE */
+	gen_state_table(filde, spec, header, state);
+	gen_middle_table(filde, spec, header, state);
+	gen_final_table(filde, spec, header, state);
 }
 
 static int 
@@ -65,7 +57,9 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 			}
 		}
 		del_nfa_record();
-		gen_skip_table(filde, spec, header);
+
+		GEN_LOOK_TABLE(filde, spec, header);
+		GEN_SKIP_TABLE(filde, spec, header);
 
 		ENDIF_ONLY_STATE_TOKEN(filde);
 	}

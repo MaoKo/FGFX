@@ -8,6 +8,8 @@
 #include "lexer.h"
 #include "utils.h"
 
+static size_t special_pos = 0;
+
 cfg_t*
 new_cfg(int filde) {
 	cfg_t* cfg = NEW(cfg_t, 1);
@@ -403,6 +405,7 @@ cfg_production_list(cfg_t* cfg) {
 	while (peek_token(cfg->lex) != T_RBRACE) {
 		if (cfg_production(cfg) == ERROR)
 			{ return (ERROR); }
+		special_pos = 0;
 	}
 	return (DONE);
 }
@@ -580,7 +583,6 @@ add_recursive(cfg_t* cfg, symbol_t* opt_nter, size_t base_index) {
 
 static int
 enclosed_element(cfg_t* cfg, production_t* prod) {
-	static size_t special_pos = 0;
 	int kind = ((advance_token(cfg->lex) == T_LBRACK) ? OPT : LST);
 
 	int greater_depth = (LHS(prod)->depth > 2);

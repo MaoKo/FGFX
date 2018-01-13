@@ -15,12 +15,16 @@ enum {
 #define GOTO(x)			(x | _GOTO)
 #define REDUCE(x)		(x | _REDUCE)
 
-#define SHIFT_REDUCE	(1)
-#define REDUCE_REDUCE	(2)
+enum {
+	SHIFT_REDUCE = 1,
+	REDUCE_REDUCE,
+};
 
 // CMP Check
-#define LR0_ITEM		(1)
-#define LR1_ITEM		(2)
+enum {
+	LR0_ITEM=1,
+	LR1_ITEM,
+};
 
 #define DOT(item)		((item)->dot_pos)
 #define PROD(item)		((item)->prod)

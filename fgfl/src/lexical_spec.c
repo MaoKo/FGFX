@@ -56,6 +56,12 @@ del_lexical_spec(lexical_spec_t* spec) {
 		del_vector(spec->state_vect);
 
 		del_lexer(spec->lex);
+
+		foreach_vector(spec->trans, &del_trans_list);
+		del_vector(spec->trans);
+
+		del_vector(spec->middle);
+		del_vector(spec->final);
 	}
 	FREE(spec);
 }
@@ -354,7 +360,7 @@ spec_regex_assign(lexical_spec_t* spec,
 			&is_tab_or_space) - save_space);
 
 		size_t front_space = count_front(C_LEXEME(spec->lex) + 1,
-				&is_tab_or_space) + 1;
+												&is_tab_or_space) + 1;
 
 		CURRENT_LINE(spec->lex) += char_in_str(
 				C_LEXEME(spec->lex) + front_space, '\n');
@@ -374,6 +380,10 @@ spec_regex_assign(lexical_spec_t* spec,
 		}
 	
 		entry->reg_str = reg_str;
+		// TODO fix me
+		if (strchr(entry->reg_str, '@'))
+			{ entry->use_look = true; }
+
 		if (peek_token(spec->lex) == T_ARROW) {
 			advance_token(spec->lex);
 			if (advance_token(spec->lex) != T_LBRACE) {
@@ -428,7 +438,8 @@ spec_regex_list(lexical_spec_t* spec, int kind_section) {
 		if (spec_regex_assign(spec, entry, kind_section) == ERROR)
 			{ return (ERROR); }
 		else if (advance_token(spec->lex) != T_SEMI) {
-			errorf(CURRENT_LINE(spec->lex), "Missing a ';' after the regex.");
+			errorf(CURRENT_LINE(spec->lex),
+						"Missing a ';' after the regex definition.");
 			return (ERROR);
 		}
 		return (spec_regex_list(spec, kind_section));

@@ -17,11 +17,12 @@ typedef struct regex_node_t {
 	} kind_ast;
 
 	union {
-		struct {
+		struct { // if AST_UNION | AST_CONCAT | AST_CLOSURE
 			struct regex_node_t* left;
 			struct regex_node_t* right;
+			bool look_sym;
 		};
-		struct {
+		struct { // if AST_SYMBOL
 			bool alone;
 			union {
 				bitset_t* cclass;
@@ -36,6 +37,7 @@ typedef struct edge_t edge_t;
 typedef struct state_t {
 	size_t index;
 	int final;
+	bool beg_look;
 	edge_t* trans;
 	// if CCLASS
 	bitset_t* class;
@@ -75,6 +77,7 @@ typedef struct {
 			bool is_igcase;
 			bool is_frag;
 
+			bool use_look;
 			bool skip;
 
 			union {
@@ -84,9 +87,6 @@ typedef struct {
 
 			bool all_state;
 			trans_list_t* state_begin_lst;
-
-			// TODO Remove that
-			int begin_state;
 		};
 		struct { // if KEYWORD & STATE
 			struct { // if STATE
@@ -106,6 +106,10 @@ typedef struct {
 	int start_state;
 	bool miss_regex;
 	state_t* master;
+	// Table generated during the build of the DFA
+	vector_t* trans;
+	vector_t* final;
+	vector_t* middle;
 } lexical_spec_t;
 
 #endif /* FGFL_H */
