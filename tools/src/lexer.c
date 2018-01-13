@@ -1,4 +1,4 @@
-#include <stdio.h>
+
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -15,63 +15,74 @@ new_lexer(int filde) {
 
 	if (!lex)
 		{ return (NULL); }
-	memset(lex, 0, sizeof(lexer_t));
+	memset(lex, 0, sizeof(*lex));
 
 	lex->filde = filde;
-	lex->last_token = lex->last_char = -1;
-	lex->lineno = 1;
+
+	lex->last_lexeme = new_buffer();
+	lex->push_back = new_buffer();
+
+	lex->last_token = NO_TOKEN;
+	lex->lineno = START_LINE;
 
 	return (lex);
 }
 
 void
 del_lexer(lexer_t* lex) {
-	if (lex)
-		{ del_buffer(lex->last_lexeme); }
+	if (lex) {
+		del_buffer(lex->push_back);
+		del_buffer(lex->last_lexeme);
+	}
 	FREE(lex);
 }
 
 static int
 get_next_token(lexer_t* lex) {
-	int rd, state = START_STATE, last_match = T_ERROR;
-	int c = 0;
+	int state = START_STATE;
+	int last_match = T_ERROR;
+	int rd = 0;
 
-	if (!lex->last_lexeme)
-		{ lex->last_lexeme = new_buffer(); }
-	if (lex->last_char != -1) {
-		state = fgfx_state_table[state][lex->last_char];
-		last_match = is_final_state(state);
-		write_char_buffer(lex->last_lexeme, lex->last_char);
+	if (lex->carry_nl)
+		{ ++(lex->lineno); }
 
-		if (lex->last_char == '\n')
-			{ ++(lex->lineno); }
+	append_buffer(lex->last_lexeme, lex->push_back);
+	reset_buffer(lex->push_back);
+
+	for (size_t i = 0; i < SIZE_BUFFER(lex->last_lexeme); ++i) {
+		state = fgfx_state_table[state][(int)CHAR_AT(lex->last_lexeme, i)];
+		if (is_final_state(state) != T_ERROR)
+			{ last_match = is_final_state(state); }
 	}
 
 	int first_read = true;
 	while (state != DEAD_STATE) {
-		rd = read(lex->filde, &c, 1);
-		if (!rd) {
+		int exit_st = read(lex->filde, &rd, 1);
+		if (!exit_st) {
 			if (first_read)
 				{ return (T_EOF); }
 			break;
 		}
-		state = fgfx_state_table[state][c];
+		state = fgfx_state_table[state][rd];
 		if (is_final_state(state) != T_ERROR)
 			{ last_match = is_final_state(state); }
-		write_char_buffer(lex->last_lexeme, c);
+		write_char_buffer(lex->last_lexeme, rd);
 		first_read = false;
-		if (state != DEAD_STATE && c == '\n')
-			{ ++(lex->lineno); }
+		if (rd == '\n') {
+			if (state != DEAD_STATE)
+				{ ++(lex->lineno); }	
+			else
+				{ lex->carry_nl = true; }
+		}
 	}
-	
+
 	if (last_match == T_ERROR) {
-		errorf(CURRENT_LINE(lex), "Lexical error on input '%s'.",
-										C_LEXEME(lex));
-		lex->last_char = -1;
+		errorf(CURRENT_LINE(lex),
+							"Lexical error on input '%s'.", C_LEXEME(lex));
 	}
 	else {
-		lex->last_char = c;
 		unget_c_buffer(lex->last_lexeme, 1);
+		write_char_buffer(lex->push_back, rd);
 	}
 	return (last_match);
 }

@@ -4,7 +4,8 @@
 #include <stddef.h>
 
 #define BODY_BUFFER(buf)		((buf)->body)
-#define SIZE_BUFFER(buf)		((buf)->size)
+#define SIZE_BUFFER(buf)		((buf)->index)
+#define CHAR_AT(buf, index)		((buf)->body[index])
 #define ALLOC_SIZE_BUFFER(buf)	((buf)->alloc)
 #define CMP_BUFF_STR(buf, str)	(!strcmp((buf)->body, str))
 #define CMP_BUFFER(b1, b2)		(CMP_BUFF_STR(b1, (b2)->body))

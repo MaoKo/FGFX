@@ -20,6 +20,7 @@ Which create a file called token_c.h.lex ready for lexing.
 ### TODO ###
 	.	More accurate handle of error in FGFX (FGFP (95%), FGFL(80%))
 	.	Optimizing FOLLOW set
+	.	Add the algorithm for optimize DFA (group)
 	.	Handle if file already exist
 	.	Improve the algorithm for constructing the
 			LALR parsing table

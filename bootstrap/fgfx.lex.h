@@ -2,6 +2,7 @@
 #define _FGFX_LEX_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 enum {
 	T_SPACE,
@@ -127,6 +128,8 @@ fgfx_final_table[23][2] = {
 	{ 39, 	T_COMMENT },
 	{ 0 },
 };
+
+#define LOOK_TABLE_NOT_DEFINE	
 
 static int8_t
 fgfx_skip_table[3] = {

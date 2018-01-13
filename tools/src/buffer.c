@@ -62,7 +62,10 @@ int
 write_char_buffer(buffer_t* buf, char c) {
 	if (extend_buffer(buf) == ERROR)
 		{ return (ERROR); }
-	return (buf->body[buf->index++] = c);
+	buf->body[buf->index] = c;
+	if (c)
+		{ ++(buf->index); }
+	return (c);
 }
 
 int

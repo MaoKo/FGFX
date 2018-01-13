@@ -163,6 +163,13 @@ spec_regex_property(lexical_spec_t* spec, spec_entry_t* entry) {
 			((kind_property == T_IGCASE)
 				? (entry->is_frag = true) : (entry->is_igcase = true));
 		}
+
+		if (entry->is_frag && entry->use_look) {
+			errorf(CURRENT_LINE(spec->lex),
+							"The token %s use the lookahead feature"
+							" but it's a fragment token.", entry->name);
+			return (ERROR);
+		}
 	}
 	else {
 		errorf(CURRENT_LINE(spec->lex), "A $FRAG or $IGCASE must appear.");

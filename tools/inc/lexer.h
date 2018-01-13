@@ -10,10 +10,14 @@
 #define C_LEXEME(lex)		(BODY_BUFFER(LAST_LEXEME(lex)))
 #define CURRENT_LINE(lex)	((lex)->lineno)
 
+#define NO_TOKEN			(-1)
+#define START_LINE			(1)
+
 typedef struct {
 	int filde;
-	int last_char;
+	bool carry_nl;
 	int last_token;
+	buffer_t* push_back;
 	buffer_t* last_lexeme;
 	int lineno;
 } lexer_t;
