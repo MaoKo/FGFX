@@ -19,20 +19,21 @@ new_lexer(int filde) {
 	lex->filde = filde;
 
 	lex->last_lexeme = new_buffer();
-	lex->push_back = new_buffer();
+	lex->last_char = NO_CHAR;
 
 	lex->last_token = NO_TOKEN;
 	lex->lineno = START_LINE;
+	
+    lex->crt_state = INIT_STATE;
+    lex->nested_com = 0;
 
 	return (lex);
 }
 
 void
 del_lexer(lexer_t* lex) {
-	if (lex) {
-		del_buffer(lex->push_back);
-		del_buffer(lex->last_lexeme);
-	}
+	if (lex)
+        { del_buffer(lex->last_lexeme); }
 	FREE(lex);
 }
 
@@ -52,35 +53,35 @@ get_next_token(lexer_t* lex) {
 	static uint8_t (*state_table)[256] = NULL;
 	static uint8_t (*final_table)[2] = NULL;
 
-	static int crt_state = INIT_STATE;
+    static bool need_recompute = true;
 
 	int state = START_STATE;
 	int last_match = T_ERROR;
 	int rd = 0;
 
-	if (lex->carry_nl)
-		{ ++(lex->lineno); }
-	lex->carry_nl = false;
+    if (need_recompute) {
+    	switch (lex->crt_state) {
+    		case S_GLOBAL:
+		    	state_table = fgfx_GLOBAL_state_table;
+    			final_table = fgfx_GLOBAL_final_table;
+	    		break;
 
-	append_buffer(lex->last_lexeme, lex->push_back);
-	reset_buffer(lex->push_back);
+    		case S_IN_REGEX:
+	    		state_table = fgfx_IN_REGEX_state_table;
+		    	final_table = fgfx_IN_REGEX_final_table;
+		    	break;
+    	}
+    }
 
-	switch (crt_state) {
-		case S_GLOBAL:
-			state_table = fgfx_GLOBAL_state_table;
-			final_table = fgfx_GLOBAL_final_table;
-			break;
+	if (lex->last_char != NO_CHAR) {
+		state = state_table[state][lex->last_char];
 
-		case S_SEEN_REGEX:
-			state_table = fgfx_SEEN_REGEX_state_table;
-			final_table = fgfx_SEEN_REGEX_final_table;
-			break;
-	}
-
-	for (size_t i = 0; i < SIZE_BUFFER(lex->last_lexeme); ++i) {
-		state = state_table[state][(int)CHAR_AT(lex->last_lexeme, i)];
 		if (is_final_state(state, final_table) != T_ERROR)
 			{ last_match = is_final_state(state, final_table); }
+		write_char_buffer(lex->last_lexeme, lex->last_char);
+  
+    	if (lex->last_char == '\n')
+	    	{ ++(lex->lineno); }
 	}
 
 	int first_read = true;
@@ -96,32 +97,31 @@ get_next_token(lexer_t* lex) {
 			{ last_match = is_final_state(state, final_table); }
 		write_char_buffer(lex->last_lexeme, rd);
 		first_read = false;
-		if (rd == '\n') {
-			if (state != DEAD_STATE)
-				{ ++(lex->lineno); }	
-			else
-				{ lex->carry_nl = true; }
-		}
+		if (state != DEAD_STATE && rd == '\n')
+            { ++(lex->lineno); }	
 	}
 
 	if (last_match == T_ERROR) {
 		errorf(CURRENT_LINE(lex),
 							"Lexical error on input '%s'.", C_LEXEME(lex));
+        lex->last_char = NO_CHAR;
 	}
 	else {
+        lex->last_char = rd;
 		unget_c_buffer(lex->last_lexeme, 1);
-		write_char_buffer(lex->push_back, rd);
 	}
 
-	if (fgfx_begin_table[last_match][crt_state])
-		{ crt_state = fgfx_begin_table[last_match][crt_state]; }
+	if (fgfx_begin_table[last_match][lex->crt_state]) {
+        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state];
+        need_recompute = true; 
+    }
 	return (last_match);
 }
 
-static inline bool
-allow_skip(int token) {
-	for (size_t i = 0; fgfx_skip_table[i] != -1; ++i) {
-		if (token == fgfx_skip_table[i])
+bool
+check_present_table(int8_t* table, int token) {
+	for (size_t i = 0; table[i] != -1; ++i) {
+		if (token == table[i])
 			{ return (true); }
 	}
 	return (false);
@@ -138,7 +138,7 @@ advance_token(lexer_t* lex) {
 		reset_buffer(lex->last_lexeme);
 		while (1) {
 			found_token = get_next_token(lex);
-			if (!allow_skip(found_token))
+			if (!check_present_table(fgfx_skip_table, found_token))
 				{ break; }
 			reset_buffer(lex->last_lexeme);
 		}

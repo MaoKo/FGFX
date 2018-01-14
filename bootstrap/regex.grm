@@ -1,6 +1,6 @@
 $EXTERN
 {
-	'fgfl_regex.lex.h',
+	'fgfx.lex.h',
 };
 
 $PRODUCTION

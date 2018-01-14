@@ -2,7 +2,7 @@
 
 CC			:=	cc
 INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
-CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) -g
+CC_FLAGS	:=	-Wall -Wextra $(addprefix -I,$(INCLUDE)) -g
 CC_MACRO	:=	-DDFA_OPTIMIZE -DPRINT_DEBUG
 LD_FLAGS	:=	# -pg
 

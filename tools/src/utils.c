@@ -46,16 +46,6 @@ is_tab_or_space(int c) {
 }
 
 size_t
-count_front(char const* base_str, int (*pred)(int)) {
-	if (!base_str || !pred)
-		{ return (0); }
-	char const* front = base_str;
-	while (*base_str && (*pred)(*base_str))
-		{ ++base_str; }
-	return (base_str - front);
-}
-
-size_t
 count_back(char const* base_str, int (*pred)(int)) {
 	if (!base_str || !pred)
 		{ return (0); }
@@ -65,21 +55,6 @@ count_back(char const* base_str, int (*pred)(int)) {
 		++count;
 		--back;
 	}
-	return (count);
-}
-
-size_t
-char_in_str(char const* base_str, char c) {
-	if (!base_str)
-		{ return (0); }
-	size_t count = 0;
-	while (*base_str) {
-		if (*base_str == c)
-			{ ++count; }
-		++base_str;
-	}
-	if (!c)
-		{ ++count; }
 	return (count);
 }
 

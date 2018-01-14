@@ -353,12 +353,13 @@ spec_regex_assign(lexical_spec_t* spec,
 			{ entry->skip = true; }
 		advance_token(spec->lex);
 	
-		if (advance_token(spec->lex) != T_REGEX) {
+		if (advance_token(spec->lex) != T_BEG_REGEX) {
 			errorf(CURRENT_LINE(spec->lex),
 						"No found regex after %s = .", entry->name);
 			return (ERROR);
 		}
 
+        advance_token(spec->lex); // T_REGEX
 
 		unget_c_buffer(LAST_LEXEME(spec->lex), 1);
 		size_t save_space = 0;
@@ -370,17 +371,9 @@ spec_regex_assign(lexical_spec_t* spec,
 
 		// Get rid of trailing space and tab
 		unget_c_buffer(LAST_LEXEME(spec->lex), count_back(C_LEXEME(spec->lex),
-			&is_tab_or_space) - save_space);
+			            &is_tab_or_space) - save_space);
 
-#if 0
-		size_t front_space = count_front(C_LEXEME(spec->lex) + 1,
-												&is_tab_or_space) + 1;
-
-		CURRENT_LINE(spec->lex) += char_in_str(
-				C_LEXEME(spec->lex) + front_space, '\n');
-#endif
 		char* reg_str = strdup(C_LEXEME(spec->lex));
-
 		if (!reg_str) {
 			errorf(0, "Non enough memory for allocate the regex string.");
 			return (ERROR);
@@ -399,7 +392,12 @@ spec_regex_assign(lexical_spec_t* spec,
 		if (strchr(entry->reg_str, '@'))
 			{ entry->use_look = true; }
 
-		if (peek_token(spec->lex) == T_ARROW) {
+        if (advance_token(spec->lex) != T_END_REGEX) {
+            errorf(CURRENT_LINE(spec->lex),
+                            "No found the end of the regex '/'.");
+            return (ERROR);
+        }
+		else if (peek_token(spec->lex) == T_ARROW) {
 			advance_token(spec->lex);
 			if (advance_token(spec->lex) != T_LBRACE) {
 				errorf(CURRENT_LINE(spec->lex),

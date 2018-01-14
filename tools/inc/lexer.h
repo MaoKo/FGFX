@@ -13,19 +13,22 @@
 #define CURRENT_LINE(lex)	((lex)->lineno)
 
 #define NO_TOKEN			(-1)
+#define NO_CHAR             (-1)
 #define START_LINE			(1)
 
 typedef struct {
 	int filde;
-	bool carry_nl;
 	int last_token;
-	buffer_t* push_back;
+	int last_char;
 	buffer_t* last_lexeme;
+    int crt_state;
+    int nested_com;
 	int lineno;
 } lexer_t;
 
 lexer_t* new_lexer(int);
 void del_lexer(lexer_t*);
+bool check_present_table(int8_t*, int);
 long advance_token(lexer_t*);
 int peek_token(lexer_t*);
 bool in_first(lexer_t*, ...);
