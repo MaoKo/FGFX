@@ -12,17 +12,18 @@ $TOKEN
 {
     /* Fragment */
 
-    LETTER = / [a-zA-Z_] / -> { $FRAG } ;
+    LETTER = / [[:alpha:]_] / -> { $FRAG } ;
 
     /* FGFL */
 
     EQUAL = /  = / ;
     STAR  = / \* / ;
-    ( GLOBAL ) BEG_REGEX   = / \/[ \t]* /, ( $BEGIN IN_REGEX ) ;
+    ( GLOBAL ) BEG_REGEX   = / \/[ \t]* /,  ( $BEGIN IN_REGEX ) ;
    
     /* Regex */
 
-    ( IN_REGEX ) END_REGEX = / [ \t]*\/ /, ( $BEGIN GLOBAL   ) ;
+    ( IN_REGEX ) END_REGEX = / [ \t]*\//[ \t\n]*(,|;|->) /,
+                                            ( $BEGIN GLOBAL   ) ;
 
     ( IN_REGEX ) REG_UNION = / \| / ;
     ( IN_REGEX ) REG_STAR = / \* / ;
@@ -31,14 +32,14 @@ $TOKEN
     ( IN_REGEX ) REG_LPAREN = / \( / ;
     ( IN_REGEX ) REG_RPAREN = / \) / ;
     ( IN_REGEX ) REG_DOT = / \. / ;
-    ( IN_REGEX ) REG_LOOK = / \@ / ;
+    ( IN_REGEX ) REG_LOOK = / \/ / ;
 
     ( IN_REGEX, STRING ) REG_QUOTE = / \" /, ( $BEGIN STRING, IN_REGEX ) ;
 
     ( IN_REGEX ) REG_BOUND_NAME = / \{{LETTER}({LETTER}|{DIGIT})*\} /;
 	
     ( IN_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN FINITE_SEQ ) ;
-    ( FINITE_SEQ ) DIGIT = / [0-9]+ / ;
+    ( FINITE_SEQ ) DIGIT = / [[:digit:]]+ / ;
     ( FINITE_SEQ ) REG_COMMA = / , / ;
     ( FINITE_SEQ ) REG_RBRACE = / \} /, ( $BEGIN IN_REGEX ) ;
 
@@ -48,7 +49,7 @@ $TOKEN
     ( IN_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL ) ;
     ( BEG_CCL ) REG_CARET = / ^ /, ( $BEGIN BODY_CCL ) ;
 
-    ( BODY_CCL ) REG_HYPHEN = / -@[^\]\n] / ;
+    ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
     ( BEG_CCL, BODY_CCL ) REG_RBRACK = / \] /, ( $BEGIN IN_REGEX, $ALL ) ;
 
     ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /, ( $BEGIN BODY_CCL );
