@@ -9,65 +9,52 @@
 #include "regex_node.h"
 #include "lexical_spec.h"
 #include "lexer.h"
-#include "utils.h"
 #include "nfa.h"
+#include "lexer.h"
 #include "vector.h"
+#include "error.h"
+#include "utils.h"
+
+#define _ONLY_STATE_TOKEN_
+#include "fgfx.lex.h"
+#undef  _ONLY_STATE_TOKEN_
 
 static lexical_spec_t* local_spec = NULL;
-static char const* regex_str_env = NULL;
-static int peek_c = -1;
-static bool escaped = false;
 
 // Static Prototype
 
-static regex_node_t* reg_look(void);
-static regex_node_t* reg_union(void);
-static regex_node_t* reg_cat(void);
-static regex_node_t* reg_closure(void);
-static regex_node_t* reg_atom(void);
-static regex_node_t* reg_quote(void);
-static regex_node_t* reg_range(void);
+static regex_node_t* regex_look(void);
+static regex_node_t* regex_union(void);
+static regex_node_t* regex_cat(void);
+static regex_node_t* regex_closure(void);
+static regex_node_t* regex_atom(void);
+static regex_node_t* regex_string(void);
+static regex_node_t* regex_fullccl(void);
+static regex_node_t* regex_loneccl(void);
+static bitset_t* regex_ccl(void);
+static bitset_t* regex_cce(int);
+static regex_node_t* regex_dot(void);
 
+#if 0
 static bool is_oct_prefix(int);
 static bool is_hex_prefix(int);
 static int read_oct(void);
 static int read_hex(void);
-
-static int get_c(void);
+#endif
 
 // Input Function
 
-static int
-read_c(void) {
-	if (!*regex_str_env)
-		{ return (EOS); }
-	return (*regex_str_env++);
-}
-
-static int
-skip_until(int(*predF)(int)) {
-	int c = 0;
-	do {
-		if ((c = get_c()) == EOS)
-			{ return (EOS); }
-	} while ((*predF)(c));
-	return (c);
-}
-
-static int
-get_c(void) {
-	peek_c = -1;
-	int input_c = read_c();
-	escaped = false;
-
+static size_t
+eval_lexeme_char(void) {
+	size_t input_c = *C_LEXEME(local_spec->lex);
 	if (input_c == '\\') {
-		input_c = read_c();
-		escaped = true;
-	
+        input_c = C_LEXEME(local_spec->lex)[1];
+#if 0
 		if (is_oct_prefix(input_c))
 			{ return (read_oct()); }
 		else if (is_hex_prefix(input_c))
 			{ return (read_hex()); }
+#endif
 
 		switch (input_c) {
 			case 'n': input_c = '\n'; break;
@@ -78,7 +65,6 @@ get_c(void) {
 			case 't': input_c = '\t'; break;
 			case 'v': input_c = '\v'; break;
 			case '\n':
-				input_c = skip_until(&is_tab_or_space);
 				break;
 			default:  break;
 		}
@@ -86,64 +72,9 @@ get_c(void) {
 	return (input_c);
 }
 
-static int
-peek(void) {
-	if (peek_c == -1)
-		{ peek_c = get_c(); }
-	return (peek_c);
-}
-
-static inline int
-advance(void) {
-	int old_peek = peek();
-	peek_c = get_c();
-	return (old_peek);
-}
-
-static bool
-match(int symbol) {
-	int is_match = (peek() == symbol);
-	if (is_match)
-		{ advance(); }
-	return (is_match);
-}
-
-static void
-expected(char expect_c) {
-	if (!match(expect_c))
-		{ /* ERROR */ }
-}
-
-#if 0
-static inline bool
-is_end_input(void) {
-	return (peek() == EOS);
-}
-
-static inline bool
-is_end_regex(void) {
-	return ((isspace(peek()) || peek() == ';') && !escaped);
-}
-#endif
-
-static inline bool
-is_end(void) {
-	return (peek() == EOS);
-}
-
 // Predicate Char Function
 
-static bool
-is_metachar(int symbl) {
-	switch (symbl) {
-		case REG_UNION: case REG_LPAREN: case REG_RPAREN:
-		case REG_LBRACK: case REG_KLEENE: case REG_PKLEENE:
-		case REG_OKLEENE: case REG_LBRACE: case REG_DQUOTE:
-		case REG_DOT: case '@': return (!escaped);
-	}
-	return (false);
-} 
-
+#if 0
 static bool
 is_oct_prefix(int c) {
 	return (c == 'o' || c == 'O');
@@ -192,301 +123,366 @@ read_hex(void) {
 		{ hex_num = hex2dec(advance()) + (hex_num * 16); }
 	return (hex_num);
 }
-
-static inline bool
-is_letter(int c) {
-	return ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z')
-		|| (c == '_'));
-}
+#endif
 
 // Regex Function
 
-static int
-str2int(void) {
-	int digit = 0;
-	while (isdigit(peek()))
-		{ digit = (digit + (advance() - '0')) + (digit * 10); }
-	return (digit);
-}
-
-static regex_node_t*
-diff_range(regex_node_t* root) {
-	if (root->alone != MULTI_S)
-		{ /* ERROR */ }
-	expected(REG_RBRACE);
-	if (!match(REG_LBRACK))
-		{ /* ERROR */ }
-	regex_node_t* diff = reg_range();
-	if (diff->alone != MULTI_S)
-		{ /* ERROR */ }
-	DIFF_BITSET(root->cclass, diff->cclass);
-	return (root);
-}
-
-static buffer_t*
-read_ident(void) {
-	buffer_t* buf = new_buffer();
-	while (is_letter(peek()) || isdigit(peek()))
-		{ write_char_buffer(buf, advance()); }
-	return (buf);
-}
-
-static int
-cmp_entry_str(spec_entry_t const* entry, char const* str) {
-	return (strcmp(entry->name, str));
-}
-
-static regex_node_t*
-bound_name(regex_node_t* root) {
-	regex_node_t* rep_node = NULL;
-	buffer_t* bound = read_ident();
-	
-	int index = get_index_vector(local_spec->entry_vect,
-			BODY_BUFFER(bound), &cmp_entry_str);
-	if (index != -1) {
-		spec_entry_t* entry = (spec_entry_t*)
-			AT_VECTOR(local_spec->entry_vect, index);
-		rep_node = cpy_regex_node(entry->reg);
-		USED_ENTRY(entry);
-	}
-	if (rep_node)
-		{ rep_node = new_regex_node(AST_CONCAT, root, rep_node); }
-	else {
-		fprintf(stderr, "Error (%d): Undefined name %s.\n",
-			CURRENT_LINE(local_spec->lex), BODY_BUFFER(bound));
-	}
-
-	del_buffer(bound);
-	return (rep_node);
-}
-
 static regex_node_t*
 finite_seq(regex_node_t* root) {
-	int start = str2int();
+    if (advance_token(local_spec->lex) != T_DIGIT) {
+        errorf(CURRENT_LINE(local_spec->lex), "Missing a digit after the '{'.");
+        return (NULL_NODE);
+    }
+
+	size_t start = atoi(C_LEXEME(local_spec->lex));
 	regex_node_t* rep_node = cpy_concat_regex_node(root, start);
-	if (match(REG_COMMA)) {
-		if (isdigit(peek())) {
-			int until = str2int();
-			if (until < start)
-				{ /* ERROR */ }	
-			for (int i = start + 1; i <= until; ++i) {
+
+	if (peek_token(local_spec->lex) == T_REG_COMMA) {
+        advance_token(local_spec->lex);
+		if (peek_token(local_spec->lex) == T_DIGIT) {
+            advance_token(local_spec->lex);
+			size_t until = atoi(C_LEXEME(local_spec->lex));
+
+			if (until < start) {
+                del_regex_node(rep_node);
+                errorf(CURRENT_LINE(local_spec->lex),
+                            "The first digit in the finite sequence %zu"
+                            " is greater than the second %zu.", start, until);
+                return (NULL_NODE);
+            }	
+			for (size_t i = start + 1; i <= until; ++i) {
 				root = cpy_regex_node(root);
 				rep_node = new_regex_node(AST_UNION, rep_node,
-										cpy_concat_regex_node(root, i));
+                                            cpy_concat_regex_node(root, i));
 			}
 		}
 		else {
-			rep_node = new_regex_node(AST_CONCAT, rep_node, new_regex_node(AST_CLOSURE,
-									cpy_regex_node(rep_node), NULL));
+			rep_node = new_regex_node(AST_CONCAT, rep_node,
+                new_regex_node(AST_CLOSURE, cpy_regex_node(rep_node), NULL));
 		}
 	}
+
+    if (advance_token(local_spec->lex) != T_REG_RBRACE) {
+        del_regex_node(rep_node);
+        errorf(CURRENT_LINE(local_spec->lex),
+                                "Missing the '}' in the finite sequence.");
+        return (NULL_NODE);
+    }
 	return (rep_node);
 }
 
-static regex_node_t*
-curly_regex(regex_node_t* root) {
-	regex_node_t* rep_node = NULL;
-	if (match(REG_HYPHEN))
-		{ return (diff_range(root));  }
-	else if (is_letter(peek()))
-		{ rep_node = bound_name(root); }
-	else if (isdigit(peek()))
-		{ rep_node = finite_seq(root); }
-	expected(REG_RBRACE);
-	return (rep_node);
-}
-
-/*
-
-static set_t*
-complement_negate_range(set_t* base) {
-	set_t* compl = EMPTY_SET;
-	for (long i = MIN_ASCII; i < MAX_ASCII; ++i) {
-		if (!has_set(base, (void*)i))
-			{ add_set(&compl, (void*)i); }
-	}
-	del_set(base);
-	return (compl);
-}
-
-*/
-
-static inline regex_node_t*
-dot_regex(void) {
-	bitset_t* newl = new_bitset();
-	ADD_BITSET(newl, '\n');
-	return (new_regex_node(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
-}
-
-static regex_node_t*
-regex_to_ast(lexical_spec_t* token_spec, char const* regex_str) {
-	if (!token_spec || !regex_str)
-		{ return (NULL); }
-	regex_str_env = regex_str;
-	local_spec = token_spec;
-	peek_c = -1;
-	escaped = false;
-	return (reg_look());
-}
-
-int
+regex_node_t*
 build_regex(lexical_spec_t* spec) {
-	vector_t* stack_order;
-	int exit_st = DONE;
-
-	if ((stack_order = topological_sort(spec))) {
-		for (size_t i = 0; i < SIZE_VECTOR(stack_order); ++i) {
-			size_t j = (long)AT_VECTOR(stack_order, i);
-			spec_entry_t* crt_entry = (spec_entry_t*)
-											AT_VECTOR(spec->entry_vect, j);
-			if (crt_entry->kind != T_KEYWORD)
-				{ crt_entry->reg = regex_to_ast(spec, crt_entry->reg_str); }
-		}
-	}
-	else
-		{ exit_st = ERROR; }
-
-	del_vector(stack_order);
-	return (exit_st);
-}
-
-static bool
-is_in_follow(int alone, ...) {
-	va_list arg;
-	va_start(arg, alone);
-	bool is_match = (peek() == alone);
-	while (!is_match) {
-		int next = va_arg(arg, int);
-		if (next == -1)
-			{ return (false); }
-		is_match = (peek() == next);
-	}
-
-	va_end(arg);
-	return (is_match && !escaped);
+    local_spec = spec;
+    // TODO anchor ( '^' and '$')
+	return (regex_look());
 }
 
 static regex_node_t*
-reg_look(void) {
-	regex_node_t* root = reg_union();
-	if (peek() == '@') {
-		advance();
-		root = new_regex_node(AST_CONCAT, root, reg_union());
+regex_look(void) {
+	regex_node_t* root = regex_union();
+    if (!root)
+        { return (NULL_NODE); }
+
+	if (peek_token(local_spec->lex) == T_REG_LOOK) {
+		advance_token(local_spec->lex);
+        regex_node_t* right_op = regex_union();
+        if (!right_op) {
+            del_regex_node(right_op);
+            return (NULL_NODE);
+        }
+		root = new_regex_node(AST_CONCAT, root, right_op);
 		root->look_sym = true;
 	}
 	return (root);
 }
 
 static regex_node_t*
-reg_union(void) {
-	regex_node_t* root = reg_cat();
-	while (is_in_follow(REG_UNION, -1)) {
-		advance();
-		root = new_regex_node(AST_UNION, root, reg_cat());
+regex_union(void) {
+	regex_node_t* root = regex_cat();
+    if (!root)
+        { return (NULL_NODE); }
+
+	while (peek_token(local_spec->lex) == T_REG_UNION) {
+		advance_token(local_spec->lex);
+        regex_node_t* right_op = regex_cat();
+        if (!right_op) {
+            del_regex_node(root);
+            errorf(CURRENT_LINE(local_spec->lex), "Missing an operand to '|'.");
+            return (NULL_NODE);
+        }
+		root = new_regex_node(AST_UNION, root, right_op);
 	}
 	return (root);
 }
 
 static regex_node_t*
-reg_cat(void) {
-	regex_node_t* root = reg_closure();
-	while (!is_in_follow(REG_UNION, REG_RPAREN, '@', -1) && !is_end())
-		{ root = new_regex_node(AST_CONCAT, root, reg_closure()); }
+regex_cat(void) {
+	regex_node_t* root = regex_closure();
+    if (!root)
+        { return (NULL_NODE); }
+
+	while (!in_first(local_spec->lex, T_REG_LOOK, T_REG_UNION,
+                                    T_REG_RPAREN, T_END_REGEX, T_EOF, -1)) {
+         regex_node_t* right_op = regex_closure();
+        if (!right_op) {
+            del_regex_node(root);
+            return (NULL_NODE); 
+        }
+        root = new_regex_node(AST_CONCAT, root, right_op);
+    }
 	return (root);
 }
 
 static regex_node_t*
-reg_closure(void) {
-	regex_node_t* root = reg_atom();
-	while (is_in_follow(REG_KLEENE, REG_PKLEENE,
-					REG_OKLEENE, REG_LBRACE, -1)) {
-		int closure_kind = advance();
+regex_closure(void) {
+	regex_node_t* root = regex_atom();
+    if (!root)
+        { return (NULL_NODE); }
+
+	while (in_first(local_spec->lex, T_REG_STAR, T_REG_PLUS,
+                                            T_REG_QUES, T_REG_LBRACE, -1)) {
+		int closure_kind = advance_token(local_spec->lex);
 		switch (closure_kind) {
-			case REG_PKLEENE:
+			case T_REG_PLUS:
 				root = new_regex_node(AST_CONCAT, root,
-						new_regex_node(AST_CLOSURE,
-						cpy_regex_node(root), NULL));
+                    new_regex_node(AST_CLOSURE, cpy_regex_node(root), NULL));
 				break;
-			case REG_OKLEENE:
+			case T_REG_QUES:
 				root = new_regex_node(AST_UNION, root,
-						new_regex_node(AST_SYMBOL, ALONE_S,
-						EPSILON));
+				    new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
 				break;
-			case REG_KLEENE:
-				root = new_regex_node(AST_CLOSURE, root, NULL);
+			case T_REG_STAR:
+                if (root->kind_ast != AST_CLOSURE)
+				    { root = new_regex_node(AST_CLOSURE, root, NULL); }
 				break;
-			case REG_LBRACE: root = curly_regex(root);
+			case T_REG_LBRACE: root = finite_seq(root);
 				break;
 		}
+        if (!root)
+            { return (NULL_NODE); }
 	}
 	return (root);
 }
 
 static regex_node_t*
-reg_atom(void) {
-	if (!is_metachar(peek()) && peek() != EOS)
-		{ return (new_regex_node(AST_SYMBOL, ALONE_S, advance())); }
-	else if (match(REG_LPAREN)) { 
-		regex_node_t* expr = reg_union();
-		expected(REG_RPAREN);
-		return (expr);
+regex_atom(void) {
+    if (peek_token(local_spec->lex) == T_REG_LBRACK)
+        { return (regex_fullccl()); }
+	else if (peek_token(local_spec->lex) == T_REG_QUOTE)
+        { return (regex_string()); }
+	else if (peek_token(local_spec->lex) == T_REG_LPAREN) { 
+        advance_token(local_spec->lex);
+		regex_node_t* root = regex_union();
+
+        if (advance_token(local_spec->lex) != T_REG_RPAREN) {
+            del_regex_node(root);
+            errorf(CURRENT_LINE(local_spec->lex),
+                                "Missing a close paren (')').");
+            return (NULL_NODE);
+        }
+		return (root);
 	}
-	else if (match(REG_LBRACK)) { return (reg_range()); }
-	else if (match(REG_DOT)) { return (dot_regex()); }
-	else if (match(REG_DQUOTE)) { return (reg_quote()); }
-	return (new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
+	else if (peek_token(local_spec->lex) == T_REG_DOT)
+        { return (regex_dot()); }
+    else if (peek_token(local_spec->lex) == T_REG_BOUND_NAME) {
+        advance_token(local_spec->lex);
+		unget_char_back_buffer(LAST_LEXEME(local_spec->lex), 1);
+		return (new_regex_node(AST_BOUND_NAME,
+                                strdup(C_LEXEME(local_spec->lex) + 1)));
+    }
+    else if (peek_token(local_spec->lex) == T_REG_CHAR) {
+        advance_token(local_spec->lex);
+		return (new_regex_node(AST_SYMBOL, ALONE_S, eval_lexeme_char()));
+    }
+    else {
+        errorf(CURRENT_LINE(local_spec->lex), "Missing a char in the regex.");
+        return (NULL_NODE);
+    }
 }
 
 static regex_node_t*
-reg_quote(void) {
+regex_string(void) {
+    advance_token(local_spec->lex);
+
 	regex_node_t* root_concat = NULL;
-	while (!is_in_follow(REG_DQUOTE, -1) && !is_end()) {
-		int c = advance();
-		regex_node_t* symbol = new_regex_node(AST_SYMBOL, ALONE_S, c);
+    bool empty_str = true;
+
+	while (!in_first(local_spec->lex, T_REG_QUOTE, T_EOF, -1)) {
+        if (advance_token(local_spec->lex) == T_ERROR)
+            { break; }
+   		regex_node_t* symbol = new_regex_node(AST_SYMBOL,
+                                    ALONE_S, eval_lexeme_char());
 		if (!root_concat)
 			{ root_concat = symbol; }
 		else
 			{ root_concat = new_regex_node(AST_CONCAT, root_concat, symbol); }
+        empty_str = true;
 	}
-	advance();
-	if (!root_concat)
+	if (!empty_str)
 		{ root_concat = new_regex_node(AST_SYMBOL, ALONE_S, EPSILON); }
-	expected(REG_DQUOTE);
+    if (!root_concat)
+         { return (NULL_NODE); }
+    if (advance_token(local_spec->lex) != T_REG_QUOTE) {
+        del_regex_node(root_concat);
+        errorf(CURRENT_LINE(local_spec->lex),
+                                "Missing a close quote ('\"') in string.");
+        return (NULL_NODE);
+    }
 	return (root_concat);
 }
 
 static regex_node_t*
-reg_range(void) {
-	bool negate = false;
-	bitset_t* range = new_bitset();
-	if (match(REG_CARET))
-		{ negate = true; }
-	int last = 0;
-	bool in_range = true;
-	while (!is_in_follow(REG_RBRACK, -1) && !is_end()) {
-		long crt_c = advance();
-		if (crt_c == '-' && !in_range &&
-				(peek() != REG_RBRACK && !is_end())) {
-			crt_c = advance();
-			for (long i = last + 1; i <= crt_c; ++i)
-				{ ADD_BITSET(range, i); }
-			in_range = true;
-		}
-		else {
-			ADD_BITSET(range, crt_c);
-			in_range = false;
-		}
-		last = crt_c;
-	}
-	advance();
+regex_fullccl(void) {
+    regex_node_t* root = regex_loneccl();
+    if (!root)
+        { return (NULL_NODE); }
+
+    while (in_first(local_spec->lex, T_REG_DIFF_CLASS, T_REG_UNION_CLASS, -1)) {
+        int kind_op = advance_token(local_spec->lex);
+        if (peek_token(local_spec->lex) != T_REG_LBRACK) {
+            del_regex_node(root);
+            errorf(CURRENT_LINE(local_spec->lex),
+                                "Missing character class operand to %s.",
+                                (kind_op == T_REG_DIFF_CLASS) ? "{-}" : "{+}");
+            return (NULL_NODE);
+        }
+        else {
+            regex_node_t* right_op = regex_loneccl();
+            if (kind_op == T_REG_DIFF_CLASS)
+        	    { DIFF_BITSET(root->cclass, right_op->cclass); }
+            else
+        	    { UNION_BITSET(root->cclass, right_op->cclass); }
+            del_regex_node(right_op);
+        }
+    }
+    return (root);
+}
+
+static regex_node_t*
+regex_loneccl(void) {
+    advance_token(local_spec->lex);
+	bool negate = (peek_token(local_spec->lex) == T_REG_CARET);
+    if (negate)
+        { advance_token(local_spec->lex); }
+    bitset_t* range = regex_ccl();
+    if (!range)
+        { return (NULL_NODE); }
+    else if (advance_token(local_spec->lex) != T_REG_RBRACK) {
+        del_bitset(range);
+        errorf(CURRENT_LINE(local_spec->lex),
+                                "Missing a close bracket (']') in ccl.");
+        return (NULL_NODE);
+    }
+
 	if (is_empty_bitset(range) && !negate) {
 		del_bitset(range);
 		return (new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
 	}
-
-	if (negate)
+	else if (negate)
 		{ COMPL_BITSET(range); }
-	expected(REG_RBRACK);
+
 	return (new_regex_node(AST_SYMBOL, MULTI_S, range));
+}
+
+static bitset_t*
+regex_ccl(void) {
+	bitset_t* range = new_bitset();
+	while (!in_first(local_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
+        int kind = advance_token(local_spec->lex);
+        if (kind == T_ERROR) {
+            del_bitset(range);
+            return (NULL_BITSET);
+        }
+        else if (kind != T_REG_CHAR && kind != T_REG_HYPHEN) {
+            bitset_t* cce_range = regex_cce(kind);
+            UNION_BITSET(range, cce_range);
+            del_bitset(cce_range);
+        }
+        else {
+            size_t min_range = eval_lexeme_char();
+
+            if (peek_token(local_spec->lex) == T_REG_HYPHEN) {
+                advance_token(local_spec->lex);
+                advance_token(local_spec->lex);
+
+                size_t max_range = eval_lexeme_char();
+                add_range_bitset(range, min_range, max_range + 1);
+
+                if (max_range < min_range) {
+                    warnf(CURRENT_LINE(local_spec->lex),
+                        "The min range %c is greater than the max range %c.",
+                        min_range, max_range);
+                }
+                else if (max_range == min_range) {
+                    warnf(CURRENT_LINE(local_spec->lex),
+                        "The min range and max range are both equal.");
+                    ADD_BITSET(range, min_range);
+                }
+            }
+		    else
+                { ADD_BITSET(range, min_range); }
+		}
+	}
+    return (range);
+}
+
+static bitset_t*
+regex_cce(int kind_cce) {
+    bitset_t* cce_range = new_bitset();
+    bitset_t* op_range = NULL_BITSET;
+
+    switch (kind_cce) {
+        case T_CCE_BLANK:
+            add_range_bitset(cce_range, '\t', '\n' + 1);
+            break;
+        case T_CCE_SPACE:
+            add_range_bitset(cce_range, '\t', '\r' + 1);
+            ADD_BITSET(cce_range, ' ');
+            break;
+        case T_CCE_CNTRL:
+            add_range_bitset(cce_range, '\0', '\x1F' + 1);
+            ADD_BITSET(cce_range, '\x7F');
+            break;
+        case T_CCE_PRINT:
+            op_range = regex_cce(T_CCE_CNTRL);
+            UNION_BITSET(cce_range, COMPL_BITSET(op_range));
+            del_bitset(op_range);        
+            break;
+        case T_CCE_XDIGIT:
+            add_range_bitset(cce_range, '0', '9' + 1);
+            add_range_bitset(cce_range, 'a', 'f' + 1);
+            add_range_bitset(cce_range, 'A', 'F' + 1);
+            break;
+        case T_CCE_DIGIT:
+            add_range_bitset(cce_range, '0', '9' + 1);
+            break;
+        case T_CCE_LOWER:
+            add_range_bitset(cce_range, 'a', 'z' + 1);
+            break;
+        case T_CCE_UPPER:
+            add_range_bitset(cce_range, 'A', 'Z' + 1);
+            break;
+        case T_CCE_ALPHA:
+            op_range = regex_cce(T_CCE_LOWER);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            op_range = regex_cce(T_CCE_UPPER);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            break;
+        case T_CCE_ALNUM:
+            op_range = regex_cce(T_CCE_ALPHA);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            op_range = regex_cce(T_CCE_DIGIT);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            break;
+    }
+    return (cce_range);
+}
+
+static regex_node_t*
+regex_dot(void) {
+    advance_token(local_spec->lex);
+	bitset_t* newl = new_bitset();
+	ADD_BITSET(newl, '\n');
+	return (new_regex_node(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }

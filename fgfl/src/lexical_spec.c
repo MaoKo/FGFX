@@ -23,7 +23,6 @@ del_spec_entry(spec_entry_t* entry) {
 			del_trans_list(entry->state_begin_lst);
 		}
 		FREE(entry->name);
-		FREE(entry->reg_str);
 	}
 	FREE(entry);
 }
@@ -66,7 +65,7 @@ del_lexical_spec(lexical_spec_t* spec) {
 	FREE(spec);
 }
 
-static inline int
+int
 cmp_token_entry(spec_entry_t* entry, char const* str) {
 	return (strcmp(entry->name, str));
 }
@@ -359,9 +358,13 @@ spec_regex_assign(lexical_spec_t* spec,
 			return (ERROR);
 		}
 
+        regex_node_t* root = build_regex(spec);
+        if (!root)
+            { return (ERROR); }
+
+#if 0
         advance_token(spec->lex); // T_REGEX
 
-		unget_c_buffer(LAST_LEXEME(spec->lex), 1);
 		size_t save_space = 0;
 
 		char* last_escape = strrchr(C_LEXEME(spec->lex), '\\');
@@ -374,23 +377,21 @@ spec_regex_assign(lexical_spec_t* spec,
 			            &is_tab_or_space) - save_space);
 
 		char* reg_str = strdup(C_LEXEME(spec->lex));
+
 		if (!reg_str) {
 			errorf(0, "Non enough memory for allocate the regex string.");
 			return (ERROR);
 		}
-		else if (entry->reg_str) {
+#endif 
+		if (entry->reg) {
 			errorf(CURRENT_LINE(spec->lex),
-					"Attempt to re-affect '%s' into the token %s who "
-								"has already a regex '%s'.", reg_str,
-								entry->name, entry->reg_str);
-			FREE(reg_str);
+                           "Attempt to re-assign the token '%s'", entry->name);
 			return (ERROR);
 		}
 	
-		entry->reg_str = reg_str;
-		// TODO fix me
-		if (strchr(entry->reg_str, '@'))
-			{ entry->use_look = true; }
+		entry->reg = root;
+        if (root->look_sym)
+            { entry->use_look = true; }
 
         if (advance_token(spec->lex) != T_END_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
@@ -662,7 +663,7 @@ int
 spec_sanity_check(lexical_spec_t* spec) {
 	if (!spec)
 		{ return (ERROR); }
-	else if (build_regex(spec) == ERROR)
+	else if (expand_macro_regex(spec) == ERROR)
 		{ return (ERROR); }
 	else if (check_validity_state(spec) == ERROR)
 		{ return (ERROR); }
@@ -679,8 +680,7 @@ print_token_entry(lexical_spec_t* spec) {
 		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
 		printf("Token %s, is_igcase %d, is_frag %d.\n",
 					crt_entry->name, crt_entry->is_igcase, crt_entry->is_frag);
-//		if (crt_entry->valid_state)
-//			{ print_bitset(crt_entry->valid_state); }
+        printf("Root node = %p\n", crt_entry->reg);
 	}
 }
 

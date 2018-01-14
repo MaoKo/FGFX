@@ -225,7 +225,7 @@ cfg_path_list(cfg_t* cfg) {
 	if (peek_token(cfg->lex) == T_RBRACE)
 		{ return (DONE); }
 	else if (advance_token(cfg->lex) == T_LITERAL) {
-		unget_c_buffer(LAST_LEXEME(cfg->lex), 1);
+		unget_char_back_buffer(LAST_LEXEME(cfg->lex), 1);
 		PUSH_BACK_VECTOR(cfg->token_file, strdup(C_LEXEME(cfg->lex) + 1));
 		if (peek_token(cfg->lex) == T_COMMA) {
 			advance_token(cfg->lex);

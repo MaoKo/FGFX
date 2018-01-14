@@ -24,8 +24,6 @@ $TOKEN
 
     ( IN_REGEX ) END_REGEX = / [ \t]*\/ /, ( $BEGIN GLOBAL   ) ;
 
-    ( IN_REGEX ) REGEX = / ([^\/\\\n]|\\(.|\n))* / ;
-
     ( IN_REGEX ) REG_UNION = / \| / ;
     ( IN_REGEX ) REG_STAR = / \* / ;
     ( IN_REGEX ) REG_PLUS = / \+ / ;
@@ -33,6 +31,7 @@ $TOKEN
     ( IN_REGEX ) REG_LPAREN = / \( / ;
     ( IN_REGEX ) REG_RPAREN = / \) / ;
     ( IN_REGEX ) REG_DOT = / \. / ;
+    ( IN_REGEX ) REG_LOOK = / \@ / ;
 
     ( IN_REGEX, STRING ) REG_QUOTE = / \" /, ( $BEGIN STRING, IN_REGEX ) ;
 
@@ -47,13 +46,13 @@ $TOKEN
     ( IN_REGEX ) REG_UNION_CLASS = / "{+}" / ;
 
     ( IN_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL ) ;
-    ( IN_REGEX ) REG_CARET = / ^ /, ( $BEGIN BODY_CCL ) ;
+    ( BEG_CCL ) REG_CARET = / ^ /, ( $BEGIN BODY_CCL ) ;
 
-    ( BODY_CCL ) REG_HYPHEN = / - / ;
-    ( BODY_CCL ) REG_RBRACK = / \] /, ( $BEGIN IN_REGEX ) ;
+    ( BODY_CCL ) REG_HYPHEN = / -@[^\]\n] / ;
+    ( BEG_CCL, BODY_CCL ) REG_RBRACK = / \] /, ( $BEGIN IN_REGEX, $ALL ) ;
 
-    ( BEG_CCL, BODY_CCL ) CCE   = / "[:{LETTER}:]"  /, ( $BEGIN BODY_CCL );
-    ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^{LETTER}:]" /, ( $BEGIN BODY_CCL );
+    ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /, ( $BEGIN BODY_CCL );
+    ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}":]" /, ( $BEGIN BODY_CCL );
 
     ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) REG_CHAR = / .|\\(.|\n) /,
                             ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
@@ -112,6 +111,7 @@ $KEYWORD
     CCE_PRINT,  /* [:print:]  */
     CCE_PUNCT,  /* [:punct:]  */
     CCE_SPACE,  /* [:space:]  */
+    CCE_BLANK,  /* [:blank:]  */
     CCE_UPPER,  /* [:upper:]  */
     CCE_XDIGIT, /* [:xdigit:] */
 
@@ -125,6 +125,7 @@ $KEYWORD
     N_CCE_PRINT,  /* [:^print:]  */
     N_CCE_PUNCT,  /* [:^punct:]  */
     N_CCE_SPACE,  /* [:^space:]  */
+    N_CCE_BLANK,  /* [:^blank:]  */
     N_CCE_UPPER,  /* [:^upper:]  */
     N_CCE_XDIGIT, /* [:^xdigit:] */
 

@@ -24,7 +24,8 @@ void del_buffer(buffer_t*);
 int write_char_buffer(buffer_t*, char);
 int write_buffer(buffer_t*, char const*);
 int append_buffer(buffer_t*, buffer_t const*);
-void unget_c_buffer(buffer_t*, size_t);
+void unget_char_front_buffer(buffer_t*, size_t);
+void unget_char_back_buffer(buffer_t*, size_t);
 void reset_buffer(buffer_t*);
 int hash_buffer(buffer_t const*);
 

@@ -19,7 +19,7 @@
 typedef struct {
 	int filde;
 	int last_token;
-	int last_char;
+    buffer_t* push_back;
 	buffer_t* last_lexeme;
     int crt_state;
     int nested_com;

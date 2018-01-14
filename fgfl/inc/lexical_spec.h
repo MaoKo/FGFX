@@ -16,6 +16,7 @@
 #define USED_ENTRY(entry)		(entry->is_used = true)
 #define NONE_BEGIN				(-1)
 
+int cmp_token_entry(spec_entry_t*, char const*);
 lexical_spec_t* parse_lexical_spec(int);
 void del_lexical_spec(lexical_spec_t*);
 int spec_sanity_check(lexical_spec_t*);

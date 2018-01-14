@@ -94,11 +94,11 @@ make_transition(state_t* start, int label, state_t* final) {
 	return (DONE);
 }
 
-static nfa_frag_t* dfs_ast(regex_node_t*);
+static nfa_frag_t* dfs_regex_node(regex_node_t*);
 static bool crt_igcase = false;
 
 static inline nfa_frag_t*
-ast_symbol(regex_node_t* root) {
+ast_symbol_node(regex_node_t* root) {
 	state_t* final_s = new_state();
 
 	if ((root->alone && !crt_igcase)
@@ -131,11 +131,11 @@ ast_symbol(regex_node_t* root) {
 }
 
 static nfa_frag_t*
-ast_union(regex_node_t* root) {
+ast_union_node(regex_node_t* root) {
 	state_t* start = new_state();
 
-	nfa_frag_t* left = dfs_ast(root->left);
-	nfa_frag_t* right = dfs_ast(root->right);	
+	nfa_frag_t* left = dfs_regex_node(root->left);
+	nfa_frag_t* right = dfs_regex_node(root->right);	
 
 	if (attach_tail(start, left, right, NULL))
 		{ /* TODO ERROR */ }
@@ -153,9 +153,9 @@ ast_union(regex_node_t* root) {
 }
 
 static nfa_frag_t*
-ast_concat(regex_node_t* root) {
-	nfa_frag_t* left = dfs_ast(root->left);
-	nfa_frag_t* right = dfs_ast(root->right);
+ast_concat_node(regex_node_t* root) {
+	nfa_frag_t* left = dfs_regex_node(root->left);
+	nfa_frag_t* right = dfs_regex_node(root->right);
 
 	if (attach_tail(left->head, right, NULL))
 		{ /* TODO ERROR */ }
@@ -170,8 +170,8 @@ ast_concat(regex_node_t* root) {
 }
 
 static nfa_frag_t*
-ast_closure(regex_node_t* root) {
-	nfa_frag_t* child = dfs_ast(root->left);
+ast_closure_node(regex_node_t* root) {
+	nfa_frag_t* child = dfs_regex_node(root->left);
 	state_t* front_state = new_state();
 
 	if (attach_tail(front_state, child, NULL))
@@ -185,28 +185,30 @@ ast_closure(regex_node_t* root) {
 
 /* Depth First Search over the ast for constructing a sub-NFA */
 static nfa_frag_t* 
-dfs_ast(regex_node_t* root) {
+dfs_regex_node(regex_node_t* root) {
 	if (root) {
 		switch (root->kind_ast) {
-			case AST_UNION:		return (ast_union(root));
+			case AST_UNION:		return (ast_union_node(root));
 						break;
-			case AST_CONCAT:	return (ast_concat(root));
+			case AST_CONCAT:	return (ast_concat_node(root));
 						break;
-			case AST_CLOSURE:	return (ast_closure(root));
+			case AST_CLOSURE:	return (ast_closure_node(root));
 						break;
-			case AST_SYMBOL:	return (ast_symbol(root));
+			case AST_SYMBOL:	return (ast_symbol_node(root));
 						break;
+            default:
+                        return (NULL_FRAG);
 		}	
 	}
-	return (NULL);
+	return (NULL_FRAG);
 }
 
 int
-ast_to_nfa(spec_entry_t* crt_entry) {
+transform_regex_nfa(spec_entry_t* crt_entry) {
 	crt_igcase = crt_entry->is_igcase;
 	regex_node_t* root = crt_entry->reg;
 	int exit_st = DONE;
-	if ((crt_entry->frag = dfs_ast(root)) == NULL)
+	if ((crt_entry->frag = dfs_regex_node(root)) == NULL)
 		{ exit_st = ERROR; }
 	else
 		{ STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1); }
@@ -273,7 +275,7 @@ build_nfa(lexical_spec_t* spec) {
 		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
 		if (entry->kind == T_KEYWORD)
 			{ continue; }
-		else if (ast_to_nfa(entry) == ERROR)
+		else if (transform_regex_nfa(entry) == ERROR)
 			{ return (ERROR); }
 		else if (!entry->is_frag
 					&& (build_nfa_entry(active_state, spec, entry) == ERROR))

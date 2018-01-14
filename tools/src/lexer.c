@@ -18,10 +18,10 @@ new_lexer(int filde) {
 
 	lex->filde = filde;
 
+	lex->push_back = new_buffer();
 	lex->last_lexeme = new_buffer();
-	lex->last_char = NO_CHAR;
 
-	lex->last_token = NO_TOKEN;
+    lex->last_token = NO_TOKEN;
 	lex->lineno = START_LINE;
 	
     lex->crt_state = INIT_STATE;
@@ -32,8 +32,10 @@ new_lexer(int filde) {
 
 void
 del_lexer(lexer_t* lex) {
-	if (lex)
-        { del_buffer(lex->last_lexeme); }
+	if (lex) {
+        del_buffer(lex->push_back);
+        del_buffer(lex->last_lexeme);
+    }
 	FREE(lex);
 }
 
@@ -63,28 +65,56 @@ get_next_token(lexer_t* lex) {
     	switch (lex->crt_state) {
     		case S_GLOBAL:
 		    	state_table = fgfx_GLOBAL_state_table;
-    			final_table = fgfx_GLOBAL_final_table;
+                final_table = fgfx_GLOBAL_final_table;
 	    		break;
 
     		case S_IN_REGEX:
 	    		state_table = fgfx_IN_REGEX_state_table;
 		    	final_table = fgfx_IN_REGEX_final_table;
 		    	break;
+
+    		case S_STRING:
+	    		state_table = fgfx_STRING_state_table;
+		    	final_table = fgfx_STRING_final_table;
+                break;
+
+    		case S_FINITE_SEQ:
+	    		state_table = fgfx_FINITE_SEQ_state_table;
+		    	final_table = fgfx_FINITE_SEQ_final_table;
+                break;
+
+    		case S_BEG_CCL:
+	    		state_table = fgfx_BEG_CCL_state_table;
+		    	final_table = fgfx_BEG_CCL_final_table;
+                break;
+
+    		case S_BODY_CCL:
+	    		state_table = fgfx_BODY_CCL_state_table;
+		    	final_table = fgfx_BODY_CCL_final_table;
+                break;
     	}
     }
 
-	if (lex->last_char != NO_CHAR) {
-		state = state_table[state][lex->last_char];
+    size_t i;
+    for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
+        int char_at = CHAR_AT(lex->push_back, i);
+        write_char_buffer(lex->last_lexeme, char_at);
 
-		if (is_final_state(state, final_table) != T_ERROR)
+		if (char_at == '\n')
+            { ++(lex->lineno); }
+
+		state = state_table[state][char_at];
+        if (state == DEAD_STATE)
+            { break; }
+		else if (is_final_state(state, final_table) != T_ERROR)
 			{ last_match = is_final_state(state, final_table); }
-		write_char_buffer(lex->last_lexeme, lex->last_char);
-  
-    	if (lex->last_char == '\n')
-	    	{ ++(lex->lineno); }
-	}
+    }
+
+    unget_char_front_buffer(lex->push_back, i);
 
 	int first_read = true;
+    bool unget_input = false;
+
 	while (state != DEAD_STATE) {
 		int exit_st = read(lex->filde, &rd, 1);
 		if (!exit_st) {
@@ -92,23 +122,45 @@ get_next_token(lexer_t* lex) {
 				{ return (T_EOF); }
 			break;
 		}
+
+        if (!unget_input && lex->crt_state == S_BODY_CCL
+                    && fgfx_BODY_CCL_middle_table[state])
+            { unget_input = true; }
 		state = state_table[state][rd];
+
 		if (is_final_state(state, final_table) != T_ERROR)
 			{ last_match = is_final_state(state, final_table); }
-		write_char_buffer(lex->last_lexeme, rd);
+
+        if (unget_input)
+		    { write_char_buffer(lex->push_back, rd); }
+        else {
+		    if (rd == '\n' && state != DEAD_STATE)
+                { ++(lex->lineno); }
+            write_char_buffer(lex->last_lexeme, rd);
+        }
+
 		first_read = false;
-		if (state != DEAD_STATE && rd == '\n')
-            { ++(lex->lineno); }	
 	}
 
 	if (last_match == T_ERROR) {
+        char const* error_str = C_LEXEME(lex);
+        if (!strcmp(error_str, "\n"))
+            { error_str = "\\n"; }
+
 		errorf(CURRENT_LINE(lex),
-							"Lexical error on input '%s'.", C_LEXEME(lex));
-        lex->last_char = NO_CHAR;
+                        "Lexical error on input '%s'.", error_str);
 	}
 	else {
-        lex->last_char = rd;
-		unget_c_buffer(lex->last_lexeme, 1);
+        if (unget_input) {
+            if (!check_present_table(fgfx_look_table, last_match)) {
+                append_buffer(lex->last_lexeme, lex->push_back);
+                reset_buffer(lex->push_back);
+            }
+        }
+        else {
+		    unget_char_back_buffer(lex->last_lexeme, 1);
+    		write_char_buffer(lex->push_back, rd);
+        }
 	}
 
 	if (fgfx_begin_table[last_match][lex->crt_state]) {
@@ -168,13 +220,36 @@ advance_token(lexer_t* lex) {
 			{ (void*)T_NONE,		"$NONE" },
 //			{ (void*)T_REJECT,		"$REJECT" },
 		};
-		for (size_t i = 0; i < *(&directive_tab + 1)- directive_tab; ++i) {
+		for (size_t i = 0; i < *(&directive_tab + 1) - directive_tab; ++i) {
 			if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))
 				{ return ((long)*directive_tab[i]); }
 		}
 		errorf(CURRENT_LINE(lex), "Bad directive %s.", C_LEXEME(lex));
 		return (T_ERROR);
 	}
+    else if (found_token == T_CCE) {
+		static void* cce_tab[][2] = {
+            { (void*)T_CCE_ALNUM,   "[:alnum:]"  },
+            { (void*)T_CCE_ALPHA,   "[:alpha:]"  },
+            { (void*)T_CCE_CNTRL,   "[:cntrl:]"  },
+            { (void*)T_CCE_DIGIT,   "[:digit:]"  },
+            { (void*)T_CCE_GRAPH,   "[:graph:]"  },
+            { (void*)T_CCE_LOWER,   "[:lower:]"  },
+            { (void*)T_CCE_PRINT,   "[:print:]"  },
+            { (void*)T_CCE_PUNCT,   "[:punct:]"  },
+            { (void*)T_CCE_SPACE,   "[:space:]"  },
+            { (void*)T_CCE_UPPER,   "[:upper:]"  },
+            { (void*)T_CCE_XDIGIT,  "[:xdigit:]" },
+		};
+		for (size_t i = 0; i < *(&cce_tab + 1) - cce_tab; ++i) {
+			if (!strcmp(C_LEXEME(lex), cce_tab[i][1]))
+				{ return ((long)*cce_tab[i]); }
+		}
+		errorf(CURRENT_LINE(lex),
+                        "Bad character class expression %s.", C_LEXEME(lex));
+		return (T_ERROR);
+
+    }
 	lex->last_token = -1;
 	return (found_token);
 }

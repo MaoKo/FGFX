@@ -13,8 +13,8 @@
 
 #define PUSH_EDGE(st, ed)		((ed->next = st->trans) , (st->trans = ed))
 #define INIT_EDGE(ed, l, o)		((ed->label = l) , (ed->out_state = o))
-//#define	MAX_STATE			(712)
 #define STATE_AT(index)			(AT_VECTOR(record_nfa_state, (size_t)index))
+#define NULL_FRAG               (NULL)
 
 extern vector_t* record_nfa_state;
 

@@ -12,8 +12,11 @@
 
 typedef struct regex_node_t {
 	enum {
-		AST_UNION, AST_CONCAT,
-		AST_CLOSURE, AST_SYMBOL,
+		AST_UNION,
+        AST_CONCAT,
+		AST_CLOSURE,
+        AST_BOUND_NAME,
+        AST_SYMBOL,
 	} kind_ast;
 
 	union {
@@ -22,6 +25,10 @@ typedef struct regex_node_t {
 			struct regex_node_t* right;
 			bool look_sym;
 		};
+        struct { // if AST_BOUND_NAME
+            char const* bound_name;
+            size_t index_token;
+        };
 		struct { // if AST_SYMBOL
 			bool alone;
 			union {
@@ -71,7 +78,6 @@ typedef struct {
 	int kind;
 	bool is_used;
 	char* name;
-	char* reg_str;
 	union {
 		struct { // if TERMINAL
 			bool is_igcase;
@@ -109,6 +115,7 @@ typedef struct {
 	bool miss_regex;
 	state_t* master;
 	// Table generated during the build of the DFA
+    // TODO construct own struct
 	vector_t* trans;
 	vector_t* final;
 	vector_t* middle;

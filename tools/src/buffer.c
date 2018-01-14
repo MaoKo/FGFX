@@ -44,13 +44,14 @@ static int
 extend_buffer(buffer_t* buf) {
 	if (!buf)
 		{ return (ERROR); }
-	if (buf->index + 1 >= buf->alloc) {
-		size_t new_sz = round_up(buf->index + 1);
+	if (SIZE_BUFFER(buf) + 1 >= buf->alloc) {
+		size_t new_sz = round_up(SIZE_BUFFER(buf) + 1);
 		char* nw_body = (char*)REALLOC(buf->body, new_sz);
 		if (nw_body) {
 			buf->body = nw_body;
 			buf->alloc = new_sz;
-			memset(buf->body + buf->index, 0, buf->alloc - buf->index);
+			memset(buf->body + SIZE_BUFFER(buf), 0,
+                                        buf->alloc - SIZE_BUFFER(buf));
 		}
 		else
 			{ return (ERROR); }
@@ -62,7 +63,7 @@ int
 write_char_buffer(buffer_t* buf, char c) {
 	if (extend_buffer(buf) == ERROR)
 		{ return (ERROR); }
-	buf->body[buf->index] = c;
+	buf->body[SIZE_BUFFER(buf)] = c;
 	if (c)
 		{ ++(buf->index); }
 	return (c);
@@ -88,13 +89,27 @@ append_buffer(buffer_t* buf, buffer_t const* src) {
 }
 
 void
-unget_c_buffer(buffer_t* buf, size_t sz) {
+unget_char_front_buffer(buffer_t* buf, size_t sz) {
+    if (!buf)
+        { return; }
+    else if (SIZE_BUFFER(buf) <= sz)
+        { reset_buffer(buf); }
+    else {
+        buf->index -= sz;
+        memmove(buf->body, buf->body + sz, SIZE_BUFFER(buf));
+        memset(buf->body + SIZE_BUFFER(buf), 0, sz);
+    }
+}
+
+void
+unget_char_back_buffer(buffer_t* buf, size_t sz) {
 	if (!buf)
 		{ return; }
-	if (sz > buf->index)
-		{ sz = buf->index; }
+
+    if (sz > SIZE_BUFFER(buf))
+		{ sz = SIZE_BUFFER(buf); }
 	while (sz--)
-		{ buf->body[--buf->index] = '\0'; }
+		{ buf->body[--(buf->index)] = '\0'; }
 }
 
 void
@@ -110,7 +125,7 @@ hash_buffer(buffer_t const* buf) {
 	if (!buf)
 		{ return (0); }
 	int sum_char = 0;
-	for (size_t i = 0; i < buf->index; ++i)
+	for (size_t i = 0; i < SIZE_BUFFER(buf); ++i)
 		{ sum_char += buf->body[i]; }
 	return (sum_char);
 }
