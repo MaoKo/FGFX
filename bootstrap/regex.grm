@@ -1,38 +1,40 @@
 $EXTERN
 {
-	'fgfx.lex.h',
+    'fgfx.lex.h',
 };
 
 $PRODUCTION
 {
-	<regex>			->	/* [ '^' ] */ [ <regex_look> ] /* [ '$' ] */ ;
+    <regex>         ->  /* [ '^' ] */ [ <regex_look> ] /* [ '$' ] */ ;
 
-	<regex_look>	->	<regex_union> [ '/' <regex_union> ] ;
+    <regex_look>    ->  <regex_union> [ '/' <regex_union> ] ;
 	
-	<regex_union>	->	<regex_cat>
-							{ '|' <regex_cat> } => ( $RIGHT ) ;
-	<regex_cat>		->	<regex_closure>
-							{ <regex_closure> } => ( $RIGHT ) ;
-	<regex_closure>	->	<regex_atom>
-							{ '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
+    <regex_union>   ->  <regex_cat>
+                            { '|' <regex_cat> } => ( $RIGHT ) ;
+    <regex_cat>     ->  <regex_closure>
+                            { <regex_closure> } => ( $RIGHT ) ;
+    <regex_closure> ->  <regex_atom>
+                            { '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
 
-	<finite_seq>	->	'{' DIGIT [ ',' [ DIGIT ] ] '}' ;
+    <finite_seq>    ->  '{' DIGIT [ ',' [ DIGIT ] ] '}' ;
 
-	<regex_atom>	->	<fullccl>
-					|	<string>
-					|	'(' <regex_union> ')'
-					|	'.'
-					|	BOUND_NAME
-					|	CHAR
-					;
+    <regex_atom>    ->  <fullccl>
+					|   <string>
+					|   '(' <regex_union> ')'
+					|   '.'
+					|   BOUND_NAME
+					|   <regex_char>
+                    ;
 
-	<fullccl>		->	<loneccl> { <kind_fullccl> <loneccl> } => ( $RIGHT ) ;
-	<kind_fullccl>	->	DIFF_CLASS | UNION_CLASS ;
+    <fullccl>       ->  <loneccl> { <kind_fullccl> <loneccl> } => ( $RIGHT ) ;
+    <kind_fullccl>  ->  DIFF_CLASS | UNION_CLASS ;
 
-	<loneccl>		->	'[' [ '^' ] <ccl> ']' ;
-	<ccl>			->	{ CHAR [ '-' CHAR ] } => ( $RIGHT ) ;
+    <loneccl>       ->  '[' [ '^' ] <ccl> ']' ;
+    <ccl>           ->  { <regex_char> [ '-' <regex_char> ] } => ( $RIGHT ) ;
 
-	<string>		->	'\"' { CHAR } => ( $RIGHT ) '\"' ;
+    <string>        ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
+
+    <regex_char>    ->  CHAR | OCT_NUM | HEX_NUM ;
 };
 
 $ALIAS

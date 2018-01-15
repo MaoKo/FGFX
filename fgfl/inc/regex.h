@@ -14,7 +14,7 @@
 
 #define EPSILON			(MAX_ASCII + 1)
 
-regex_node_t* build_regex(lexical_spec_t*);
+regex_node_t* build_regex(lexical_spec_t*, spec_entry_t*);
 void del_regex_node(regex_node_t*);
 
 #endif /* REGEX_H */

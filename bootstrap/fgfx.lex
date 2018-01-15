@@ -18,11 +18,11 @@ $TOKEN
 
     EQUAL = /  = / ;
     STAR  = / \* / ;
-    ( GLOBAL ) BEG_REGEX   = / \/[ \t]* /,  ( $BEGIN IN_REGEX ) ;
+    ( GLOBAL ) BEG_REGEX   = / \/[[:blank:]]* /,  ( $BEGIN IN_REGEX ) ;
    
     /* Regex */
 
-    ( IN_REGEX ) END_REGEX = / [ \t]*\//[ \t\n]*(,|;|->) /,
+    ( IN_REGEX ) END_REGEX = / [[:blank:]]*\//{SPACE}*(,|;|->) /,
                                             ( $BEGIN GLOBAL   ) ;
 
     ( IN_REGEX ) REG_UNION = / \| / ;
@@ -54,6 +54,12 @@ $TOKEN
 
     ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /,  ( $BEGIN BODY_CCL ) ;
     ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}+":]" /, ( $BEGIN BODY_CCL ) ;
+
+    ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) OCT_NUM = / \\[0-7]{1,3} /,
+                            ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
+
+    ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) HEX_NUM = / \\x[a-f0-9]{1,2} /
+                    -> { $IGCASE }, ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
 
     ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) REG_CHAR = / .|\\(.|\n) /,
                             ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
@@ -102,6 +108,8 @@ $KEYWORD
     REJECT,
 
     // Regex
+    CC_FIRST, // Dummy
+
 	// Character Class Expression
     CCE_ALNUM, CCE_ALPHA,
     CCE_CNTRL, CCE_DIGIT,
@@ -110,6 +118,8 @@ $KEYWORD
     CCE_SPACE, CCE_BLANK,
     CCE_UPPER, CCE_XDIGIT,
 
+    CC_MIDDLE, // Dummy
+
 	// Negate Character Class Expression
     N_CCE_ALNUM, N_CCE_ALPHA,
     N_CCE_CNTRL, N_CCE_DIGIT,
@@ -117,6 +127,8 @@ $KEYWORD
     N_CCE_PRINT, N_CCE_PUNCT,
     N_CCE_SPACE, N_CCE_BLANK,
     N_CCE_UPPER, N_CCE_XDIGIT,
+
+    CC_LAST, // Dummy
 
 	// FGFP
     EXTERN, PRODUCTION, ALIAS, PRECEDENCE, MIMIC,

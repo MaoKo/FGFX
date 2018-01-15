@@ -19,7 +19,8 @@
 #include "fgfx.lex.h"
 #undef  _ONLY_STATE_TOKEN_
 
-static lexical_spec_t* local_spec = NULL;
+static lexical_spec_t* regex_spec = NULL;
+static spec_entry_t* regex_entry = NULL;
 
 // Static Prototype
 
@@ -35,118 +36,29 @@ static bitset_t* regex_ccl(void);
 static bitset_t* regex_cce(int);
 static bitset_t* regex_n_cce(int);
 static regex_node_t* regex_dot(void);
-
-#if 0
-static bool is_oct_prefix(int);
-static bool is_hex_prefix(int);
-static int read_oct(void);
-static int read_hex(void);
-#endif
-
-// Input Function
-
-static size_t
-eval_lexeme_char(void) {
-	size_t input_c = *C_LEXEME(local_spec->lex);
-	if (input_c == '\\') {
-        input_c = C_LEXEME(local_spec->lex)[1];
-#if 0
-		if (is_oct_prefix(input_c))
-			{ return (read_oct()); }
-		else if (is_hex_prefix(input_c))
-			{ return (read_hex()); }
-#endif
-
-		switch (input_c) {
-			case 'n': input_c = '\n'; break;
-			case 'a': input_c = '\a'; break;
-			case 'b': input_c = '\b'; break;
-			case 'f': input_c = '\f'; break;
-			case 'r': input_c = '\r'; break;
-			case 't': input_c = '\t'; break;
-			case 'v': input_c = '\v'; break;
-			case '\n':
-				break;
-			default:  break;
-		}
-	}
-	return (input_c);
-}
-
-// Predicate Char Function
-
-#if 0
-static bool
-is_oct_prefix(int c) {
-	return (c == 'o' || c == 'O');
-}
-
-static bool
-is_oct(int c) {
-	return (c >= '0' && c <= '7');
-}
-
-static bool
-is_hex_prefix(int c) {
-	return (c == 'x' || c == 'X');
-}
-
-static bool
-is_hex(int c) {
-	return ((c >= '0' && c <= '9') ||
-			(c >= 'a' && c <= 'z') ||
-			(c >= 'A' && c <= 'Z'));
-}
-
-static int
-hex2dec(int c) {
-	if (isdigit(c)) { return (c - '0'); }
-	else if (islower(c)) { return ((c - 'a') + 10); }
-	else if (isupper(c)) { return ((c - 'A') + 10); }
-	return (-1);
-}
-
-static int
-read_oct(void) {
-	if (!is_oct(peek()))
-		{ /* ERROR */ }
-	int oct_num = advance() - '0';
-	if (is_oct(peek())) { oct_num = (advance() - '0') + (oct_num * 8); }
-	return (oct_num);
-}
-
-static int
-read_hex(void) {
-	if (!is_hex(peek()))
-		{ /* ERROR */ }
-	int hex_num = hex2dec(advance());
-	if (is_hex(peek()))
-		{ hex_num = hex2dec(advance()) + (hex_num * 16); }
-	return (hex_num);
-}
-#endif
+static int regex_char(int);
 
 // Regex Function
 
 static regex_node_t*
 finite_seq(regex_node_t* root) {
-    if (advance_token(local_spec->lex) != T_DIGIT) {
-        errorf(CURRENT_LINE(local_spec->lex), "Missing a digit after the '{'.");
+    if (advance_token(regex_spec->lex) != T_DIGIT) {
+        errorf(CURRENT_LINE(regex_spec->lex), "Missing a digit after the '{'.");
         return (NULL_NODE);
     }
 
-	size_t start = atoi(C_LEXEME(local_spec->lex));
+	size_t start = atoi(C_LEXEME(regex_spec->lex));
 	regex_node_t* rep_node = cpy_concat_regex_node(root, start);
 
-	if (peek_token(local_spec->lex) == T_REG_COMMA) {
-        advance_token(local_spec->lex);
-		if (peek_token(local_spec->lex) == T_DIGIT) {
-            advance_token(local_spec->lex);
-			size_t until = atoi(C_LEXEME(local_spec->lex));
+	if (peek_token(regex_spec->lex) == T_REG_COMMA) {
+        advance_token(regex_spec->lex);
+		if (peek_token(regex_spec->lex) == T_DIGIT) {
+            advance_token(regex_spec->lex);
+			size_t until = atoi(C_LEXEME(regex_spec->lex));
 
 			if (until < start) {
                 del_regex_node(rep_node);
-                errorf(CURRENT_LINE(local_spec->lex),
+                errorf(CURRENT_LINE(regex_spec->lex),
                             "The first digit in the finite sequence %zu"
                             " is greater than the second %zu.", start, until);
                 return (NULL_NODE);
@@ -163,9 +75,9 @@ finite_seq(regex_node_t* root) {
 		}
 	}
 
-    if (advance_token(local_spec->lex) != T_REG_RBRACE) {
+    if (advance_token(regex_spec->lex) != T_REG_RBRACE) {
         del_regex_node(rep_node);
-        errorf(CURRENT_LINE(local_spec->lex),
+        errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing the '}' in the finite sequence.");
         return (NULL_NODE);
     }
@@ -173,8 +85,9 @@ finite_seq(regex_node_t* root) {
 }
 
 regex_node_t*
-build_regex(lexical_spec_t* spec) {
-    local_spec = spec;
+build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
+    regex_spec = spec;
+    regex_entry = entry;
     // TODO anchor ( '^' and '$')
 	return (regex_look());
 }
@@ -185,15 +98,15 @@ regex_look(void) {
     if (!root)
         { return (NULL_NODE); }
 
-	if (peek_token(local_spec->lex) == T_REG_LOOK) {
-		advance_token(local_spec->lex);
+	if (peek_token(regex_spec->lex) == T_REG_LOOK) {
+		advance_token(regex_spec->lex);
         regex_node_t* right_op = regex_union();
         if (!right_op) {
             del_regex_node(right_op);
             return (NULL_NODE);
         }
 		root = new_regex_node(AST_CONCAT, root, right_op);
-		root->look_sym = true;
+		regex_entry->use_look = root->look_sym = true;
 	}
 	return (root);
 }
@@ -204,12 +117,12 @@ regex_union(void) {
     if (!root)
         { return (NULL_NODE); }
 
-	while (peek_token(local_spec->lex) == T_REG_UNION) {
-		advance_token(local_spec->lex);
+	while (peek_token(regex_spec->lex) == T_REG_UNION) {
+		advance_token(regex_spec->lex);
         regex_node_t* right_op = regex_cat();
         if (!right_op) {
             del_regex_node(root);
-            errorf(CURRENT_LINE(local_spec->lex), "Missing an operand to '|'.");
+            errorf(CURRENT_LINE(regex_spec->lex), "Missing an operand to '|'.");
             return (NULL_NODE);
         }
 		root = new_regex_node(AST_UNION, root, right_op);
@@ -223,7 +136,7 @@ regex_cat(void) {
     if (!root)
         { return (NULL_NODE); }
 
-	while (!in_first(local_spec->lex, T_REG_LOOK, T_REG_UNION,
+	while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION,
                                     T_REG_RPAREN, T_END_REGEX, T_EOF, -1)) {
          regex_node_t* right_op = regex_closure();
         if (!right_op) {
@@ -241,9 +154,9 @@ regex_closure(void) {
     if (!root)
         { return (NULL_NODE); }
 
-	while (in_first(local_spec->lex, T_REG_STAR, T_REG_PLUS,
+	while (in_first(regex_spec->lex, T_REG_STAR, T_REG_PLUS,
                                             T_REG_QUES, T_REG_LBRACE, -1)) {
-		int closure_kind = advance_token(local_spec->lex);
+		int closure_kind = advance_token(regex_spec->lex);
 		switch (closure_kind) {
 			case T_REG_PLUS:
 				root = new_regex_node(AST_CONCAT, root,
@@ -268,52 +181,58 @@ regex_closure(void) {
 
 static regex_node_t*
 regex_atom(void) {
-    if (peek_token(local_spec->lex) == T_REG_LBRACK)
+    if (peek_token(regex_spec->lex) == T_REG_LBRACK)
         { return (regex_fullccl()); }
-	else if (peek_token(local_spec->lex) == T_REG_QUOTE)
+	else if (peek_token(regex_spec->lex) == T_REG_QUOTE)
         { return (regex_string()); }
-	else if (peek_token(local_spec->lex) == T_REG_LPAREN) { 
-        advance_token(local_spec->lex);
+	else if (peek_token(regex_spec->lex) == T_REG_LPAREN) { 
+        advance_token(regex_spec->lex);
 		regex_node_t* root = regex_union();
 
-        if (advance_token(local_spec->lex) != T_REG_RPAREN) {
+        if (advance_token(regex_spec->lex) != T_REG_RPAREN) {
             del_regex_node(root);
-            errorf(CURRENT_LINE(local_spec->lex),
+            errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing a close paren (')').");
             return (NULL_NODE);
         }
 		return (root);
 	}
-	else if (peek_token(local_spec->lex) == T_REG_DOT)
+	else if (peek_token(regex_spec->lex) == T_REG_DOT)
         { return (regex_dot()); }
-    else if (peek_token(local_spec->lex) == T_REG_BOUND_NAME) {
-        advance_token(local_spec->lex);
-		unget_char_back_buffer(LAST_LEXEME(local_spec->lex), 1);
+    else if (peek_token(regex_spec->lex) == T_REG_BOUND_NAME) {
+        advance_token(regex_spec->lex);
+		unget_char_back_buffer(LAST_LEXEME(regex_spec->lex), 1);
 		return (new_regex_node(AST_BOUND_NAME,
-                                strdup(C_LEXEME(local_spec->lex) + 1)));
-    }
-    else if (peek_token(local_spec->lex) == T_REG_CHAR) {
-        advance_token(local_spec->lex);
-		return (new_regex_node(AST_SYMBOL, ALONE_S, eval_lexeme_char()));
+                                strdup(C_LEXEME(regex_spec->lex) + 1)));
     }
     else {
-        errorf(CURRENT_LINE(local_spec->lex), "Missing a char in the regex.");
-        return (NULL_NODE);
+        int kind = peek_token(regex_spec->lex);
+        int val_lexeme;
+        if ((val_lexeme = regex_char(kind)) != ERROR) {
+            advance_token(regex_spec->lex);
+	    	return (new_regex_node(AST_SYMBOL, ALONE_S, val_lexeme));
+        }
+        else {
+            errorf(CURRENT_LINE(regex_spec->lex),
+                                            "Missing a char in the regex.");
+            return (NULL_NODE);
+        }
     }
 }
 
 static regex_node_t*
 regex_string(void) {
-    advance_token(local_spec->lex);
+    advance_token(regex_spec->lex);
 
 	regex_node_t* root_concat = NULL;
     bool empty_str = true;
 
-	while (!in_first(local_spec->lex, T_REG_QUOTE, T_EOF, -1)) {
-        if (advance_token(local_spec->lex) == T_ERROR)
+	while (!in_first(regex_spec->lex, T_REG_QUOTE, T_EOF, -1)) {
+        int kind_char;
+        if ((kind_char = advance_token(regex_spec->lex)) == T_ERROR)
             { break; }
    		regex_node_t* symbol = new_regex_node(AST_SYMBOL,
-                                    ALONE_S, eval_lexeme_char());
+                                    ALONE_S, regex_char(kind_char));
 		if (!root_concat)
 			{ root_concat = symbol; }
 		else
@@ -324,9 +243,9 @@ regex_string(void) {
 		{ root_concat = new_regex_node(AST_SYMBOL, ALONE_S, EPSILON); }
     if (!root_concat)
          { return (NULL_NODE); }
-    if (advance_token(local_spec->lex) != T_REG_QUOTE) {
+    if (advance_token(regex_spec->lex) != T_REG_QUOTE) {
         del_regex_node(root_concat);
-        errorf(CURRENT_LINE(local_spec->lex),
+        errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing a close quote ('\"') in string.");
         return (NULL_NODE);
     }
@@ -339,11 +258,11 @@ regex_fullccl(void) {
     if (!root)
         { return (NULL_NODE); }
 
-    while (in_first(local_spec->lex, T_REG_DIFF_CLASS, T_REG_UNION_CLASS, -1)) {
-        int kind_op = advance_token(local_spec->lex);
-        if (peek_token(local_spec->lex) != T_REG_LBRACK) {
+    while (in_first(regex_spec->lex, T_REG_DIFF_CLASS, T_REG_UNION_CLASS, -1)) {
+        int kind_op = advance_token(regex_spec->lex);
+        if (peek_token(regex_spec->lex) != T_REG_LBRACK) {
             del_regex_node(root);
-            errorf(CURRENT_LINE(local_spec->lex),
+            errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing character class operand to %s.",
                                 (kind_op == T_REG_DIFF_CLASS) ? "{-}" : "{+}");
             return (NULL_NODE);
@@ -362,16 +281,16 @@ regex_fullccl(void) {
 
 static regex_node_t*
 regex_loneccl(void) {
-    advance_token(local_spec->lex);
-	bool negate = (peek_token(local_spec->lex) == T_REG_CARET);
+    advance_token(regex_spec->lex);
+	bool negate = (peek_token(regex_spec->lex) == T_REG_CARET);
     if (negate)
-        { advance_token(local_spec->lex); }
+        { advance_token(regex_spec->lex); }
     bitset_t* range = regex_ccl();
     if (!range)
         { return (NULL_NODE); }
-    else if (advance_token(local_spec->lex) != T_REG_RBRACK) {
+    else if (advance_token(regex_spec->lex) != T_REG_RBRACK) {
         del_bitset(range);
-        errorf(CURRENT_LINE(local_spec->lex),
+        errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing a close bracket (']') in ccl.");
         return (NULL_NODE);
     }
@@ -389,39 +308,39 @@ regex_loneccl(void) {
 static bitset_t*
 regex_ccl(void) {
 	bitset_t* range = new_bitset();
-	while (!in_first(local_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
-        int kind = advance_token(local_spec->lex);
-        if (kind == T_ERROR) {
+	while (!in_first(regex_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
+        int kind_right = advance_token(regex_spec->lex);
+        if (kind_right == T_ERROR) {
             del_bitset(range);
             return (NULL_BITSET);
         }
-        else if (kind != T_REG_CHAR && kind != T_REG_HYPHEN) {
+        else if (kind_right > T_CC_FIRST && kind_right < T_CC_LAST) {
             bitset_t* (*cce_ptr)(int) = NULL;
-            if (kind == T_CCE)
+            if (kind_right < T_CC_MIDDLE)
                 { cce_ptr = &regex_cce; }
             else
                 { cce_ptr = &regex_n_cce; }
-            bitset_t* cce_range = (*cce_ptr)(kind);
+            bitset_t* cce_range = (*cce_ptr)(kind_right);
             UNION_BITSET(range, cce_range);
             del_bitset(cce_range);
         }
         else {
-            size_t min_range = eval_lexeme_char();
+            size_t min_range = regex_char(kind_right);
 
-            if (peek_token(local_spec->lex) == T_REG_HYPHEN) {
-                advance_token(local_spec->lex);
-                advance_token(local_spec->lex);
+            if (peek_token(regex_spec->lex) == T_REG_HYPHEN) {
+                advance_token(regex_spec->lex);
+                int kind_left = advance_token(regex_spec->lex);
 
-                size_t max_range = eval_lexeme_char();
+                size_t max_range = regex_char(kind_left);
                 add_range_bitset(range, min_range, max_range + 1);
 
                 if (max_range < min_range) {
-                    warnf(CURRENT_LINE(local_spec->lex),
+                    warnf(CURRENT_LINE(regex_spec->lex),
                         "The min range %c is greater than the max range %c.",
                         min_range, max_range);
                 }
                 else if (max_range == min_range) {
-                    warnf(CURRENT_LINE(local_spec->lex),
+                    warnf(CURRENT_LINE(regex_spec->lex),
                         "The min range and max range are both equal.");
                     ADD_BITSET(range, min_range);
                 }
@@ -452,7 +371,8 @@ regex_cce(int kind_cce) {
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
             break;
         case T_CCE_BLANK:
-            add_range_bitset(cce_range, '\t', '\n' + 1);
+            ADD_BITSET(cce_range, '\t');
+            ADD_BITSET(cce_range, ' ');
             break;
         case T_CCE_CNTRL:
             add_range_bitset(cce_range, '\0', '\x1F' + 1);
@@ -466,6 +386,7 @@ regex_cce(int kind_cce) {
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);
             break;
         case T_CCE_LOWER:
+            regex_entry->use_upper_lower = true;
             add_range_bitset(cce_range, 'a', 'z' + 1);
             break;
         case T_CCE_PRINT:
@@ -485,6 +406,7 @@ regex_cce(int kind_cce) {
             ADD_BITSET(cce_range, ' ');
             break;
         case T_CCE_UPPER:
+            regex_entry->use_upper_lower = true;
             add_range_bitset(cce_range, 'A', 'Z' + 1);
             break;
         case T_CCE_XDIGIT:
@@ -530,8 +452,58 @@ regex_n_cce(int kind_cce) {
 
 static regex_node_t*
 regex_dot(void) {
-    advance_token(local_spec->lex);
+    advance_token(regex_spec->lex);
 	bitset_t* newl = new_bitset();
 	ADD_BITSET(newl, '\n');
 	return (new_regex_node(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
 }
+
+static int
+hex_to_dec(int c) {
+	if (isdigit(c)) { return (c - '0'); }
+	else if (islower(c)) { return ((c - 'a') + 10); }
+	else if (isupper(c)) { return ((c - 'A') + 10); }
+	return (ERROR);
+}
+
+static int
+regex_char(int kind) {
+    if (kind == T_REG_CHAR) {
+    	size_t input_c = *C_LEXEME(regex_spec->lex);
+	    if (input_c == '\\') {
+            input_c = C_LEXEME(regex_spec->lex)[1];
+
+    		switch (input_c) {
+	    		case 'n': input_c = '\n'; break;
+		    	case 'a': input_c = '\a'; break;
+		    	case 'b': input_c = '\b'; break;
+    			case 'f': input_c = '\f'; break;
+	    		case 'r': input_c = '\r'; break;
+		    	case 't': input_c = '\t'; break;
+			    case 'v': input_c = '\v'; break;
+		    	default:  break;
+		    }
+	    }
+    	return (input_c);
+    }
+    else if ( kind == T_OCT_NUM) {
+        char const* first_digit = C_LEXEME(regex_spec->lex) + 1;
+    	size_t oct_num = 0;
+        while (*first_digit) {
+	        oct_num = (*first_digit - '0') + (oct_num * 8);
+            ++first_digit;
+        }
+        return (oct_num);
+    }
+    else if ( kind == T_HEX_NUM) {
+        char const* first_digit = C_LEXEME(regex_spec->lex) + 2;
+    	size_t hex_num = 0;
+        while (*first_digit) {
+		    hex_num = hex_to_dec(*first_digit) + (hex_num * 16);
+            ++first_digit;
+        }
+        return (hex_num);
+    }
+    return (ERROR);
+}
+

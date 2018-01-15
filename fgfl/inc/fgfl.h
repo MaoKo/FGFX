@@ -84,6 +84,8 @@ typedef struct {
 			bool is_frag;
 
 			bool use_look;
+            bool use_upper_lower;
+
 			bool skip;
 
 			enum { REGEX, NFA } active;
@@ -93,6 +95,7 @@ typedef struct {
 			};
 
 			int default_state;
+
 			bool all_state;
 			trans_list_t* state_begin_lst;
 		};

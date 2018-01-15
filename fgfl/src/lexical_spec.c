@@ -358,7 +358,7 @@ spec_regex_assign(lexical_spec_t* spec,
 			return (ERROR);
 		}
 
-        regex_node_t* root = build_regex(spec);
+        regex_node_t* root = build_regex(spec, entry);
         if (!root)
             { return (ERROR); }
 		else if (entry->reg) {
@@ -368,9 +368,6 @@ spec_regex_assign(lexical_spec_t* spec,
 		}
 	
 		entry->reg = root;
-        if (root->look_sym)
-            { entry->use_look = true; }
-
         if (advance_token(spec->lex) != T_END_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
                             "No found the end of the regex '/'.");
@@ -391,6 +388,11 @@ spec_regex_assign(lexical_spec_t* spec,
 				return (ERROR);
 			}
 
+            if (entry->use_upper_lower && entry->is_igcase) {
+                warnf(CURRENT_LINE(spec->lex),
+                                "The token %s use [:lower:] or [:upper:]"
+                                " but it's an igcase token.", entry->name);
+            }
 		}
 		if (peek_token(spec->lex) == T_COMMA) {
 			advance_token(spec->lex);

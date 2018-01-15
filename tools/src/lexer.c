@@ -249,6 +249,7 @@ advance_token(lexer_t* lex) {
             { (void*)T_CCE_PRINT,   "[:print:]"  },
             { (void*)T_CCE_PUNCT,   "[:punct:]"  },
             { (void*)T_CCE_SPACE,   "[:space:]"  },
+            { (void*)T_CCE_BLANK,   "[:blank:]"  },
             { (void*)T_CCE_UPPER,   "[:upper:]"  },
             { (void*)T_CCE_XDIGIT,  "[:xdigit:]" },
 		};
@@ -271,6 +272,7 @@ advance_token(lexer_t* lex) {
             { (void*)T_N_CCE_PRINT,     "[:^print:]"  },
             { (void*)T_N_CCE_PUNCT,     "[:^punct:]"  },
             { (void*)T_N_CCE_SPACE,     "[:^space:]"  },
+            { (void*)T_N_CCE_BLANK,     "[:^blank:]"  },
             { (void*)T_N_CCE_UPPER,     "[:^upper:]"  },
             { (void*)T_N_CCE_XDIGIT,    "[:^xdigit:]" },
 		};

@@ -1,8 +1,9 @@
 .PHONY: all clean mrproper re
 
 CC			:=	cc
+#C_STD      :=  -std=c99
 INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
-CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) -g
+CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE)) $(C_STD) -g
 CC_MACRO	:=	-DDFA_OPTIMIZE -DPRINT_DEBUG
 LD_FLAGS	:=	# -pg
 
