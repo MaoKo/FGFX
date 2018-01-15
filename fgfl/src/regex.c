@@ -4,8 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "preprocess_regex.h"
 #include "regex.h"
+#include "preprocess_regex.h"
 #include "regex_node.h"
 #include "lexical_spec.h"
 #include "lexer.h"
@@ -33,6 +33,7 @@ static regex_node_t* regex_fullccl(void);
 static regex_node_t* regex_loneccl(void);
 static bitset_t* regex_ccl(void);
 static bitset_t* regex_cce(int);
+static bitset_t* regex_n_cce(int);
 static regex_node_t* regex_dot(void);
 
 #if 0
@@ -395,7 +396,12 @@ regex_ccl(void) {
             return (NULL_BITSET);
         }
         else if (kind != T_REG_CHAR && kind != T_REG_HYPHEN) {
-            bitset_t* cce_range = regex_cce(kind);
+            bitset_t* (*cce_ptr)(int) = NULL;
+            if (kind == T_CCE)
+                { cce_ptr = &regex_cce; }
+            else
+                { cce_ptr = &regex_n_cce; }
+            bitset_t* cce_range = (*cce_ptr)(kind);
             UNION_BITSET(range, cce_range);
             del_bitset(cce_range);
         }
@@ -433,35 +439,11 @@ regex_cce(int kind_cce) {
     bitset_t* op_range = NULL_BITSET;
 
     switch (kind_cce) {
-        case T_CCE_BLANK:
-            add_range_bitset(cce_range, '\t', '\n' + 1);
-            break;
-        case T_CCE_SPACE:
-            add_range_bitset(cce_range, '\t', '\r' + 1);
-            ADD_BITSET(cce_range, ' ');
-            break;
-        case T_CCE_CNTRL:
-            add_range_bitset(cce_range, '\0', '\x1F' + 1);
-            ADD_BITSET(cce_range, '\x7F');
-            break;
-        case T_CCE_PRINT:
-            op_range = regex_cce(T_CCE_CNTRL);
-            UNION_BITSET(cce_range, COMPL_BITSET(op_range));
-            del_bitset(op_range);        
-            break;
-        case T_CCE_XDIGIT:
-            add_range_bitset(cce_range, '0', '9' + 1);
-            add_range_bitset(cce_range, 'a', 'f' + 1);
-            add_range_bitset(cce_range, 'A', 'F' + 1);
-            break;
-        case T_CCE_DIGIT:
-            add_range_bitset(cce_range, '0', '9' + 1);
-            break;
-        case T_CCE_LOWER:
-            add_range_bitset(cce_range, 'a', 'z' + 1);
-            break;
-        case T_CCE_UPPER:
-            add_range_bitset(cce_range, 'A', 'Z' + 1);
+        case T_CCE_ALNUM:
+            op_range = regex_cce(T_CCE_ALPHA);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            op_range = regex_cce(T_CCE_DIGIT);
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
             break;
         case T_CCE_ALPHA:
             op_range = regex_cce(T_CCE_LOWER);
@@ -469,14 +451,81 @@ regex_cce(int kind_cce) {
             op_range = regex_cce(T_CCE_UPPER);
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
             break;
-        case T_CCE_ALNUM:
-            op_range = regex_cce(T_CCE_ALPHA);
+        case T_CCE_BLANK:
+            add_range_bitset(cce_range, '\t', '\n' + 1);
+            break;
+        case T_CCE_CNTRL:
+            add_range_bitset(cce_range, '\0', '\x1F' + 1);
+            ADD_BITSET(cce_range, '\x7F');
+            break;
+        case T_CCE_DIGIT:
+            add_range_bitset(cce_range, '0', '9' + 1);
+            break;
+        case T_CCE_GRAPH:
+            op_range = regex_cce(T_CCE_PRINT); OFF_BITSET(op_range, ' ');
+            UNION_BITSET(cce_range, op_range); del_bitset(op_range);
+            break;
+        case T_CCE_LOWER:
+            add_range_bitset(cce_range, 'a', 'z' + 1);
+            break;
+        case T_CCE_PRINT:
+            op_range = regex_cce(T_CCE_CNTRL);
+            UNION_BITSET(cce_range, COMPL_BITSET(op_range));
+            del_bitset(op_range);
+            break;
+        case T_CCE_PUNCT:
+            op_range = regex_cce(T_CCE_GRAPH);
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            op_range = regex_cce(T_CCE_ALNUM);
+            UNION_BITSET(cce_range, COMPL_BITSET(op_range));
+            del_bitset(op_range);        
+            break;
+        case T_CCE_SPACE:
+            add_range_bitset(cce_range, '\t', '\r' + 1);
+            ADD_BITSET(cce_range, ' ');
+            break;
+        case T_CCE_UPPER:
+            add_range_bitset(cce_range, 'A', 'Z' + 1);
+            break;
+        case T_CCE_XDIGIT:
             op_range = regex_cce(T_CCE_DIGIT);
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);        
+            add_range_bitset(cce_range, 'a', 'f' + 1);
+            add_range_bitset(cce_range, 'A', 'F' + 1);
             break;
     }
     return (cce_range);
+}
+
+static bitset_t*
+regex_n_cce(int kind_cce) {
+    switch (kind_cce) {
+        case T_N_CCE_ALNUM:
+            return (COMPL_BITSET(regex_cce(T_CCE_ALNUM)));
+        case T_N_CCE_ALPHA:
+            return (COMPL_BITSET(regex_cce(T_CCE_ALPHA)));
+        case T_N_CCE_BLANK:
+            return (COMPL_BITSET(regex_cce(T_CCE_BLANK)));
+        case T_N_CCE_CNTRL:
+            return (COMPL_BITSET(regex_cce(T_CCE_CNTRL)));
+        case T_N_CCE_DIGIT:
+            return (COMPL_BITSET(regex_cce(T_CCE_DIGIT)));
+        case T_N_CCE_GRAPH:
+            return (COMPL_BITSET(regex_cce(T_CCE_GRAPH)));
+        case T_N_CCE_LOWER:
+            return (COMPL_BITSET(regex_cce(T_CCE_LOWER)));
+        case T_N_CCE_PRINT:
+            return (COMPL_BITSET(regex_cce(T_CCE_PRINT)));
+        case T_N_CCE_PUNCT:
+            return (COMPL_BITSET(regex_cce(T_CCE_PUNCT)));
+        case T_N_CCE_SPACE:
+            return (COMPL_BITSET(regex_cce(T_CCE_SPACE)));
+        case T_N_CCE_UPPER:
+            return (COMPL_BITSET(regex_cce(T_CCE_UPPER)));
+        case T_N_CCE_XDIGIT:
+            return (COMPL_BITSET(regex_cce(T_CCE_XDIGIT)));
+        }
+    return (NULL_BITSET);
 }
 
 static regex_node_t*

@@ -32,11 +32,9 @@ Which create a file called token_c.h.lex ready for lexing.
 	.	Remove unreachable state
 	.	Handle when the number of state is 1
 	.	Check useless $BEGIN
-	.	Handle empty regex
 	.	Gen begin table when occurs ( $BEGIN )
-	.	Add lookahead operator
-	.	Add regex scanner
 	.	Add several begin move for the same token name (fix when (*) occurs)
+    .   Add anchor to the regex '^' and '$'
 	.	Create the grammar and the lexical specification for regex
 	.	Learn MarkDown :)
 

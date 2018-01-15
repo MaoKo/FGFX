@@ -361,29 +361,7 @@ spec_regex_assign(lexical_spec_t* spec,
         regex_node_t* root = build_regex(spec);
         if (!root)
             { return (ERROR); }
-
-#if 0
-        advance_token(spec->lex); // T_REGEX
-
-		size_t save_space = 0;
-
-		char* last_escape = strrchr(C_LEXEME(spec->lex), '\\');
-		if ((last_escape && last_escape[-1] != '\\')
-				&& is_tab_or_space(last_escape[1]))
-			{ save_space = 1; }
-
-		// Get rid of trailing space and tab
-		unget_c_buffer(LAST_LEXEME(spec->lex), count_back(C_LEXEME(spec->lex),
-			            &is_tab_or_space) - save_space);
-
-		char* reg_str = strdup(C_LEXEME(spec->lex));
-
-		if (!reg_str) {
-			errorf(0, "Non enough memory for allocate the regex string.");
-			return (ERROR);
-		}
-#endif 
-		if (entry->reg) {
+		else if (entry->reg) {
 			errorf(CURRENT_LINE(spec->lex),
                            "Attempt to re-assign the token '%s'", entry->name);
 			return (ERROR);

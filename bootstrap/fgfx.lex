@@ -52,8 +52,8 @@ $TOKEN
     ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
     ( BEG_CCL, BODY_CCL ) REG_RBRACK = / \] /, ( $BEGIN IN_REGEX, $ALL ) ;
 
-    ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /, ( $BEGIN BODY_CCL );
-    ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}":]" /, ( $BEGIN BODY_CCL );
+    ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /,  ( $BEGIN BODY_CCL ) ;
+    ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}+":]" /, ( $BEGIN BODY_CCL ) ;
 
     ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) REG_CHAR = / .|\\(.|\n) /,
                             ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
@@ -103,32 +103,20 @@ $KEYWORD
 
     // Regex
 	// Character Class Expression
-    CCE_ALNUM,  /* [:alnum:]  */
-    CCE_ALPHA,  /* [:alpha:]  */
-    CCE_CNTRL,  /* [:cntrl:]  */
-    CCE_DIGIT,  /* [:digit:]  */
-    CCE_GRAPH,  /* [:graph:]  */
-    CCE_LOWER,  /* [:lower:]  */
-    CCE_PRINT,  /* [:print:]  */
-    CCE_PUNCT,  /* [:punct:]  */
-    CCE_SPACE,  /* [:space:]  */
-    CCE_BLANK,  /* [:blank:]  */
-    CCE_UPPER,  /* [:upper:]  */
-    CCE_XDIGIT, /* [:xdigit:] */
+    CCE_ALNUM, CCE_ALPHA,
+    CCE_CNTRL, CCE_DIGIT,
+    CCE_GRAPH, CCE_LOWER,
+    CCE_PRINT, CCE_PUNCT,
+    CCE_SPACE, CCE_BLANK,
+    CCE_UPPER, CCE_XDIGIT,
 
 	// Negate Character Class Expression
-    N_CCE_ALNUM,  /* [:^alnum:]  */
-    N_CCE_ALPHA,  /* [:^alpha:]  */
-    N_CCE_CNTRL,  /* [:^cntrl:]  */
-    N_CCE_DIGIT,  /* [:^digit:]  */
-    N_CCE_GRAPH,  /* [:^graph:]  */
-    N_CCE_LOWER,  /* [:^lower:]  */
-    N_CCE_PRINT,  /* [:^print:]  */
-    N_CCE_PUNCT,  /* [:^punct:]  */
-    N_CCE_SPACE,  /* [:^space:]  */
-    N_CCE_BLANK,  /* [:^blank:]  */
-    N_CCE_UPPER,  /* [:^upper:]  */
-    N_CCE_XDIGIT, /* [:^xdigit:] */
+    N_CCE_ALNUM, N_CCE_ALPHA,
+    N_CCE_CNTRL, N_CCE_DIGIT,
+    N_CCE_GRAPH, N_CCE_LOWER,
+    N_CCE_PRINT, N_CCE_PUNCT,
+    N_CCE_SPACE, N_CCE_BLANK,
+    N_CCE_UPPER, N_CCE_XDIGIT,
 
 	// FGFP
     EXTERN, PRODUCTION, ALIAS, PRECEDENCE, MIMIC,

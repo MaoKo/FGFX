@@ -123,6 +123,7 @@ get_next_token(lexer_t* lex) {
 			break;
 		}
 
+        // Change state
         if (!unget_input) {
             if (lex->crt_state == S_BODY_CCL
                                 && fgfx_BODY_CCL_middle_table[state])
@@ -131,11 +132,12 @@ get_next_token(lexer_t* lex) {
                                 && fgfx_IN_REGEX_middle_table[state])
                 { unget_input = true; }
         }
-		state = state_table[state][rd];
 
+		state = state_table[state][rd];
 		if (is_final_state(state, final_table) != T_ERROR)
 			{ last_match = is_final_state(state, final_table); }
 
+        // Write on buffer
         if (unget_input)
 		    { write_char_buffer(lex->push_back, rd); }
         else {
@@ -158,13 +160,12 @@ get_next_token(lexer_t* lex) {
 	else {
         if (unget_input) {
             if (!check_present_table(fgfx_look_table, last_match)) {
-                int last_c = LAST_CHAR(lex->push_back);
 		        unget_char_back_buffer(lex->push_back, 1);
 
                 append_buffer(lex->last_lexeme, lex->push_back);
                 reset_buffer(lex->push_back);
 
-        		write_char_buffer(lex->push_back, last_c);
+        		write_char_buffer(lex->push_back, rd);
             }
         }
         else {
@@ -258,7 +259,28 @@ advance_token(lexer_t* lex) {
 		errorf(CURRENT_LINE(lex),
                         "Bad character class expression %s.", C_LEXEME(lex));
 		return (T_ERROR);
-
+    }
+    else if (found_token == T_N_CCE) {
+		static void* n_cce_tab[][2] = {
+            { (void*)T_N_CCE_ALNUM,     "[:^alnum:]"  },
+            { (void*)T_N_CCE_ALPHA,     "[:^alpha:]"  },
+            { (void*)T_N_CCE_CNTRL,     "[:^cntrl:]"  },
+            { (void*)T_N_CCE_DIGIT,     "[:^digit:]"  },
+            { (void*)T_N_CCE_GRAPH,     "[:^graph:]"  },
+            { (void*)T_N_CCE_LOWER,     "[:^lower:]"  },
+            { (void*)T_N_CCE_PRINT,     "[:^print:]"  },
+            { (void*)T_N_CCE_PUNCT,     "[:^punct:]"  },
+            { (void*)T_N_CCE_SPACE,     "[:^space:]"  },
+            { (void*)T_N_CCE_UPPER,     "[:^upper:]"  },
+            { (void*)T_N_CCE_XDIGIT,    "[:^xdigit:]" },
+		};
+		for (size_t i = 0; i < *(&n_cce_tab + 1) - n_cce_tab; ++i) {
+			if (!strcmp(C_LEXEME(lex), n_cce_tab[i][1]))
+				{ return ((long)*n_cce_tab[i]); }
+		}
+		errorf(CURRENT_LINE(lex),
+                    "Bad negate character class expression %s.", C_LEXEME(lex));
+		return (T_ERROR);
     }
 	lex->last_token = -1;
 	return (found_token);
