@@ -6,20 +6,26 @@
 #include "fgfl.h"
 #include "regex.h"
 
-#define STATE_FINAL(state, tok)	(state->final = tok)
-#define FREE_FRAG(f)			((FREE(f->tail)) , (FREE(f)))
-#define CPY_EDGE(x, y)			((x->label = y->label),\
-										(x->out_state = y->out_state))
+#define STATE_FINAL(state, tok)	(state->final_type = (tok))
 
-#define PUSH_EDGE(st, ed)		((ed->next = st->trans) , (st->trans = ed))
-#define INIT_EDGE(ed, l, o)		((ed->label = l) , (ed->out_state = o))
-#define STATE_AT(index)			(AT_VECTOR(record_nfa_state, (size_t)index))
-#define NULL_FRAG               (NULL)
+#define STATE_AT(index)         (AT_VECTOR(record_nfa_state, (size_t)index))
+#define AUTOMATON_AT(index)     (AT_VECTOR(record_nfa_automata, (size_t)index))
+
+#define MAX_SIZE_STATE          (SIZE_VECTOR(record_nfa_state))
+
+#define IS_CLOSURE(kind)        ((kind == AST_STAR) || (kind == AST_PLUS)\
+                                                    || (kind == AST_QUES))
+#define NULL_AUTOMATON          (NULL)
+#define NULL_NFA_STATE          (NULL)
+
+#define EDGE_AUTOMATA           (-1)
+#define EDGE_CLASS              (-2)
+#define NO_EDGE                 (-3)
 
 extern vector_t* record_nfa_state;
+extern vector_t* record_nfa_automata;
 
 void del_nfa_record(void);
-state_t* new_state(void);
 int build_nfa(lexical_spec_t*);
 
 #endif /* NFA_H */

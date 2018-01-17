@@ -22,8 +22,6 @@
 static lexical_spec_t* regex_spec = NULL;
 static spec_entry_t* regex_entry = NULL;
 
-// Static Prototype
-
 static regex_node_t* regex_look(void);
 static regex_node_t* regex_union(void);
 static regex_node_t* regex_cat(void);
@@ -37,8 +35,6 @@ static bitset_t* regex_cce(int);
 static bitset_t* regex_n_cce(int);
 static regex_node_t* regex_dot(void);
 static int regex_char(int);
-
-// Regex Function
 
 static regex_node_t*
 finite_seq(regex_node_t* root) {
@@ -164,7 +160,7 @@ regex_closure(void) {
 				break;
 			case T_REG_QUES:
 				root = new_regex_node(AST_UNION, root,
-				    new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
+				    new_regex_node(AST_EPSILON));
 				break;
 			case T_REG_STAR:
                 if (root->kind_ast != AST_CLOSURE)
@@ -210,7 +206,7 @@ regex_atom(void) {
         int val_lexeme;
         if ((val_lexeme = regex_char(kind)) != ERROR) {
             advance_token(regex_spec->lex);
-	    	return (new_regex_node(AST_SYMBOL, ALONE_S, val_lexeme));
+	    	return (new_regex_node(AST_SYMBOL, val_lexeme));
         }
         else {
             errorf(CURRENT_LINE(regex_spec->lex),
@@ -232,7 +228,7 @@ regex_string(void) {
         if ((kind_char = advance_token(regex_spec->lex)) == T_ERROR)
             { break; }
    		regex_node_t* symbol = new_regex_node(AST_SYMBOL,
-                                    ALONE_S, regex_char(kind_char));
+                                    regex_char(kind_char));
 		if (!root_concat)
 			{ root_concat = symbol; }
 		else
@@ -240,7 +236,7 @@ regex_string(void) {
         empty_str = true;
 	}
 	if (!empty_str)
-		{ root_concat = new_regex_node(AST_SYMBOL, ALONE_S, EPSILON); }
+		{ root_concat = new_regex_node(AST_EPSILON); }
     if (!root_concat)
          { return (NULL_NODE); }
     if (advance_token(regex_spec->lex) != T_REG_QUOTE) {
@@ -270,9 +266,9 @@ regex_fullccl(void) {
         else {
             regex_node_t* right_op = regex_loneccl();
             if (kind_op == T_REG_DIFF_CLASS)
-        	    { DIFF_BITSET(root->cclass, right_op->cclass); }
+        	    { DIFF_BITSET(root->class, right_op->class); }
             else
-        	    { UNION_BITSET(root->cclass, right_op->cclass); }
+        	    { UNION_BITSET(root->class, right_op->class); }
             del_regex_node(right_op);
         }
     }
@@ -297,12 +293,12 @@ regex_loneccl(void) {
 
 	if (is_empty_bitset(range) && !negate) {
 		del_bitset(range);
-		return (new_regex_node(AST_SYMBOL, ALONE_S, EPSILON));
+		return (new_regex_node(AST_EPSILON));
 	}
 	else if (negate)
 		{ COMPL_BITSET(range); }
 
-	return (new_regex_node(AST_SYMBOL, MULTI_S, range));
+	return (new_regex_node(AST_CLASS, range));
 }
 
 static bitset_t*
@@ -455,7 +451,7 @@ regex_dot(void) {
     advance_token(regex_spec->lex);
 	bitset_t* newl = new_bitset();
 	ADD_BITSET(newl, '\n');
-	return (new_regex_node(AST_SYMBOL, MULTI_S, COMPL_BITSET(newl)));
+	return (new_regex_node(AST_CLASS, COMPL_BITSET(newl)));
 }
 
 static int
@@ -469,7 +465,7 @@ hex_to_dec(int c) {
 static int
 regex_char(int kind) {
     if (kind == T_REG_CHAR) {
-    	size_t input_c = *C_LEXEME(regex_spec->lex);
+    	size_t input_c = (*C_LEXEME(regex_spec->lex));
 	    if (input_c == '\\') {
             input_c = C_LEXEME(regex_spec->lex)[1];
 

@@ -25,7 +25,6 @@ $TOKEN
 
 	STR			=	/(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"/ ;
 
-
 	/* C Punctuation */
 
 	COMMA		=	/,/	;

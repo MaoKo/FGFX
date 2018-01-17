@@ -5,24 +5,71 @@
 #include "utils.h"
 
 static void
-edges(state_t* state, int symbol, bitset_t* result) {
-	if (state->trans) {
-		edge_t* it = state->trans;
-		while (it) {
-			if (it->label == symbol)
-				{ ADD_BITSET(result, GET_INDEX(it->out_state)); }
-			it = it->next;
-		}
-	}
-	if (state->class && (symbol != EPSILON &&
-								IS_PRESENT(state->class, (size_t)symbol)))
-		{ ADD_BITSET(result, GET_INDEX(state->out_class)); }
+nfa_automaton_edge(nfa_automaton_t* nfa_m, int symbol, bitset_t* result) {
+    switch (nfa_m->kind_nfa) {
+        case NFA_UNION:
+        case NFA_CLASS:
+            if (symbol == EPSILON)
+                { ADD_BITSET(result, GET_INDEX(nfa_m->tail_state)); }
+            break;
+
+        case NFA_SYMBOL:
+            if (nfa_m->out_symbol == symbol)
+                { ADD_BITSET(result, GET_INDEX(nfa_m->head_state)); }
+            break;
+
+        case NFA_CLOSURE:
+        case NFA_EPSILON:
+            if (symbol == EPSILON)
+                { ADD_BITSET(result, GET_INDEX(nfa_m->head_state)); }
+            break;
+
+        case NFA_CONCAT:
+            nfa_automaton_edge(nfa_m->left, symbol, result);
+            break;
+
+        case NFA_MASTER: ;
+                int i;
+                while ((i = IT_NEXT(nfa_m->out_automata)) != IT_NULL) {
+                    nfa_automaton_t* crt_nfa_m = AUTOMATON_AT(i);
+                    nfa_automaton_edge(crt_nfa_m, symbol, result);
+                }
+                IT_RESET(nfa_m->out_automata);
+                break;
+
+        default:
+            break;
+    }
+}
+
+static void
+nfa_state_edges(nfa_state_t* state, int symbol, bitset_t* result) {
+    switch (state->symbol_edge) {
+        case EDGE_AUTOMATA:
+            nfa_automaton_edge(state->edge, symbol, result);
+            if (state->edge2)
+                { nfa_automaton_edge(state->edge2, symbol, result); }
+            break;
+
+        case EDGE_CLASS:
+            if ((symbol != EPSILON)
+                                && (IS_PRESENT(state->class, (size_t)symbol)))
+                { ADD_BITSET(result, GET_INDEX(state->out_state)); }
+            break;
+
+        case NO_EDGE:
+            break;
+
+        default:
+            if (symbol == state->symbol_edge)
+                { ADD_BITSET(result, GET_INDEX(state->out_state)); }
+    }    
 }
 
 static bitset_t*
 epsilon_closure(bitset_t* set_state) {
 	if (!set_state)
-		{ return (NULL); }
+		{ return (NULL_BITSET); }
 
 	bitset_t* seen_state = new_bitset();
 	bool change = false;
@@ -33,16 +80,24 @@ epsilon_closure(bitset_t* set_state) {
 
 		while ((i = IT_NEXT(set_state)) != IT_NULL) {
 			if (!IS_PRESENT(seen_state, (size_t)i)) {
-				edges(STATE_AT(i), EPSILON, set_state);
-				ADD_BITSET(seen_state, (size_t)i);
-
-				change = true;
+                nfa_state_t* crt_state = STATE_AT(i);
+                if (crt_state->eclos) {
+                    if (!is_subset_bitset(set_state, crt_state->eclos))
+                        { UNION_BITSET(set_state, crt_state->eclos); }
+                    else
+                        { continue; }
+                }
+                else {
+    				nfa_state_edges(STATE_AT(i), EPSILON, set_state);
+	    			ADD_BITSET(seen_state, (size_t)i);
+                }
+                change = true;
 			}
 		}
 		IT_RESET(set_state);
 	} while (change);
-	del_bitset(seen_state);
 
+	del_bitset(seen_state);
 	return (set_state);
 }
 
@@ -52,7 +107,7 @@ dfa_edge(bitset_t* states, int symbol) {
 
 	int i;
 	while ((i = IT_NEXT(states)) != IT_NULL)
-		{ edges(STATE_AT(i), symbol, target); }
+		{ nfa_state_edges(STATE_AT(i), symbol, target); }
 	IT_RESET(states);
 
 	if (is_empty_bitset(target)) {
@@ -64,14 +119,11 @@ dfa_edge(bitset_t* states, int symbol) {
 }
 
 static vector_t*
-build_state_table(state_t* master, vector_t** return_states) {
+build_state_table(nfa_state_t* master, vector_t** return_states) {
 	vector_t* states = (*return_states) = new_vector();
 	
-	bitset_t* start = new_bitset();
-	ADD_BITSET(start, GET_INDEX(master));
-	
 	PUSH_BACK_VECTOR(states, NULL_BITSET);
-	PUSH_BACK_VECTOR(states, epsilon_closure(start));
+	PUSH_BACK_VECTOR(states, master->eclos);
 	
 	vector_t* trans = new_vector();
 	PUSH_BACK_VECTOR(trans, NULL_TRANS_LST); //Dead State
@@ -82,7 +134,7 @@ build_state_table(state_t* master, vector_t** return_states) {
 	while (j <= p) {
 		//printf("J = %ld\n", j);
 		PUSH_BACK_VECTOR(trans, NULL_TRANS_LST);
-		for (register int i = MIN_ASCII; i < MAX_ASCII; ++i) {
+		for (size_t i = MIN_ASCII; i < MAX_ASCII; ++i) {
 			bitset_t* next = dfa_edge(AT_VECTOR(states, j), i);
 			if (next == NULL_BITSET)
 				{ continue; }
@@ -118,7 +170,7 @@ build_middle_table(vector_t* states) {
 		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
 		int j;
 		while ((j = IT_NEXT(set_state)) != IT_NULL) {
-			state_t* crt_state = STATE_AT(j);
+			nfa_state_t* crt_state = STATE_AT(j);
 			if (crt_state->beg_look) {
 				if (!middle)
 					{ middle = new_vector(); }
@@ -140,10 +192,10 @@ build_final_table(vector_t* states, vector_t* elst) {
 
 		int it;
 		while ((it = IT_NEXT(set_state)) != IT_NULL) {
-			state_t* crt_state = STATE_AT(it);
-			if (crt_state->final) {
-				if (!min_tok || min_tok > crt_state->final)
-					{ min_tok = crt_state->final; }
+			nfa_state_t* crt_state = STATE_AT(it);
+			if (crt_state->final_type) {
+				if (!min_tok || min_tok > crt_state->final_type)
+					{ min_tok = crt_state->final_type; }
 			}
 		}
 		if (min_tok) {
@@ -156,8 +208,25 @@ build_final_table(vector_t* states, vector_t* elst) {
 	return (final);
 }
 
+static void
+precompute_epsilon_closure(nfa_state_t* state) {
+    if (state->eclos)
+        { return; }
+    bitset_t* result_set = new_bitset();
+    ADD_BITSET(result_set, GET_INDEX(state));
+    epsilon_closure(result_set);
+    state->eclos = result_set;
+}
+
 void
-build_dfa_table(state_t* master, lexical_spec_t* spec) {
+build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
+    static bool do_eclos = false;
+    if (!do_eclos) {
+        for (size_t i = 0; i < MAX_SIZE_STATE; ++i)
+            { precompute_epsilon_closure(STATE_AT(i)); }
+        do_eclos = true;
+    }
+
 	if (spec->trans) {
 		foreach_vector(spec->trans, &del_trans_list);
 		del_vector(spec->trans);

@@ -13,11 +13,11 @@
 #include "utils.h"
 
 static void
-gen_dfa_final_tables(int filde, lexical_spec_t* spec, state_t* master,
+gen_dfa_final_tables(int filde, lexical_spec_t* spec, nfa_state_t* master,
 									char const* header, spec_entry_t* state) {
 	build_dfa_table(master, spec);
 #ifdef DFA_OPTIMIZE
-	equivalent_state(spec->trans, spec->final);
+//	equivalent_state(spec->trans, spec->final);
 #endif /* DFA_OPTIMIZE */
 	gen_state_table(filde, spec, header, state);
 	gen_middle_table(filde, spec, header, state);
@@ -94,7 +94,10 @@ main(int argc, char const* argv[]) {
 	}
 
 //	print_token_entry(spec);
-	build_nfa(spec);
+	if (build_nfa(spec) == ERROR) {
+        errorf(0, "Impossible to construct the NFA automaton.");
+        return (EXIT_FAILURE);
+    }
 
 	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
 	del_lexical_spec(spec);

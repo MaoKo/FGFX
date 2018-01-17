@@ -8,214 +8,304 @@
 #include "nfa.h"
 
 vector_t* record_nfa_state = NULL;
+vector_t* record_nfa_automata = NULL;
 
 static void
-del_state(state_t* state) {
+del_nfa_state(nfa_state_t* state) {
 	if (state) {
-		if (state->trans) {
-			edge_t* it = state->trans;
-			while (it) {
-				edge_t* next = it;
-				it = it->next;
-				FREE(next);	
-			}
-		}
-		if (state->class)
-			{ del_bitset(state->class); }
+        if (state->symbol_edge == EDGE_CLASS)
+            { del_bitset(state->class); }
+        del_bitset(state->eclos);
 	}
 	FREE(state);
 }
 
-void
-del_nfa_record(void) {
-	foreach_vector(record_nfa_state, &del_state);
-	del_vector(record_nfa_state);
+static void
+del_nfa_automaton(nfa_automaton_t* nfa_m) {
+    if ((nfa_m) && (nfa_m->kind_nfa == NFA_MASTER))
+        { del_bitset(nfa_m->out_automata); }
+    FREE(nfa_m); 
 }
 
-state_t*
-new_state(void) {
-	state_t* state = NEW(state_t, 1);
+void
+del_nfa_record(void) {
+    foreach_vector(record_nfa_state, &del_nfa_state);
+    foreach_vector(record_nfa_automata, &del_nfa_automaton);
+    del_vector(record_nfa_state);
+}
+
+static nfa_automaton_t*
+new_nfa_automaton(int kind, ...) {
+    if (!record_nfa_automata)
+        { record_nfa_automata = new_vector(); }
+
+    nfa_automaton_t* nfa_m = NEW(nfa_automaton_t, 1);
+    if (!nfa_m)
+        { return (NULL_AUTOMATON); }
+    memset(nfa_m, 0, sizeof(*nfa_m)); 
+
+    va_list args;
+    va_start(args, kind);
+
+    switch (kind) {
+        case NFA_CLASS:
+                nfa_m->tail_state = va_arg(args, nfa_state_t*);
+                break;
+
+        case NFA_SYMBOL:
+                nfa_m->out_symbol = va_arg(args, int);
+                break;
+
+        case NFA_EPSILON:
+                break;
+
+        case NFA_UNION:
+        case NFA_CONCAT:
+                nfa_m->left = va_arg(args, nfa_automaton_t*);
+                nfa_m->right = va_arg(args, nfa_automaton_t*);
+                if (kind == NFA_UNION)
+                    { nfa_m->tail_state = va_arg(args, nfa_state_t*); }
+                break;
+
+        case NFA_CLOSURE:
+                nfa_m->middle = va_arg(args, nfa_automaton_t*);
+                break;
+
+        case NFA_MASTER:
+                nfa_m->out_automata = va_arg(args, bitset_t*);
+                break;
+    }
+
+    if (kind != NFA_MASTER)
+        { nfa_m->head_state = va_arg(args, nfa_state_t*); }
+
+    nfa_m->kind_nfa = kind;
+
+    nfa_m->index = SIZE_VECTOR(record_nfa_automata);
+	PUSH_BACK_VECTOR(record_nfa_automata, nfa_m);
+
+    va_end(args);
+    return (nfa_m);
+}
+
+nfa_state_t*
+new_nfa_state(int symbol_edge, ...) {
+	nfa_state_t* state = NEW(nfa_state_t, 1);
 
 	if (!state)
-		{ return (NULL); }
+		{ return (NULL_NFA_STATE); }
 	memset(state, 0, sizeof(*state));
 
 	if (!record_nfa_state)
 		{ record_nfa_state = new_vector(); }
 
+    va_list args;
+    va_start(args, symbol_edge);
+
+    state->symbol_edge = symbol_edge;
+    switch (symbol_edge) {
+        case EDGE_AUTOMATA:
+            state->edge = va_arg(args, nfa_automaton_t*);
+            state->edge2 = va_arg(args, nfa_automaton_t*);
+            break;
+
+        case EDGE_CLASS:
+            state->class = va_arg(args, bitset_t*);            
+            state->out_state = va_arg(args, nfa_state_t*);
+            break;
+
+        case NO_EDGE:
+            break;
+
+        default:
+            state->out_state = va_arg(args, nfa_state_t*);
+    }
+
 	state->index = SIZE_VECTOR(record_nfa_state);
 	PUSH_BACK_VECTOR(record_nfa_state, state);
 
+    va_end(args);
 	return (state);
 }
 
-static nfa_frag_t* 
-new_nfa_frag(int tail_label, state_t* tail_start, state_t* head) {
-	nfa_frag_t* frag = NEW(nfa_frag_t, 1);
-	if (!frag)
-		{ return (NULL); }
-	frag->tail = NEW(edge_t, 1);
-	if (!frag->tail)
-		{ return (NULL); }
-	memset(frag->tail, 0, sizeof(edge_t));
-	INIT_EDGE(frag->tail, tail_label, tail_start);
-	frag->head = head;
-	return (frag);
-}
-
-static int
-attach_tail(state_t* state, ...) {
-	va_list args;
-	va_start(args, state);
-
-	nfa_frag_t* frag = NULL;
-	while ((frag = va_arg(args, nfa_frag_t*))) {
-		edge_t* new_edge = NEW(edge_t, 1);
-		if (!new_edge)
-			{ return (ERROR);  }
-		CPY_EDGE(new_edge, frag->tail);
-		PUSH_EDGE(state, new_edge);
-	}
-
-	va_end(args);
-	return (DONE);
-}
-
-static int
-make_transition(state_t* start, int label, state_t* final) {
-	edge_t* new_edge = NEW(edge_t, 1);
-	if (!new_edge)
-		{ return (ERROR); }
-	memset(new_edge, 0, sizeof(*new_edge));
-
-	INIT_EDGE(new_edge, label, final);
-	PUSH_EDGE(start, new_edge);
-
-	return (DONE);
-}
-
-static nfa_frag_t* dfs_regex_node(regex_node_t*);
+static nfa_automaton_t* dfs_regex_node(regex_node_t*);
 static bool crt_igcase = false;
 
-static inline nfa_frag_t*
-ast_symbol_node(regex_node_t* root) {
-	state_t* final_s = new_state();
+#include <stdio.h>
 
-	if ((root->alone && !crt_igcase)
-				|| (root->alone && crt_igcase && !isalpha(root->symbol)))
-		{ return (new_nfa_frag(root->symbol, final_s, final_s)); }
+static nfa_automaton_t*
+regex_node_class(regex_node_t* root) {
+    if ((root->kind_ast != AST_CLASS))
+        { return (NULL_AUTOMATON); }
 
-	if (root->alone) {
-		size_t symbol = root->symbol;
-		root->cclass = new_bitset();
-		ADD_BITSET(root->cclass, symbol);
-		root->alone = false;
-	}
+    nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
+    if (!new_head_state)
+        { return (NULL_AUTOMATON); }
 
-	state_t* relay_s  = new_state();
-	relay_s->class = dup_bitset(root->cclass);
-	relay_s->out_class = final_s;
-
-	if (crt_igcase) {
+    if (crt_igcase) {
 		int i;
-		while ((i = IT_NEXT(root->cclass)) != IT_NULL) {
+		while ((i = IT_NEXT(root->class)) != IT_NULL) {
 			if (isalpha(i)) {
 				size_t target = (islower(i) ? toupper(i) : tolower(i));
-				ADD_BITSET(relay_s->class, target);	
+				ADD_BITSET(root->class, target);	
 			}	
 		}
-		IT_RESET(root->cclass);
-	}
-
-	return (new_nfa_frag(EPSILON, relay_s, final_s));
+		IT_RESET(root->class);
+    }
+    
+    nfa_state_t* new_tail_state = new_nfa_state(EDGE_CLASS,
+                                    dup_bitset(root->class), new_head_state);
+    if (!new_tail_state) {
+        del_nfa_state(new_head_state);
+        return (NULL_AUTOMATON);
+    }
+    
+    return (new_nfa_automaton(NFA_CLASS, new_tail_state, new_head_state));
 }
 
-static nfa_frag_t*
-ast_union_node(regex_node_t* root) {
-	state_t* start = new_state();
+static nfa_automaton_t*
+regex_node_symbol(regex_node_t* root) {
+    if ((root->kind_ast != AST_SYMBOL))
+        { return (NULL_AUTOMATON); }
 
-	nfa_frag_t* left = dfs_regex_node(root->left);
-	nfa_frag_t* right = dfs_regex_node(root->right);	
+    if (crt_igcase && isalpha(root->symbol)) {
+        root->kind_ast = AST_CLASS;
+		size_t back_symbol = root->symbol;
+		root->class = new_bitset();
+		ADD_BITSET(root->class, back_symbol);
+        return (regex_node_class(root));
+    }
+    else {
+        nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
+        if (!new_head_state)
+            { return (NULL_AUTOMATON); }
 
-	if (attach_tail(start, left, right, NULL))
-		{ /* TODO ERROR */ }
-
-	state_t* final = new_state();
-
-	if (make_transition(left->head, EPSILON, final)
-			|| make_transition(right->head, EPSILON, final))
-		{ /* TODO ERROR */ }
-
-	FREE_FRAG(left);
-	FREE_FRAG(right);
-
-	return (new_nfa_frag(EPSILON, start, final));
+        return (new_nfa_automaton(NFA_SYMBOL, root->symbol, new_head_state));
+    }
 }
 
-static nfa_frag_t*
-ast_concat_node(regex_node_t* root) {
-	nfa_frag_t* left = dfs_regex_node(root->left);
-	nfa_frag_t* right = dfs_regex_node(root->right);
+static nfa_automaton_t*
+regex_node_epsilon(regex_node_t* root) {
+    if ((root->kind_ast != AST_EPSILON))
+        { return (NULL_AUTOMATON); }
 
-	if (attach_tail(left->head, right, NULL))
-		{ /* TODO ERROR */ }
+    nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
+    if (!new_head_state)
+        { return (NULL_AUTOMATON); }
 
-	if (root->look_sym)
-		{ left->head->beg_look = true; }
-
-	left->head = right->head;
-	FREE_FRAG(right);
-
-	return (left);
+    return (new_nfa_automaton(NFA_EPSILON, new_head_state));
 }
 
-static nfa_frag_t*
-ast_closure_node(regex_node_t* root) {
-	nfa_frag_t* child = dfs_regex_node(root->left);
-	state_t* front_state = new_state();
+static nfa_automaton_t*
+regex_node_union(regex_node_t* root) {
+    if (root->kind_ast != AST_UNION)
+        { return (NULL_AUTOMATON); }
 
-	if (attach_tail(front_state, child, NULL))
-		{ /* TODO ERROR */ }
+	nfa_automaton_t* left = dfs_regex_node(root->left);
+    if (!left)
+        { return (NULL_AUTOMATON); }
 
-	make_transition(child->head, EPSILON, front_state);
-	FREE_FRAG(child);
+  	nfa_automaton_t* right = dfs_regex_node(root->right);
+    if (!right) {
+        del_nfa_automaton(left);
+        return (NULL_AUTOMATON);
+    }
 
-	return (new_nfa_frag(EPSILON, front_state, front_state));
+    nfa_state_t* new_tail_state = new_nfa_state(EDGE_AUTOMATA, left, right);
+    nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
+
+    if ((!new_tail_state) || (!new_head_state)) {
+        del_nfa_automaton(left);
+        del_nfa_automaton(right);
+        return (NULL_AUTOMATON);
+    }
+
+    left->head_state->symbol_edge = EPSILON;   
+    left->head_state->out_state = new_head_state;   
+
+    right->head_state->symbol_edge = EPSILON;   
+    right->head_state->out_state = new_head_state;   
+
+    return (new_nfa_automaton(NFA_UNION,
+                                left, right, new_tail_state, new_head_state));
+}
+
+static nfa_automaton_t*
+regex_node_concat(regex_node_t* root) {
+    if (root->kind_ast != AST_CONCAT)
+        { return (NULL_AUTOMATON); }
+
+	nfa_automaton_t* left = dfs_regex_node(root->left);
+    if (!left)
+        { return (NULL_AUTOMATON); }
+
+	nfa_automaton_t* right = dfs_regex_node(root->right);
+    if (!right) {
+        del_nfa_automaton(left);
+        return (NULL_AUTOMATON);
+    }
+
+    left->head_state->symbol_edge = EDGE_AUTOMATA;
+    left->head_state->edge = right;
+
+    return (new_nfa_automaton(NFA_CONCAT, left, right, right->head_state));
+}
+
+static nfa_automaton_t*
+regex_node_closure(regex_node_t* root) {
+    if (root->kind_ast != AST_CLOSURE)
+//  if (!IS_CLOSURE(root->kind_ast))
+        { return (NULL_AUTOMATON); }
+
+	nfa_automaton_t* middle = dfs_regex_node(root->left);
+    if (!middle)
+        { return (NULL_AUTOMATON); }
+
+    nfa_state_t* new_head_state = new_nfa_state(EDGE_AUTOMATA,
+                                                    middle, NULL_AUTOMATON);
+
+    if (!new_head_state) {
+        del_nfa_automaton(middle);
+        return (NULL_AUTOMATON);
+    }
+
+    middle->head_state->symbol_edge = EPSILON;   
+    middle->head_state->out_state = new_head_state;
+
+    return (new_nfa_automaton(NFA_CLOSURE, middle, new_head_state));
 }
 
 /* Depth First Search over the ast for constructing a sub-NFA */
-static nfa_frag_t* 
+static nfa_automaton_t* 
 dfs_regex_node(regex_node_t* root) {
 	if (root) {
 		switch (root->kind_ast) {
-			case AST_UNION:		return (ast_union_node(root));
-						break;
-			case AST_CONCAT:	return (ast_concat_node(root));
-						break;
-			case AST_CLOSURE:	return (ast_closure_node(root));
-						break;
-			case AST_SYMBOL:	return (ast_symbol_node(root));
-						break;
+			case AST_UNION:
+                return (regex_node_union(root));
+
+			case AST_CONCAT:
+                return (regex_node_concat(root));
+
+			case AST_CLOSURE:
+                return (regex_node_closure(root));
+
+			case AST_SYMBOL:
+                return (regex_node_symbol(root));
+
+			case AST_EPSILON:
+                return (regex_node_epsilon(root));
+
+			case AST_CLASS:
+                return (regex_node_class(root));
+
             default:
-                        return (NULL_FRAG);
+                break;
 		}	
 	}
-	return (NULL_FRAG);
+    return (NULL_AUTOMATON);
 }
 
-int
-transform_regex_nfa(spec_entry_t* crt_entry) {
-	crt_igcase = crt_entry->is_igcase;
-	regex_node_t* root = crt_entry->reg;
-	int exit_st = DONE;
-	if ((crt_entry->frag = dfs_regex_node(root)) == NULL)
-		{ exit_st = ERROR; }
-	else
-		{ STATE_FINAL(crt_entry->frag->head, GET_INDEX(crt_entry) + 1); }
-	del_regex_node(root);
-	crt_entry->active = NFA;
-	return (exit_st);
-}
+#if 0
 
 static int
 build_nfa_entry(bool active_state, lexical_spec_t* spec, spec_entry_t* entry) {
@@ -284,3 +374,62 @@ build_nfa(lexical_spec_t* spec) {
 
 	return (DONE);
 }
+
+#endif
+
+int
+transform_regex_nfa(spec_entry_t* crt_entry) {
+	crt_igcase = crt_entry->is_igcase;
+	regex_node_t* root = crt_entry->reg;
+
+	int exit_st = DONE;
+
+	if ((crt_entry->frag = dfs_regex_node(root)) == NULL_AUTOMATON)
+		{ exit_st = ERROR; }
+    else
+        { STATE_FINAL(crt_entry->frag->head_state, GET_INDEX(crt_entry) + 1); }
+
+	del_regex_node(root);
+	crt_entry->active = NFA;
+
+	return (exit_st);
+}
+
+int
+build_nfa(lexical_spec_t* spec) {
+	if (!spec)
+		{ return (ERROR); }
+
+#if 0
+
+	bool active_state = (spec->start_state != -1);
+	if (!active_state)
+		{ spec->master = new_state(); }
+
+#endif
+   
+    bitset_t* set_frag = new_bitset();
+	for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+		spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
+		if (entry->kind == T_KEYWORD)
+			{ continue; }
+		else if (transform_regex_nfa(entry) == ERROR) {
+            del_bitset(set_frag);
+            return (ERROR);
+        }
+
+        ADD_BITSET(set_frag, GET_INDEX(entry->frag));
+#if 0
+		else if (!entry->is_frag
+					&& (build_nfa_entry(active_state, spec, entry) == ERROR))
+			{ return (ERROR); }
+#endif
+
+	}
+
+    nfa_automaton_t* nfa_m = new_nfa_automaton(NFA_MASTER, set_frag);
+    spec->master = new_nfa_state(EDGE_AUTOMATA, nfa_m, NULL_NFA_STATE);
+
+	return (DONE);
+}
+
