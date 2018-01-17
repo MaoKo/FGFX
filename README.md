@@ -5,7 +5,6 @@ a DFA ready for lexical analysis. Note that the DFA is suboptimal, in the future
 I attempt to fix this. 
 The goal of FGFP is to create from a grammar description a LALR(1) parsing table.
 Also for speed, maybe, I replace the Vector with Hash.
-I also no free memory or only a subset. I try to fix this as soon as possible.
 For constructing the LALR parsing table, I use the step-by-step approach, which
 whenever I found similar LR(0) state, I merge them.
 But I prefer do that, if the user want to conserve the LR(1) table.

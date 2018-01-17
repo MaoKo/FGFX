@@ -7,40 +7,38 @@
 #include "vector.h"
 
 //Allocation Macro
-#define NEW(type, size)		(type*)_pmalloc(sizeof(type) * size)
-#define REALLOC(ptr, size)	_prealloc(ptr, size)
-#define FREE(ptr)			free((void*)ptr)
+#define NEW(type, size)     (type*)_pmalloc(sizeof(type) * size)
+#define REALLOC(ptr, size)  _prealloc(ptr, size)
+#define FREE(ptr)           free((void*)ptr)
 
 //Misc
-#define MIN(x, y)			((x < y) ? x : y)
-#define MAX(x, y)			((x > y) ? x : y)
-#define GET_INDEX(obj)		((obj)->index)
+#define MIN(x, y)           ((x < y) ? x : y)
+#define MAX(x, y)           ((x > y) ? x : y)
+#define GET_INDEX(obj)      ((obj)->index)
 
-#define EOS					('\0')
-#define ERROR				(-1)
-#define DONE				(0)
+#define EOS                 ('\0')
+#define ERROR               (-1)
+#define DONE                (0)
 
-#define NULL_TRANS_LST		(NULL)
+#define NULL_TRANS_LST      (NULL)
 
 typedef struct trans_list_t {
-	struct trans_list_t* next;
-	int input;
-	int state;
+    struct trans_list_t* next;
+    int input;
+    int state;
 } trans_list_t;
 
 typedef struct gen_list_t {
-	struct gen_list_t* next;
+    struct gen_list_t* next;
 } gen_list_t;
 
 typedef struct obj_index_t {
-	size_t index;
+    size_t index;
 } obj_index_t;
 
 size_t round_up(size_t);
 char* strjoin(char const*, char const*);
 char const* get_filename(char const*);
-int is_tab_or_space(int);
-size_t count_back(char const*, int(*)(int));
 trans_list_t* new_trans_list(int, int, trans_list_t*);
 void readjust_index(vector_t*, size_t, void(*)(void*));
 size_t size_gen_list(gen_list_t const*);

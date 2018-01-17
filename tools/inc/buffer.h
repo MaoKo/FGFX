@@ -3,19 +3,19 @@
 
 #include <stddef.h>
 
-#define BODY_BUFFER(buf)		((buf)->body)
-#define SIZE_BUFFER(buf)		((buf)->index)
-#define CHAR_AT(buf, index)		((buf)->body[index])
-#define ALLOC_SIZE_BUFFER(buf)	((buf)->alloc)
-#define CMP_BUFF_STR(buf, str)	(!strcmp((buf)->body, str))
-#define CMP_BUFFER(b1, b2)		(CMP_BUFF_STR(b1, (b2)->body))
+#define BODY_BUFFER(buf)        ((buf)->body)
+#define SIZE_BUFFER(buf)        ((buf)->index)
+#define CHAR_AT(buf, index)     ((buf)->body[index])
+#define ALLOC_SIZE_BUFFER(buf)  ((buf)->alloc)
+#define CMP_BUFF_STR(buf, str)  (!strcmp((buf)->body, str))
+#define CMP_BUFFER(b1, b2)      (CMP_BUFF_STR(b1, (b2)->body))
 
-#define _BUFF_SIZE				(16)
+#define _BUFF_SIZE              (16)
 
 typedef struct {
-	char* body;
-	size_t alloc;
-	size_t index;
+    char* body;
+    size_t alloc;
+    size_t index;
 } buffer_t;
 
 buffer_t* new_buffer(void);

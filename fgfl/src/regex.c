@@ -43,33 +43,33 @@ finite_seq(regex_node_t* root) {
         return (NULL_NODE);
     }
 
-	size_t start = atoi(C_LEXEME(regex_spec->lex));
-	regex_node_t* rep_node = cpy_concat_regex_node(root, start);
+    size_t start = atoi(C_LEXEME(regex_spec->lex));
+    regex_node_t* rep_node = cpy_concat_regex_node(root, start);
 
-	if (peek_token(regex_spec->lex) == T_REG_COMMA) {
+    if (peek_token(regex_spec->lex) == T_REG_COMMA) {
         advance_token(regex_spec->lex);
-		if (peek_token(regex_spec->lex) == T_DIGIT) {
+        if (peek_token(regex_spec->lex) == T_DIGIT) {
             advance_token(regex_spec->lex);
-			size_t until = atoi(C_LEXEME(regex_spec->lex));
+            size_t until = atoi(C_LEXEME(regex_spec->lex));
 
-			if (until < start) {
+            if (until < start) {
                 del_regex_node(rep_node);
                 errorf(CURRENT_LINE(regex_spec->lex),
                             "The first digit in the finite sequence %zu"
                             " is greater than the second %zu.", start, until);
                 return (NULL_NODE);
-            }	
-			for (size_t i = start + 1; i <= until; ++i) {
-				root = cpy_regex_node(root);
-				rep_node = new_regex_node(AST_UNION, rep_node,
+            }   
+            for (size_t i = start + 1; i <= until; ++i) {
+                root = cpy_regex_node(root);
+                rep_node = new_regex_node(AST_UNION, rep_node,
                                             cpy_concat_regex_node(root, i));
-			}
-		}
-		else {
-			rep_node = new_regex_node(AST_CONCAT, rep_node,
+            }
+        }
+        else {
+            rep_node = new_regex_node(AST_CONCAT, rep_node,
                 new_regex_node(AST_CLOSURE, cpy_regex_node(rep_node), NULL));
-		}
-	}
+        }
+    }
 
     if (advance_token(regex_spec->lex) != T_REG_RBRACE) {
         del_regex_node(rep_node);
@@ -77,7 +77,7 @@ finite_seq(regex_node_t* root) {
                                 "Missing the '}' in the finite sequence.");
         return (NULL_NODE);
     }
-	return (rep_node);
+    return (rep_node);
 }
 
 regex_node_t*
@@ -85,54 +85,54 @@ build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
     regex_spec = spec;
     regex_entry = entry;
     // TODO anchor ( '^' and '$' )
-	return (regex_look());
+    return (regex_look());
 }
 
 static regex_node_t*
 regex_look(void) {
-	regex_node_t* root = regex_union();
+    regex_node_t* root = regex_union();
     if (!root)
         { return (NULL_NODE); }
 
-	if (peek_token(regex_spec->lex) == T_REG_LOOK) {
-		advance_token(regex_spec->lex);
+    if (peek_token(regex_spec->lex) == T_REG_LOOK) {
+        advance_token(regex_spec->lex);
         regex_node_t* right_op = regex_union();
         if (!right_op) {
             del_regex_node(right_op);
             return (NULL_NODE);
         }
-		root = new_regex_node(AST_LOOK, root, right_op);
-		regex_entry->use_look = true;
-	}
-	return (root);
+        root = new_regex_node(AST_LOOK, root, right_op);
+        regex_entry->use_look = true;
+    }
+    return (root);
 }
 
 static regex_node_t*
 regex_union(void) {
-	regex_node_t* root = regex_cat();
+    regex_node_t* root = regex_cat();
     if (!root)
         { return (NULL_NODE); }
 
-	while (peek_token(regex_spec->lex) == T_REG_UNION) {
-		advance_token(regex_spec->lex);
+    while (peek_token(regex_spec->lex) == T_REG_UNION) {
+        advance_token(regex_spec->lex);
         regex_node_t* right_op = regex_cat();
         if (!right_op) {
             del_regex_node(root);
             errorf(CURRENT_LINE(regex_spec->lex), "Missing an operand to '|'.");
             return (NULL_NODE);
         }
-		root = new_regex_node(AST_UNION, root, right_op);
-	}
-	return (root);
+        root = new_regex_node(AST_UNION, root, right_op);
+    }
+    return (root);
 }
 
 static regex_node_t*
 regex_cat(void) {
-	regex_node_t* root = regex_closure();
+    regex_node_t* root = regex_closure();
     if (!root)
         { return (NULL_NODE); }
 
-	while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION,
+    while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION,
                                     T_REG_RPAREN, T_END_REGEX, T_EOF, -1)) {
          regex_node_t* right_op = regex_closure();
         if (!right_op) {
@@ -141,49 +141,49 @@ regex_cat(void) {
         }
         root = new_regex_node(AST_CONCAT, root, right_op);
     }
-	return (root);
+    return (root);
 }
 
 static regex_node_t*
 regex_closure(void) {
-	regex_node_t* root = regex_atom();
+    regex_node_t* root = regex_atom();
     if (!root)
         { return (NULL_NODE); }
 
-	while (in_first(regex_spec->lex, T_REG_STAR, T_REG_PLUS,
+    while (in_first(regex_spec->lex, T_REG_STAR, T_REG_PLUS,
                                             T_REG_QUES, T_REG_LBRACE, -1)) {
-		int closure_kind = advance_token(regex_spec->lex);
-		switch (closure_kind) {
-			case T_REG_PLUS:
-				root = new_regex_node(AST_CONCAT, root,
+        int closure_kind = advance_token(regex_spec->lex);
+        switch (closure_kind) {
+            case T_REG_PLUS:
+                root = new_regex_node(AST_CONCAT, root,
                     new_regex_node(AST_CLOSURE, cpy_regex_node(root), NULL));
-				break;
-			case T_REG_QUES:
-				root = new_regex_node(AST_UNION, root,
-				    new_regex_node(AST_EPSILON));
-				break;
-			case T_REG_STAR:
+                break;
+            case T_REG_QUES:
+                root = new_regex_node(AST_UNION, root,
+                    new_regex_node(AST_EPSILON));
+                break;
+            case T_REG_STAR:
                 if (root->kind_ast != AST_CLOSURE)
-				    { root = new_regex_node(AST_CLOSURE, root, NULL); }
-				break;
-			case T_REG_LBRACE: root = finite_seq(root);
-				break;
-		}
+                    { root = new_regex_node(AST_CLOSURE, root, NULL); }
+                break;
+            case T_REG_LBRACE: root = finite_seq(root);
+                break;
+        }
         if (!root)
             { return (NULL_NODE); }
-	}
-	return (root);
+    }
+    return (root);
 }
 
 static regex_node_t*
 regex_atom(void) {
     if (peek_token(regex_spec->lex) == T_REG_LBRACK)
         { return (regex_fullccl()); }
-	else if (peek_token(regex_spec->lex) == T_REG_QUOTE)
+    else if (peek_token(regex_spec->lex) == T_REG_QUOTE)
         { return (regex_string()); }
-	else if (peek_token(regex_spec->lex) == T_REG_LPAREN) { 
+    else if (peek_token(regex_spec->lex) == T_REG_LPAREN) { 
         advance_token(regex_spec->lex);
-		regex_node_t* root = regex_union();
+        regex_node_t* root = regex_union();
 
         if (advance_token(regex_spec->lex) != T_REG_RPAREN) {
             del_regex_node(root);
@@ -191,14 +191,14 @@ regex_atom(void) {
                                 "Missing a close paren (')').");
             return (NULL_NODE);
         }
-		return (root);
-	}
-	else if (peek_token(regex_spec->lex) == T_REG_DOT)
+        return (root);
+    }
+    else if (peek_token(regex_spec->lex) == T_REG_DOT)
         { return (regex_dot()); }
     else if (peek_token(regex_spec->lex) == T_REG_BOUND_NAME) {
         advance_token(regex_spec->lex);
-		unget_char_back_buffer(LAST_LEXEME(regex_spec->lex), 1);
-		return (new_regex_node(AST_BOUND_NAME,
+        unget_char_back_buffer(LAST_LEXEME(regex_spec->lex), 1);
+        return (new_regex_node(AST_BOUND_NAME,
                                 strdup(C_LEXEME(regex_spec->lex) + 1)));
     }
     else {
@@ -206,7 +206,7 @@ regex_atom(void) {
         int val_lexeme;
         if ((val_lexeme = regex_char(kind)) != ERROR) {
             advance_token(regex_spec->lex);
-	    	return (new_regex_node(AST_SYMBOL, val_lexeme));
+            return (new_regex_node(AST_SYMBOL, val_lexeme));
         }
         else {
             errorf(CURRENT_LINE(regex_spec->lex),
@@ -220,23 +220,23 @@ static regex_node_t*
 regex_string(void) {
     advance_token(regex_spec->lex);
 
-	regex_node_t* root_concat = NULL;
+    regex_node_t* root_concat = NULL;
     bool empty_str = true;
 
-	while (!in_first(regex_spec->lex, T_REG_QUOTE, T_EOF, -1)) {
+    while (!in_first(regex_spec->lex, T_REG_QUOTE, T_EOF, -1)) {
         int kind_char;
         if ((kind_char = advance_token(regex_spec->lex)) == T_ERROR)
             { break; }
-   		regex_node_t* symbol = new_regex_node(AST_SYMBOL,
+        regex_node_t* symbol = new_regex_node(AST_SYMBOL,
                                     regex_char(kind_char));
-		if (!root_concat)
-			{ root_concat = symbol; }
-		else
-			{ root_concat = new_regex_node(AST_CONCAT, root_concat, symbol); }
+        if (!root_concat)
+            { root_concat = symbol; }
+        else
+            { root_concat = new_regex_node(AST_CONCAT, root_concat, symbol); }
         empty_str = true;
-	}
-	if (!empty_str)
-		{ root_concat = new_regex_node(AST_EPSILON); }
+    }
+    if (!empty_str)
+        { root_concat = new_regex_node(AST_EPSILON); }
     if (!root_concat)
          { return (NULL_NODE); }
     if (advance_token(regex_spec->lex) != T_REG_QUOTE) {
@@ -245,7 +245,7 @@ regex_string(void) {
                                 "Missing a close quote ('\"') in string.");
         return (NULL_NODE);
     }
-	return (root_concat);
+    return (root_concat);
 }
 
 static regex_node_t*
@@ -266,9 +266,9 @@ regex_fullccl(void) {
         else {
             regex_node_t* right_op = regex_loneccl();
             if (kind_op == T_REG_DIFF_CLASS)
-        	    { DIFF_BITSET(root->class, right_op->class); }
+                { DIFF_BITSET(root->class, right_op->class); }
             else
-        	    { UNION_BITSET(root->class, right_op->class); }
+                { UNION_BITSET(root->class, right_op->class); }
             del_regex_node(right_op);
         }
     }
@@ -278,7 +278,7 @@ regex_fullccl(void) {
 static regex_node_t*
 regex_loneccl(void) {
     advance_token(regex_spec->lex);
-	bool negate = (peek_token(regex_spec->lex) == T_REG_CARET);
+    bool negate = (peek_token(regex_spec->lex) == T_REG_CARET);
     if (negate)
         { advance_token(regex_spec->lex); }
     bitset_t* range = regex_ccl();
@@ -291,20 +291,20 @@ regex_loneccl(void) {
         return (NULL_NODE);
     }
 
-	if (is_empty_bitset(range) && !negate) {
-		del_bitset(range);
-		return (new_regex_node(AST_EPSILON));
-	}
-	else if (negate)
-		{ COMPL_BITSET(range); }
+    if (is_empty_bitset(range) && !negate) {
+        del_bitset(range);
+        return (new_regex_node(AST_EPSILON));
+    }
+    else if (negate)
+        { COMPL_BITSET(range); }
 
-	return (new_regex_node(AST_CLASS, range));
+    return (new_regex_node(AST_CLASS, range));
 }
 
 static bitset_t*
 regex_ccl(void) {
-	bitset_t* range = new_bitset();
-	while (!in_first(regex_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
+    bitset_t* range = new_bitset();
+    while (!in_first(regex_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
         int kind_right = advance_token(regex_spec->lex);
         if (kind_right == T_ERROR) {
             del_bitset(range);
@@ -341,10 +341,10 @@ regex_ccl(void) {
                     ADD_BITSET(range, min_range);
                 }
             }
-		    else
+            else
                 { ADD_BITSET(range, min_range); }
-		}
-	}
+        }
+    }
     return (range);
 }
 
@@ -449,53 +449,53 @@ regex_n_cce(int kind_cce) {
 static regex_node_t*
 regex_dot(void) {
     advance_token(regex_spec->lex);
-	bitset_t* newl = new_bitset();
-	ADD_BITSET(newl, '\n');
-	return (new_regex_node(AST_CLASS, COMPL_BITSET(newl)));
+    bitset_t* newl = new_bitset();
+    ADD_BITSET(newl, '\n');
+    return (new_regex_node(AST_CLASS, COMPL_BITSET(newl)));
 }
 
 static int
 hex_to_dec(int c) {
-	if (isdigit(c)) { return (c - '0'); }
-	else if (islower(c)) { return ((c - 'a') + 10); }
-	else if (isupper(c)) { return ((c - 'A') + 10); }
-	return (ERROR);
+    if (isdigit(c)) { return (c - '0'); }
+    else if (islower(c)) { return ((c - 'a') + 10); }
+    else if (isupper(c)) { return ((c - 'A') + 10); }
+    return (ERROR);
 }
 
 static int
 regex_char(int kind) {
     if (kind == T_REG_CHAR) {
-    	size_t input_c = (*C_LEXEME(regex_spec->lex));
-	    if (input_c == '\\') {
+        size_t input_c = (*C_LEXEME(regex_spec->lex));
+        if (input_c == '\\') {
             input_c = C_LEXEME(regex_spec->lex)[1];
 
-    		switch (input_c) {
-	    		case 'n': input_c = '\n'; break;
-		    	case 'a': input_c = '\a'; break;
-		    	case 'b': input_c = '\b'; break;
-    			case 'f': input_c = '\f'; break;
-	    		case 'r': input_c = '\r'; break;
-		    	case 't': input_c = '\t'; break;
-			    case 'v': input_c = '\v'; break;
-		    	default:  break;
-		    }
-	    }
-    	return (input_c);
+            switch (input_c) {
+                case 'n': input_c = '\n'; break;
+                case 'a': input_c = '\a'; break;
+                case 'b': input_c = '\b'; break;
+                case 'f': input_c = '\f'; break;
+                case 'r': input_c = '\r'; break;
+                case 't': input_c = '\t'; break;
+                case 'v': input_c = '\v'; break;
+                default:  break;
+            }
+        }
+        return (input_c);
     }
     else if ( kind == T_OCT_NUM) {
         char const* first_digit = C_LEXEME(regex_spec->lex) + 1;
-    	size_t oct_num = 0;
+        size_t oct_num = 0;
         while (*first_digit) {
-	        oct_num = (*first_digit - '0') + (oct_num * 8);
+            oct_num = (*first_digit - '0') + (oct_num * 8);
             ++first_digit;
         }
         return (oct_num);
     }
     else if ( kind == T_HEX_NUM) {
         char const* first_digit = C_LEXEME(regex_spec->lex) + 2;
-    	size_t hex_num = 0;
+        size_t hex_num = 0;
         while (*first_digit) {
-		    hex_num = hex_to_dec(*first_digit) + (hex_num * 16);
+            hex_num = hex_to_dec(*first_digit) + (hex_num * 16);
             ++first_digit;
         }
         return (hex_num);

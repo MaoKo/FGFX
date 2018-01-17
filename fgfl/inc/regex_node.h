@@ -10,7 +10,7 @@
 #define CHILD_NODE(k)   ((k == AST_CLOSURE) || (k == AST_CONCAT)\
                             || (k == AST_UNION) || (k == AST_LOOK))
 
-#define NULL_NODE   (NULL)
+#define NULL_NODE       (NULL)
 
 regex_node_t* new_regex_node(int, ...);
 void del_regex_node(regex_node_t*);

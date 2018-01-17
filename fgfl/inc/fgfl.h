@@ -11,7 +11,7 @@
 #include "utils.h"
 
 typedef struct regex_node_t {
-	enum {
+    enum {
         AST_UNION,
         AST_CONCAT,
 // TODO
@@ -25,21 +25,21 @@ typedef struct regex_node_t {
         AST_SYMBOL,
         AST_EPSILON,
         AST_CLASS,
-	} kind_ast;
-	union {
-		struct { // if AST_UNION | AST_CONCAT | AST_CLOSURE
-			struct regex_node_t* left;
-			struct regex_node_t* right;
-		};
+    } kind_ast;
+    union {
+        struct { // if AST_UNION | AST_CONCAT | AST_CLOSURE
+            struct regex_node_t* left;
+            struct regex_node_t* right;
+        };
         struct { // if AST_BOUND_NAME
             char const* bound_name;
             size_t index_token;
         };
-		struct // if AST_SYMBOL
+        struct // if AST_SYMBOL
             { int symbol; };
         struct // if AST_CLASS
             { bitset_t* class; };
-	};
+    };
 } regex_node_t;
 
 typedef struct nfa_automaton_t nfa_automaton_t;
@@ -53,7 +53,7 @@ typedef struct nfa_state_t {
     nfa_automaton_t* edge;
     union {
         nfa_automaton_t* edge2;
-	    bitset_t* class;
+        bitset_t* class;
     };
     bitset_t* eclos;
 } nfa_state_t;
@@ -98,10 +98,10 @@ typedef struct {
 } dfa_state_t;
 
 typedef struct {
-	size_t index;
-	int kind;
-	bool is_used;
-	char* name;
+    size_t index;
+    int kind;
+    bool is_used;
+    char* name;
     union {
         struct { // if TERMINAL
             bool is_igcase;
@@ -116,30 +116,30 @@ typedef struct {
             regex_node_t* reg_ast;
             nfa_automaton_t* nfa_m;
 
-			int default_state;
+            int default_state;
 
-			bool all_state;
-			trans_list_t* state_begin_lst;
-		};
-		struct { // if KEYWORD & STATE
-			struct { // if STATE
-	            nfa_state_t* state_master;
-				bool is_defined;
-				bool is_reach;
-			};
+            bool all_state;
+            trans_list_t* state_begin_lst;
+        };
+        struct { // if KEYWORD & STATE
+            struct { // if STATE
+                nfa_state_t* state_master;
+                bool is_defined;
+                bool is_reach;
+            };
             size_t count;
         };
-	};
+    };
 } spec_entry_t;
 
 typedef struct {
-	lexer_t* lex;
-	vector_t* entry_vect;
-	vector_t* state_vect;
-	int start_state;
-	bool miss_regex;
-	nfa_state_t* master;
-	vector_t* states;
+    lexer_t* lex;
+    vector_t* entry_vect;
+    vector_t* state_vect;
+    int start_state;
+    bool miss_regex;
+    nfa_state_t* master;
+    vector_t* states;
     size_t size_final;
 } lexical_spec_t;
 

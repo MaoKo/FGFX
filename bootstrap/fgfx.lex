@@ -1,11 +1,11 @@
 $STATE
 {
-	GLOBAL => $INITIAL,
-	IN_REGEX,
-	STRING,
-	FINITE_SEQ,
-	BEG_CCL,
-	BODY_CCL,
+    GLOBAL => $INITIAL,
+    IN_REGEX,
+    STRING,
+    FINITE_SEQ,
+    BEG_CCL,
+    BODY_CCL,
 };
 
 $TOKEN
@@ -37,7 +37,7 @@ $TOKEN
     ( IN_REGEX, STRING ) REG_QUOTE = / \" /, ( $BEGIN STRING, IN_REGEX ) ;
 
     ( IN_REGEX ) REG_BOUND_NAME = / \{{LETTER}({LETTER}|{DIGIT})*\} /;
-	
+    
     ( IN_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN FINITE_SEQ ) ;
     ( FINITE_SEQ ) DIGIT = / [[:digit:]]+ / ;
     ( FINITE_SEQ ) REG_COMMA = / , / ;
@@ -100,7 +100,7 @@ $SKIP
 
 $KEYWORD
 {
-	// FGFL
+    // FGFL
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
     BEGIN, FRAG, INITIAL, ALL, NONE,
 
@@ -110,7 +110,7 @@ $KEYWORD
     // Regex
     CC_FIRST, // Dummy
 
-	// Character Class Expression
+    // Character Class Expression
     CCE_ALNUM, CCE_ALPHA,
     CCE_CNTRL, CCE_DIGIT,
     CCE_GRAPH, CCE_LOWER,
@@ -120,7 +120,7 @@ $KEYWORD
 
     CC_MIDDLE, // Dummy
 
-	// Negate Character Class Expression
+    // Negate Character Class Expression
     N_CCE_ALNUM, N_CCE_ALPHA,
     N_CCE_CNTRL, N_CCE_DIGIT,
     N_CCE_GRAPH, N_CCE_LOWER,
@@ -130,7 +130,7 @@ $KEYWORD
 
     CC_LAST, // Dummy
 
-	// FGFP
+    // FGFP
     EXTERN, PRODUCTION, ALIAS, PRECEDENCE, MIMIC,
     EMPTY, START, LEFT, RIGHT, NONASSOC,
 };

@@ -6,7 +6,7 @@
 #include "fgfl.h"
 #include "regex.h"
 
-#define STATE_FINAL(state, tok)	(state->final_type = (tok))
+#define STATE_FINAL(state, tok) (state->final_type = (tok))
 
 #define STATE_AT(index)         (AT_VECTOR(record_nfa_state, (size_t)index))
 #define AUTOMATON_AT(index)     (AT_VECTOR(record_nfa_automata, (size_t)index))

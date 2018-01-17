@@ -3,18 +3,18 @@
 
 #include "fgfl.h"
 
-#define	_ONLY_STATE_TOKEN_
+#define _ONLY_STATE_TOKEN_
 #include "fgfx.lex.h"
-#undef	_ONLY_STATE_TOKEN_
+#undef  _ONLY_STATE_TOKEN_
 
-#define KIND_IN2_STR(x)			((x == T_TERMINAL) ? "TERMINAL" :\
-									((x == T_KEYWORD) ? "KEYWORD" : "STATE"))
+#define KIND_IN2_STR(x)         ((x == T_TERMINAL) ? "TERMINAL" :\
+                                    ((x == T_KEYWORD) ? "KEYWORD" : "STATE"))
 
-#define REGEX_LST_SECT(x)		((x == T_TOKEN) ?  "$TOKEN" : "$SKIP")
-#define STATE_TOKEN_LST_SECT(x)	((x == T_STATE) ?  "$STATE" : "$KEYWORD")
+#define REGEX_LST_SECT(x)       ((x == T_TOKEN) ?  "$TOKEN" : "$SKIP")
+#define STATE_TOKEN_LST_SECT(x) ((x == T_STATE) ?  "$STATE" : "$KEYWORD")
 
-#define USED_ENTRY(entry)		(entry->is_used = true)
-#define NONE_BEGIN				(-1)
+#define USED_ENTRY(entry)       (entry->is_used = true)
+#define NONE_BEGIN              (-1)
 
 int cmp_token_entry(spec_entry_t*, char const*);
 lexical_spec_t* parse_lexical_spec(int);

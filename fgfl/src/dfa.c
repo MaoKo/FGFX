@@ -76,18 +76,18 @@ nfa_state_edges(nfa_state_t* state, int symbol, bitset_t* result) {
 
 static bitset_t*
 epsilon_closure(bitset_t* set_state) {
-	if (!set_state)
-		{ return (NULL_BITSET); }
+    if (!set_state)
+        { return (NULL_BITSET); }
 
-	bitset_t* seen_state = new_bitset();
-	bool change = false;
+    bitset_t* seen_state = new_bitset();
+    bool change = false;
 
-	do {
-		int i;
-		change = false;
+    do {
+        int i;
+        change = false;
 
-		while ((i = IT_NEXT(set_state)) != IT_NULL) {
-			if (!IS_PRESENT(seen_state, (size_t)i)) {
+        while ((i = IT_NEXT(set_state)) != IT_NULL) {
+            if (!IS_PRESENT(seen_state, (size_t)i)) {
                 nfa_state_t* crt_state = STATE_AT(i);
                 if (crt_state->eclos) {
                     if (!is_subset_bitset(set_state, crt_state->eclos))
@@ -96,34 +96,34 @@ epsilon_closure(bitset_t* set_state) {
                         { continue; }
                 }
                 else {
-    				nfa_state_edges(STATE_AT(i), EPSILON, set_state);
-	    			ADD_BITSET(seen_state, (size_t)i);
+                    nfa_state_edges(STATE_AT(i), EPSILON, set_state);
+                    ADD_BITSET(seen_state, (size_t)i);
                 }
                 change = true;
-			}
-		}
-		IT_RESET(set_state);
-	} while (change);
+            }
+        }
+        IT_RESET(set_state);
+    } while (change);
 
-	del_bitset(seen_state);
-	return (set_state);
+    del_bitset(seen_state);
+    return (set_state);
 }
 
 static bitset_t*
 dfa_edge(bitset_t* states, int symbol) {
-	bitset_t* target = new_bitset();
+    bitset_t* target = new_bitset();
 
-	int i;
-	while ((i = IT_NEXT(states)) != IT_NULL)
-		{ nfa_state_edges(STATE_AT(i), symbol, target); }
-	IT_RESET(states);
+    int i;
+    while ((i = IT_NEXT(states)) != IT_NULL)
+        { nfa_state_edges(STATE_AT(i), symbol, target); }
+    IT_RESET(states);
 
-	if (is_empty_bitset(target)) {
-		del_bitset(target);
-		return (NULL_BITSET);
-	}
+    if (is_empty_bitset(target)) {
+        del_bitset(target);
+        return (NULL_BITSET);
+    }
 
-	return (epsilon_closure(target));
+    return (epsilon_closure(target));
 }
 
 static dfa_state_t*
@@ -152,88 +152,88 @@ del_dfa_state(dfa_state_t* dfa_state) {
 
 static vector_t*
 build_state_table(nfa_state_t* master) {
-	vector_t* states = new_vector();
-	
-	PUSH_BACK_VECTOR(states, NULL_DFA_STATE);
-	PUSH_BACK_VECTOR(states, new_dfa_state(dup_bitset(master->eclos)));
-	
-	size_t j = 1;
-	size_t p = 1;
+    vector_t* states = new_vector();
+    
+    PUSH_BACK_VECTOR(states, NULL_DFA_STATE);
+    PUSH_BACK_VECTOR(states, new_dfa_state(dup_bitset(master->eclos)));
+    
+    size_t j = 1;
+    size_t p = 1;
 
-	while (j <= p) {
+    while (j <= p) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, j);
-		for (size_t i = MIN_ASCII; i < MAX_ASCII; ++i) {
-			bitset_t* next = dfa_edge(crt_state->set_state, i);
-			if (next == NULL_BITSET)
-				{ continue; }
+        for (size_t i = MIN_ASCII; i < MAX_ASCII; ++i) {
+            bitset_t* next = dfa_edge(crt_state->set_state, i);
+            if (next == NULL_BITSET)
+                { continue; }
 
             size_t hash_new_set = hash_bitset(next);
 
-			trans_list_t* new_trans_list = NEW(trans_list_t, 1);
-			new_trans_list->input = i;
+            trans_list_t* new_trans_list = NEW(trans_list_t, 1);
+            new_trans_list->input = i;
 
-			size_t l = 1;
-			for (; l <= p; ++l) {
+            size_t l = 1;
+            for (; l <= p; ++l) {
                 dfa_state_t* cmp_state = (dfa_state_t*)AT_VECTOR(states, l);
-				if ((hash_new_set == cmp_state->hash_state)
+                if ((hash_new_set == cmp_state->hash_state)
                         && (eq_bitset(next, cmp_state->set_state)))
-					{ break; }
-			}
-			if (l <= p) {
-				new_trans_list->state = l;
-				del_bitset(next);
-			}
-			else {
-				new_trans_list->state = ++p;
-				PUSH_BACK_VECTOR(states, new_dfa_state(next));
-			}
+                    { break; }
+            }
+            if (l <= p) {
+                new_trans_list->state = l;
+                del_bitset(next);
+            }
+            else {
+                new_trans_list->state = ++p;
+                PUSH_BACK_VECTOR(states, new_dfa_state(next));
+            }
             new_trans_list->next = crt_state->trans;
             crt_state->trans = new_trans_list;
-		}
-		++j;
-	}
+        }
+        ++j;
+    }
 
-	return (states);
+    return (states);
 }
 
 static void
 build_middle_table(vector_t* states) {
-	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
+    for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
-		int j;
-		while ((j = IT_NEXT(crt_state->set_state)) != IT_NULL) {
-			nfa_state_t* nfa_state = STATE_AT(j);
-			if (nfa_state->beg_look)
+        int j;
+        while ((j = IT_NEXT(crt_state->set_state)) != IT_NULL) {
+            nfa_state_t* nfa_state = STATE_AT(j);
+            if (nfa_state->beg_look)
                 { crt_state->middle = true; }
-		}
-		IT_RESET(crt_state->set_state);
-	}
+        }
+        IT_RESET(crt_state->set_state);
+    }
 }
 
 static size_t
 build_final_table(vector_t* states) {
     size_t count_final = 0;
-	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
+    for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
-		int min_tok = NO_FINAL;
+        int min_tok = NO_FINAL;
 
-		int it;
-		while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
-			nfa_state_t* nfa_state = STATE_AT(it);
-			if (nfa_state->final_type != NO_FINAL) {
-				if ((min_tok == NO_FINAL)
+        int it;
+        while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
+            nfa_state_t* nfa_state = STATE_AT(it);
+            if (nfa_state->final_type != NO_FINAL) {
+                if ((min_tok == NO_FINAL)
                                     || (min_tok > nfa_state->final_type))
-					{ min_tok = nfa_state->final_type; }
-			}
-		}
+                    { min_tok = nfa_state->final_type; }
+            }
+        }
         IT_RESET(crt_state->set_state);
 
-		if (min_tok != NO_FINAL) {
+        if (min_tok != NO_FINAL) {
             crt_state->final_entry = min_tok;
             crt_state->group = FINAL_GROUP;
             ++count_final;
         }
-	}
+    }
     return (count_final);
 }
 
@@ -255,13 +255,13 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
         do_eclos = true;
     }
 
-	if (spec->states) {
-	    foreach_vector(spec->states, &del_dfa_state);
-    	del_vector(spec->states);
-	}
+    if (spec->states) {
+        foreach_vector(spec->states, &del_dfa_state);
+        del_vector(spec->states);
+    }
 
-	spec->states = build_state_table(master);
-	build_middle_table(spec->states);
+    spec->states = build_state_table(master);
+    build_middle_table(spec->states);
     spec->size_final = build_final_table(spec->states);
 }
 
@@ -269,58 +269,58 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
 
 static void
 redirect_transition(vector_t* trans, long s1, long s2) {
-	del_trans_list(AT_VECTOR(trans, s2));
-	erase_vector(trans, s2);
+    del_trans_list(AT_VECTOR(trans, s2));
+    erase_vector(trans, s2);
 
-	for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
-		trans_list_t* list = (trans_list_t*)AT_VECTOR(trans, i);
-		redirect_trans_list(list, s1, s2);
-	}
+    for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
+        trans_list_t* list = (trans_list_t*)AT_VECTOR(trans, i);
+        redirect_trans_list(list, s1, s2);
+    }
 }
 
 static void
 redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
-	if (isf) {
-		erase_vector(finalt, fs2);
-		erase_vector(finalt, fs2);
-	}
-	for (size_t i = 0; i < SIZE_VECTOR(finalt); i += 2) {
-		if ((size_t)AT_VECTOR(finalt, i) > max) {
-			long old = (long)AT_VECTOR(finalt, i) - 1;
-			SET_VECTOR(finalt, i, (void*)old);
-		}
-	}
+    if (isf) {
+        erase_vector(finalt, fs2);
+        erase_vector(finalt, fs2);
+    }
+    for (size_t i = 0; i < SIZE_VECTOR(finalt); i += 2) {
+        if ((size_t)AT_VECTOR(finalt, i) > max) {
+            long old = (long)AT_VECTOR(finalt, i) - 1;
+            SET_VECTOR(finalt, i, (void*)old);
+        }
+    }
 }
 
 void 
 equivalent_state(vector_t* trans, vector_t* finalt) {
-	bool repeat;
-	do {
-		repeat = false;
-		for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
-			trans_list_t const* t1 = (trans_list_t*)AT_VECTOR(trans, i);
-			for (size_t j = i + 1; j < SIZE_VECTOR(trans); ++j) {
-				trans_list_t const* t2 = (trans_list_t*)
-								AT_VECTOR(trans, j);
-				if (!cmp_trans_list(t1, t2))
-					{ continue; }
-			
-				int fs1 = get_index_vector(finalt, (void*)i, NULL);
-				int fs2 = get_index_vector(finalt, (void*)j, NULL);
+    bool repeat;
+    do {
+        repeat = false;
+        for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
+            trans_list_t const* t1 = (trans_list_t*)AT_VECTOR(trans, i);
+            for (size_t j = i + 1; j < SIZE_VECTOR(trans); ++j) {
+                trans_list_t const* t2 = (trans_list_t*)
+                                AT_VECTOR(trans, j);
+                if (!cmp_trans_list(t1, t2))
+                    { continue; }
+            
+                int fs1 = get_index_vector(finalt, (void*)i, NULL);
+                int fs2 = get_index_vector(finalt, (void*)j, NULL);
 
-				bool final = (fs1 >= 0 && fs2 >= 0) &&
-					(AT_VECTOR(finalt, fs1 + 1) == AT_VECTOR(finalt, fs2 + 1));
-			
-				bool nonfinal = (fs1 == -1 && fs2 == -1);
-		
-				if (final || nonfinal) {
-					repeat = true;
-					redirect_transition(trans, i, j);
-					redirect_final(finalt, final, fs2, j);
-				}
-			}
-		}
-	} while (repeat);
+                bool final = (fs1 >= 0 && fs2 >= 0) &&
+                    (AT_VECTOR(finalt, fs1 + 1) == AT_VECTOR(finalt, fs2 + 1));
+            
+                bool nonfinal = (fs1 == -1 && fs2 == -1);
+        
+                if (final || nonfinal) {
+                    repeat = true;
+                    redirect_transition(trans, i, j);
+                    redirect_final(finalt, final, fs2, j);
+                }
+            }
+        }
+    } while (repeat);
 }
 
 #endif /* DFA_OPTIMIZE */

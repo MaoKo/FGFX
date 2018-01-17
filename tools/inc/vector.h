@@ -4,28 +4,28 @@
 #include <stddef.h>
 #include "bitset.h"
 
-#define AT_VECTOR(vect, i)			((vect)->body[i])
-#define SET_VECTOR(vect, i, x)		((vect)->body[i] = x)
-#define FRONT_VECTOR(vect)			((*vect)->body)
-#define BACK_VECTOR(vect)			((vect)->body[(vect)->index - 1])
-#define EMPTY_VECTOR(vect)			(!(vect)->index)
-#define SIZE_VECTOR(vect)			((vect)->index)
+#define AT_VECTOR(vect, i)          ((vect)->body[i])
+#define SET_VECTOR(vect, i, x)      ((vect)->body[i] = x)
+#define FRONT_VECTOR(vect)          ((*vect)->body)
+#define BACK_VECTOR(vect)           ((vect)->body[(vect)->index - 1])
+#define EMPTY_VECTOR(vect)          (!(vect)->index)
+#define SIZE_VECTOR(vect)           ((vect)->index)
 
-#define PUSH_FRONT_VECTOR(vect, x)	(insert_vector(vect, 0, x))
-#define PUSH_BACK_VECTOR(vect, x)	(insert_vector(vect, (vect)->index, x))
+#define PUSH_FRONT_VECTOR(vect, x)  (insert_vector(vect, 0, x))
+#define PUSH_BACK_VECTOR(vect, x)   (insert_vector(vect, (vect)->index, x))
 
-#define POP_BACK_VECTOR(vect)		(erase_vector(vect, (vect)->index - 1))
-#define POP_FRONT_VECTOR(vect)		(erase_vector(vect, 0))
+#define POP_BACK_VECTOR(vect)       (erase_vector(vect, (vect)->index - 1))
+#define POP_FRONT_VECTOR(vect)      (erase_vector(vect, 0))
 
-#define LAST_INDEX_VECTOR(vect)		(SIZE_VECTOR(vect) - 1)
+#define LAST_INDEX_VECTOR(vect)     (SIZE_VECTOR(vect) - 1)
 
-#define NULL_VECT					(NULL)
-#define _VECT_SIZE					(8)
+#define NULL_VECT                   (NULL)
+#define _VECT_SIZE                  (8)
 
 typedef struct {
-	void** body;
-	size_t alloc;
-	size_t index;
+    void** body;
+    size_t alloc;
+    size_t index;
 } vector_t;
 
 vector_t* new_vector(void);
