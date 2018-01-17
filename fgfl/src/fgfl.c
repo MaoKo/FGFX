@@ -17,7 +17,7 @@ gen_dfa_final_tables(int filde, lexical_spec_t* spec, nfa_state_t* master,
 									char const* header, spec_entry_t* state) {
 	build_dfa_table(master, spec);
 #ifdef DFA_OPTIMIZE
-//	equivalent_state(spec->trans, spec->final);
+	equivalent_state(spec->trans, spec->final);
 #endif /* DFA_OPTIMIZE */
 	gen_state_table(filde, spec, header, state);
 	gen_middle_table(filde, spec, header, state);
@@ -53,7 +53,7 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
 				spec_entry_t* crt_state = (spec_entry_t*)
 										AT_VECTOR(spec->state_vect, i);
 				gen_dfa_final_tables(filde, spec,
-								crt_state->st_master, header, crt_state);
+								crt_state->state_master, header, crt_state);
 			}
 		}
 		del_nfa_record();

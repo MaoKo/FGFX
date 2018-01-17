@@ -59,6 +59,12 @@ nfa_state_edges(nfa_state_t* state, int symbol, bitset_t* result) {
                 { ADD_BITSET(result, GET_INDEX(state->out_state)); }
             break;
 
+        case EDGE_BOTH:
+            nfa_automaton_edges(state->edge, symbol, result);
+            if (symbol == EPSILON)
+                { ADD_BITSET(result, GET_INDEX(state->out_state)); }
+            break;       
+
         case NO_EDGE:
             break;
 
@@ -151,8 +157,8 @@ build_state_table(nfa_state_t* master) {
 	PUSH_BACK_VECTOR(states, NULL_DFA_STATE);
 	PUSH_BACK_VECTOR(states, new_dfa_state(dup_bitset(master->eclos)));
 	
-	long j = 1;
-	long p = 1;
+	size_t j = 1;
+	size_t p = 1;
 
 	while (j <= p) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, j);
@@ -166,7 +172,7 @@ build_state_table(nfa_state_t* master) {
 			trans_list_t* new_trans_list = NEW(trans_list_t, 1);
 			new_trans_list->input = i;
 
-			long l = 1;
+			size_t l = 1;
 			for (; l <= p; ++l) {
                 dfa_state_t* cmp_state = (dfa_state_t*)AT_VECTOR(states, l);
 				if ((hash_new_set == cmp_state->hash_state)
@@ -186,10 +192,11 @@ build_state_table(nfa_state_t* master) {
 		}
 		++j;
 	}
+
 	return (states);
 }
 
-void
+static void
 build_middle_table(vector_t* states) {
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
@@ -203,7 +210,7 @@ build_middle_table(vector_t* states) {
 	}
 }
 
-size_t
+static size_t
 build_final_table(vector_t* states) {
     size_t count_final = 0;
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {

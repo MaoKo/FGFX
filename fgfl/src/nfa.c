@@ -224,10 +224,16 @@ regex_node_union(regex_node_t* root) {
         return (NULL_AUTOMATON);
     }
 
-    left->head_state->symbol_edge = EPSILON;   
-    left->head_state->out_state = new_head_state;   
+    if (left->head_state->symbol_edge == NO_EDGE)
+        { left->head_state->symbol_edge = EPSILON; }
+    else
+        { left->head_state->symbol_edge = EDGE_BOTH; }
+    left->head_state->out_state = new_head_state; 
 
-    right->head_state->symbol_edge = EPSILON;   
+    if (right->head_state->symbol_edge == NO_EDGE)
+        { right->head_state->symbol_edge = EPSILON; } 
+    else
+        { right->head_state->symbol_edge = EDGE_BOTH; }
     right->head_state->out_state = new_head_state;   
 
     return (new_nfa_automaton(NFA_UNION,
@@ -249,8 +255,12 @@ regex_node_concat(regex_node_t* root) {
         return (NULL_AUTOMATON);
     }
 
-    left->head_state->symbol_edge = EDGE_AUTOMATA;
-    left->head_state->edge = right;
+    if (left->head_state->symbol_edge != EDGE_AUTOMATA) {
+        left->head_state->symbol_edge = EDGE_AUTOMATA;
+        left->head_state->edge = right;
+    }
+    else
+        { left->head_state->edge2 = right; }
 
     if (root->kind_ast == AST_LOOK)
         { left->head_state->beg_look = true; }
@@ -276,7 +286,10 @@ regex_node_closure(regex_node_t* root) {
         return (NULL_AUTOMATON);
     }
 
-    middle->head_state->symbol_edge = EPSILON;   
+    if (middle->head_state->symbol_edge == NO_EDGE) 
+        { middle->head_state->symbol_edge = EPSILON; }
+    else
+        { middle->head_state->symbol_edge = EDGE_BOTH; }
     middle->head_state->out_state = new_head_state;
 
     return (new_nfa_automaton(NFA_CLOSURE, middle, new_head_state));

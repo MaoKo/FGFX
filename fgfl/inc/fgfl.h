@@ -49,15 +49,11 @@ typedef struct nfa_state_t {
     int final_type;
     bool beg_look;
     int symbol_edge;
+    struct nfa_state_t* out_state;
+    nfa_automaton_t* edge;
     union {
-        struct {
-            nfa_automaton_t* edge;
-            nfa_automaton_t* edge2;
-        };
-        struct {
-	        bitset_t* class;
-            struct nfa_state_t* out_state;
-        };
+        nfa_automaton_t* edge2;
+	    bitset_t* class;
     };
     bitset_t* eclos;
 } nfa_state_t;
@@ -127,7 +123,7 @@ typedef struct {
 		};
 		struct { // if KEYWORD & STATE
 			struct { // if STATE
-	            nfa_state_t* st_master;
+	            nfa_state_t* state_master;
 				bool is_defined;
 				bool is_reach;
 			};

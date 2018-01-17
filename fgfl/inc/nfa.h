@@ -20,7 +20,8 @@
 
 #define EDGE_AUTOMATA           (-1)
 #define EDGE_CLASS              (-2)
-#define NO_EDGE                 (-3)
+#define EDGE_BOTH               (-3)
+#define NO_EDGE                 (-4)
 
 #define NO_FINAL                (-1)
 
