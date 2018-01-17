@@ -27,7 +27,6 @@ Which create a file called token_c.h.lex ready for lexing.
 			DFA transition table
 
 	.	Add error recovery mechanism
-	.	Add parser and lexer in the template dir
 	.	Add in FGFP ( ... | ... )
 	.	Remove unreachable state
 	.	Handle when the number of state is 1

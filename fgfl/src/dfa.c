@@ -130,8 +130,8 @@ new_dfa_state(bitset_t* set_state) {
 
     state->set_state = set_state;
     state->hash_state = hash_bitset(set_state);
-    state->group = START_GROUP;
 
+    state->group = START_GROUP;
     return (state);
 }
 
@@ -214,7 +214,8 @@ build_final_table(vector_t* states) {
 		while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
 			nfa_state_t* nfa_state = STATE_AT(it);
 			if (nfa_state->final_type != NO_FINAL) {
-				if ((min_tok == NO_FINAL) || (min_tok > nfa_state->final_type))
+				if ((min_tok == NO_FINAL)
+                                    || (min_tok > nfa_state->final_type))
 					{ min_tok = nfa_state->final_type; }
 			}
 		}
@@ -229,14 +230,13 @@ build_final_table(vector_t* states) {
     return (count_final);
 }
 
-static void
+static inline void
 precompute_epsilon_closure(nfa_state_t* state) {
     if (state->eclos)
         { return; }
     bitset_t* result_set = new_bitset();
     ADD_BITSET(result_set, GET_INDEX(state));
-    epsilon_closure(result_set);
-    state->eclos = result_set;
+    state->eclos = epsilon_closure(result_set);
 }
 
 void

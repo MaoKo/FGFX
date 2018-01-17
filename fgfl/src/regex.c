@@ -84,7 +84,7 @@ regex_node_t*
 build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
     regex_spec = spec;
     regex_entry = entry;
-    // TODO anchor ( '^' and '$')
+    // TODO anchor ( '^' and '$' )
 	return (regex_look());
 }
 
@@ -101,8 +101,8 @@ regex_look(void) {
             del_regex_node(right_op);
             return (NULL_NODE);
         }
-		root = new_regex_node(AST_CONCAT, root, right_op);
-		regex_entry->use_look = root->look_sym = true;
+		root = new_regex_node(AST_LOOK, root, right_op);
+		regex_entry->use_look = true;
 	}
 	return (root);
 }
@@ -382,7 +382,7 @@ regex_cce(int kind_cce) {
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);
             break;
         case T_CCE_LOWER:
-            regex_entry->use_upper_lower = true;
+            regex_entry->use_lower = true;
             add_range_bitset(cce_range, 'a', 'z' + 1);
             break;
         case T_CCE_PRINT:
@@ -402,7 +402,7 @@ regex_cce(int kind_cce) {
             ADD_BITSET(cce_range, ' ');
             break;
         case T_CCE_UPPER:
-            regex_entry->use_upper_lower = true;
+            regex_entry->use_upper = true;
             add_range_bitset(cce_range, 'A', 'Z' + 1);
             break;
         case T_CCE_XDIGIT:

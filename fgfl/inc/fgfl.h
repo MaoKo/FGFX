@@ -18,8 +18,8 @@ typedef struct regex_node_t {
         AST_STAR,
         AST_PLUS,
         AST_QUES,
-        AST_LOOK,
 // TODO
+        AST_LOOK,
         AST_CLOSURE,
         AST_BOUND_NAME,
         AST_SYMBOL,
@@ -30,7 +30,6 @@ typedef struct regex_node_t {
 		struct { // if AST_UNION | AST_CONCAT | AST_CLOSURE
 			struct regex_node_t* left;
 			struct regex_node_t* right;
-			bool look_sym;
 		};
         struct { // if AST_BOUND_NAME
             char const* bound_name;
@@ -111,19 +110,15 @@ typedef struct {
         struct { // if TERMINAL
             bool is_igcase;
             bool is_frag;
-            bool use_upper_lower;
-#if 0
-            bool useless_lower;
-            bool useless_upper;
-#endif
+
+            bool use_lower;
+            bool use_upper;
+
             bool use_look;
             bool skip;
 
-			enum { REGEX, NFA } active;
-			union {
-				regex_node_t* reg;
-				nfa_automaton_t* frag;
-			};
+            regex_node_t* reg_ast;
+            nfa_automaton_t* nfa_m;
 
 			int default_state;
 

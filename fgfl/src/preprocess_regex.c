@@ -22,7 +22,7 @@ dependency_macro(lexical_spec_t* spec,
     vector_t* depend_vect = new_vector();
     int exit_st = DONE;
 
-    search_kind_regex_node(entry->reg, AST_BOUND_NAME, depend_vect);
+    search_kind_regex_node(entry->reg_ast, AST_BOUND_NAME, depend_vect);
     for (size_t i = 0; i < SIZE_VECTOR(depend_vect); ++i) {
         regex_node_t* bound_node = (regex_node_t*)AT_VECTOR(depend_vect, i);
 
@@ -148,7 +148,7 @@ expand_macro_regex(lexical_spec_t* spec) {
 			size_t j = (long)AT_VECTOR(stack_order, i);
             spec_entry_t* crt_entry = (spec_entry_t*)
 		                                    AT_VECTOR(spec->entry_vect, j);
-            replace_bound_name_node(crt_entry->reg, spec);
+            replace_bound_name_node(crt_entry->reg_ast, spec);
 		}
 	}
 	else

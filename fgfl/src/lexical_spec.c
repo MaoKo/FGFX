@@ -17,10 +17,7 @@ static void
 del_spec_entry(spec_entry_t* entry) {
 	if (entry) {
 		if (entry->kind == T_TERMINAL) {
-			if (entry->active == REGEX)	
-				{ del_regex_node(entry->reg); }
-//			else if (entry->active == NFA && entry->frag)
-//				{ del_nfa_state(entry->frag); }
+		    del_regex_node(entry->reg_ast);
 			del_trans_list(entry->state_begin_lst);
 		}
 		FREE(entry->name);
@@ -116,10 +113,8 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 		return (NULL);
 	}
 
-	if (entry->kind == T_TERMINAL) {
-		entry->default_state = -1;
-		entry->active = REGEX;
-	}
+	if (entry->kind == T_TERMINAL)
+        { entry->default_state = -1; }
 
 	entry->index = SIZE_VECTOR(src_vect);
 	PUSH_BACK_VECTOR(src_vect, entry);
@@ -359,13 +354,13 @@ spec_regex_assign(lexical_spec_t* spec,
         regex_node_t* root = build_regex(spec, entry);
         if (!root)
             { return (ERROR); }
-		else if (entry->reg) {
+		else if (entry->reg_ast) {
 			errorf(CURRENT_LINE(spec->lex),
                            "Attempt to re-assign the token '%s'", entry->name);
 			return (ERROR);
 		}
 	
-		entry->reg = root;
+		entry->reg_ast = root;
         if (advance_token(spec->lex) != T_END_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
                             "No found the end of the regex '/'.");
@@ -386,10 +381,12 @@ spec_regex_assign(lexical_spec_t* spec,
 				return (ERROR);
 			}
 
-            if (entry->use_upper_lower && entry->is_igcase) {
+            if ((entry->use_lower || entry->use_upper) && entry->is_igcase) {
+                bool both = (entry->use_lower) && (entry->use_upper);
                 warnf(CURRENT_LINE(spec->lex),
-                                "The token %s use [:lower:] or [:upper:]"
-                                " but it's an igcase token.", entry->name);
+                        "The token %s use [:%s:]%s but it's an igcase token.",
+                        entry->name, (entry->use_lower) ? "lower" : "upper",
+                        (both) ? " and [:upper:]" : "");
             }
 		}
 		if (peek_token(spec->lex) == T_COMMA) {
@@ -658,7 +655,7 @@ print_token_entry(lexical_spec_t* spec) {
 		spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
 		printf("Token %s, is_igcase %d, is_frag %d.\n",
 					crt_entry->name, crt_entry->is_igcase, crt_entry->is_frag);
-        printf("Root node = %p\n", crt_entry->reg);
+        printf("Root node = %p\n", crt_entry->reg_ast);
 	}
 }
 

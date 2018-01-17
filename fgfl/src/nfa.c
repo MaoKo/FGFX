@@ -3,9 +3,10 @@
 #include <ctype.h>
 
 #include "lexical_spec.h"
+#include "regex_node.h"
+#include "nfa.h"
 #include "utils.h"
 #include "bitset.h"
-#include "nfa.h"
 
 vector_t* record_nfa_state = NULL;
 vector_t* record_nfa_automata = NULL;
@@ -235,7 +236,7 @@ regex_node_union(regex_node_t* root) {
 
 static nfa_automaton_t*
 regex_node_concat(regex_node_t* root) {
-    if (root->kind_ast != AST_CONCAT)
+    if ((root->kind_ast != AST_CONCAT) && (root->kind_ast != AST_LOOK))
         { return (NULL_AUTOMATON); }
 
 	nfa_automaton_t* left = dfs_regex_node(root->left);
@@ -250,6 +251,9 @@ regex_node_concat(regex_node_t* root) {
 
     left->head_state->symbol_edge = EDGE_AUTOMATA;
     left->head_state->edge = right;
+
+    if (root->kind_ast == AST_LOOK)
+        { left->head_state->beg_look = true; }
 
     return (new_nfa_automaton(NFA_CONCAT, left, right, right->head_state));
 }
@@ -286,6 +290,7 @@ dfs_regex_node(regex_node_t* root) {
 			case AST_UNION:
                 return (regex_node_union(root));
 
+			case AST_LOOK:
 			case AST_CONCAT:
                 return (regex_node_concat(root));
 
@@ -383,17 +388,17 @@ build_nfa(lexical_spec_t* spec) {
 int
 transform_regex_nfa(spec_entry_t* crt_entry) {
 	crt_igcase = crt_entry->is_igcase;
-	regex_node_t* root = crt_entry->reg;
+	regex_node_t* root = crt_entry->reg_ast;
 
 	int exit_st = DONE;
 
-	if ((crt_entry->frag = dfs_regex_node(root)) == NULL_AUTOMATON)
+	if ((crt_entry->nfa_m = dfs_regex_node(root)) == NULL_AUTOMATON)
 		{ exit_st = ERROR; }
     else
-        { STATE_FINAL(crt_entry->frag->head_state, GET_INDEX(crt_entry)); }
+        { STATE_FINAL(crt_entry->nfa_m->head_state, GET_INDEX(crt_entry)); }
 
 	del_regex_node(root);
-	crt_entry->active = NFA;
+    crt_entry->reg_ast = NULL_NODE;
 
 	return (exit_st);
 }
@@ -421,7 +426,7 @@ build_nfa(lexical_spec_t* spec) {
             return (ERROR);
         }
 
-        ADD_BITSET(set_frag, GET_INDEX(entry->frag));
+        ADD_BITSET(set_frag, GET_INDEX(entry->nfa_m));
 #if 0
 		else if (!entry->is_frag
 					&& (build_nfa_entry(active_state, spec, entry) == ERROR))

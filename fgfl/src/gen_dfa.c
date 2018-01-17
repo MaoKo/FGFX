@@ -114,7 +114,8 @@ gen_middle_table(int filde, lexical_spec_t const* spec,
         }
 		dprintf(filde, TAB "[%ld]=true" COMMA NL, i);
 	}
-	dprintf(filde, END_BLOCK SEMI NL NL);
+    if (first_seen)
+    	{ dprintf(filde, END_BLOCK SEMI NL NL); }
 }
 
 void
@@ -132,7 +133,7 @@ gen_final_table(int filde, lexical_spec_t const* spec,
 	dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, spec->size_final + 1);
 	for (size_t i = 1; i < size_states; ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
-        if (crt_state->group == FINAL_GROUP)
+        if (crt_state->group != FINAL_GROUP)
             { continue; }
 
         spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect,

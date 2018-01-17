@@ -7,6 +7,9 @@
 #include "fgfl.h"
 #include "vector.h"
 
+#define CHILD_NODE(k)   ((k == AST_CLOSURE) || (k == AST_CONCAT)\
+                            || (k == AST_UNION) || (k == AST_LOOK))
+
 #define NULL_NODE   (NULL)
 
 regex_node_t* new_regex_node(int, ...);

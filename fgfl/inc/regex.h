@@ -6,9 +6,6 @@
 
 #include "fgfl.h"
 
-#define CHILD_NODE(k)   ((k == AST_CLOSURE) || (k == AST_CONCAT)\
-                                            || (k == AST_UNION))
-
 #define MIN_ASCII		(0)
 #define MAX_ASCII		(UCHAR_MAX + 1)
 

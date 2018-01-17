@@ -196,8 +196,8 @@ is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	if (!bset1 || !bset2)
 		{ return (!bset2); }
 	//The Empty set is the subset of every all set even the empty set
-	unsigned short max = MAX(bset1->nwords, bset2->nwords);
-	for (size_t i = 0; i < max; ++i) {
+	unsigned short min = MIN(bset1->nwords, bset2->nwords);
+	for (size_t i = 0; i < min; ++i) {
 		if ((~bset1->map[i]) & bset2->map[i])
 			{ return (false); }
 	}

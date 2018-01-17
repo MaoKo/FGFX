@@ -32,8 +32,6 @@ new_regex_node(int kind, ...) {
         default:
 	    	node->left = va_arg(args, regex_node_t*);
 	    	node->right = va_arg(args, regex_node_t*);
-
-	    	node->look_sym = false;
     }
 
 	node->kind_ast = kind;
@@ -109,14 +107,14 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
     else if (CHILD_NODE(root->kind_ast)) {
         if (root->left->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
-                    AT_VECTOR(spec->entry_vect, root->left->index_token))->reg;
+                AT_VECTOR(spec->entry_vect, root->left->index_token))->reg_ast;
             del_regex_node(root->left);
             root->left = cpy_regex_node(target_node);
         }
         /* Check for '*' operator */
         if (root->right && root->right->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
-                    AT_VECTOR(spec->entry_vect, root->right->index_token))->reg;
+                AT_VECTOR(spec->entry_vect, root->right->index_token))->reg_ast;
             del_regex_node(root->right);
             root->right = cpy_regex_node(target_node);
         }
@@ -126,7 +124,7 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
     }
     else if (root->kind_ast == AST_BOUND_NAME) {
         regex_node_t* target_node = cpy_regex_node(((spec_entry_t*)
-                         AT_VECTOR(spec->entry_vect, root->index_token))->reg);
+                    AT_VECTOR(spec->entry_vect, root->index_token))->reg_ast);
         FREE(root->bound_name);
         memcpy(root, target_node, sizeof(*root));
         FREE(target_node);
