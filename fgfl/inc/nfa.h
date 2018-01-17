@@ -22,6 +22,8 @@
 #define EDGE_CLASS              (-2)
 #define NO_EDGE                 (-3)
 
+#define NO_FINAL                (-1)
+
 extern vector_t* record_nfa_state;
 extern vector_t* record_nfa_automata;
 

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "dfa.h"
 #include "gen_dfa.h"
 #include "lexical_spec.h"
@@ -5,7 +7,7 @@
 #include "utils.h"
 
 static void
-nfa_automaton_edge(nfa_automaton_t* nfa_m, int symbol, bitset_t* result) {
+nfa_automaton_edges(nfa_automaton_t* nfa_m, int symbol, bitset_t* result) {
     switch (nfa_m->kind_nfa) {
         case NFA_UNION:
         case NFA_CLASS:
@@ -25,14 +27,14 @@ nfa_automaton_edge(nfa_automaton_t* nfa_m, int symbol, bitset_t* result) {
             break;
 
         case NFA_CONCAT:
-            nfa_automaton_edge(nfa_m->left, symbol, result);
+            nfa_automaton_edges(nfa_m->left, symbol, result);
             break;
 
         case NFA_MASTER: ;
                 int i;
                 while ((i = IT_NEXT(nfa_m->out_automata)) != IT_NULL) {
                     nfa_automaton_t* crt_nfa_m = AUTOMATON_AT(i);
-                    nfa_automaton_edge(crt_nfa_m, symbol, result);
+                    nfa_automaton_edges(crt_nfa_m, symbol, result);
                 }
                 IT_RESET(nfa_m->out_automata);
                 break;
@@ -46,9 +48,9 @@ static void
 nfa_state_edges(nfa_state_t* state, int symbol, bitset_t* result) {
     switch (state->symbol_edge) {
         case EDGE_AUTOMATA:
-            nfa_automaton_edge(state->edge, symbol, result);
+            nfa_automaton_edges(state->edge, symbol, result);
             if (state->edge2)
-                { nfa_automaton_edge(state->edge2, symbol, result); }
+                { nfa_automaton_edges(state->edge2, symbol, result); }
             break;
 
         case EDGE_CLASS:
@@ -118,94 +120,113 @@ dfa_edge(bitset_t* states, int symbol) {
 	return (epsilon_closure(target));
 }
 
-static vector_t*
-build_state_table(nfa_state_t* master, vector_t** return_states) {
-	vector_t* states = (*return_states) = new_vector();
-	
-	PUSH_BACK_VECTOR(states, NULL_BITSET);
-	PUSH_BACK_VECTOR(states, master->eclos);
-	
-	vector_t* trans = new_vector();
-	PUSH_BACK_VECTOR(trans, NULL_TRANS_LST); //Dead State
+static dfa_state_t*
+new_dfa_state(bitset_t* set_state) {
+    dfa_state_t* state = NEW(dfa_state_t, 1);
 
+    if (!state)
+        { return (NULL_DFA_STATE); }
+    memset(state, 0, sizeof(*state));
+
+    state->set_state = set_state;
+    state->hash_state = hash_bitset(set_state);
+    state->group = START_GROUP;
+
+    return (state);
+}
+
+void
+del_dfa_state(dfa_state_t* dfa_state) {
+    if (dfa_state) {
+        del_bitset(dfa_state->set_state);
+        del_trans_list(dfa_state->trans);
+    }
+    FREE(dfa_state);
+}
+
+static vector_t*
+build_state_table(nfa_state_t* master) {
+	vector_t* states = new_vector();
+	
+	PUSH_BACK_VECTOR(states, NULL_DFA_STATE);
+	PUSH_BACK_VECTOR(states, new_dfa_state(dup_bitset(master->eclos)));
+	
 	long j = 1;
 	long p = 1;
 
 	while (j <= p) {
-		//printf("J = %ld\n", j);
-		PUSH_BACK_VECTOR(trans, NULL_TRANS_LST);
+        dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, j);
 		for (size_t i = MIN_ASCII; i < MAX_ASCII; ++i) {
-			bitset_t* next = dfa_edge(AT_VECTOR(states, j), i);
+			bitset_t* next = dfa_edge(crt_state->set_state, i);
 			if (next == NULL_BITSET)
 				{ continue; }
 
-			trans_list_t* new_list = NEW(trans_list_t, 1);
-			new_list->input = i;
+            size_t hash_new_set = hash_bitset(next);
+
+			trans_list_t* new_trans_list = NEW(trans_list_t, 1);
+			new_trans_list->input = i;
 
 			long l = 1;
 			for (; l <= p; ++l) {
-				if (eq_bitset(next, (bitset_t*)AT_VECTOR(states, l)))
+                dfa_state_t* cmp_state = (dfa_state_t*)AT_VECTOR(states, l);
+				if ((hash_new_set == cmp_state->hash_state)
+                        && (eq_bitset(next, cmp_state->set_state)))
 					{ break; }
 			}
 			if (l <= p) {
-				new_list->state = l;
+				new_trans_list->state = l;
 				del_bitset(next);
 			}
 			else {
-				new_list->state = ++p;
-				PUSH_BACK_VECTOR(states, next);
+				new_trans_list->state = ++p;
+				PUSH_BACK_VECTOR(states, new_dfa_state(next));
 			}
-			new_list->next = AT_VECTOR(trans, j);
-			SET_VECTOR(trans, j, new_list);
+            new_trans_list->next = crt_state->trans;
+            crt_state->trans = new_trans_list;
 		}
 		++j;
 	}
-	return (trans);
+	return (states);
 }
 
-static vector_t*
+void
 build_middle_table(vector_t* states) {
-	vector_t* middle = NULL_VECT;
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
-		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
+        dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
 		int j;
-		while ((j = IT_NEXT(set_state)) != IT_NULL) {
-			nfa_state_t* crt_state = STATE_AT(j);
-			if (crt_state->beg_look) {
-				if (!middle)
-					{ middle = new_vector(); }
-				PUSH_BACK_VECTOR(middle, (void*)i);
-			}
+		while ((j = IT_NEXT(crt_state->set_state)) != IT_NULL) {
+			nfa_state_t* nfa_state = STATE_AT(j);
+			if (nfa_state->beg_look)
+                { crt_state->middle = true; }
 		}
-		IT_RESET(set_state);
+		IT_RESET(crt_state->set_state);
 	}
-	return (middle);
 }
 
-static vector_t*
-build_final_table(vector_t* states, vector_t* elst) {
-	vector_t* final = new_vector();
-
+size_t
+build_final_table(vector_t* states) {
+    size_t count_final = 0;
 	for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
-		bitset_t* set_state = (bitset_t*)AT_VECTOR(states, i);
-		int min_tok = 0;
+        dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
+		int min_tok = NO_FINAL;
 
 		int it;
-		while ((it = IT_NEXT(set_state)) != IT_NULL) {
-			nfa_state_t* crt_state = STATE_AT(it);
-			if (crt_state->final_type) {
-				if (!min_tok || min_tok > crt_state->final_type)
-					{ min_tok = crt_state->final_type; }
+		while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
+			nfa_state_t* nfa_state = STATE_AT(it);
+			if (nfa_state->final_type != NO_FINAL) {
+				if ((min_tok == NO_FINAL) || (min_tok > nfa_state->final_type))
+					{ min_tok = nfa_state->final_type; }
 			}
 		}
-		if (min_tok) {
-			char* name = ((spec_entry_t*)AT_VECTOR(elst, min_tok - 1))->name;
+        IT_RESET(crt_state->set_state);
 
-			PUSH_BACK_VECTOR(final, (void*)i);
-			PUSH_BACK_VECTOR(final, name);
-		}
+		if (min_tok != NO_FINAL) {
+            crt_state->final_entry = min_tok;
+            crt_state->group = FINAL_GROUP;
+            ++count_final;
+        }
 	}
-	return (final);
+    return (count_final);
 }
 
 static void
@@ -227,24 +248,14 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
         do_eclos = true;
     }
 
-	if (spec->trans) {
-		foreach_vector(spec->trans, &del_trans_list);
-		del_vector(spec->trans);
+	if (spec->states) {
+	    foreach_vector(spec->states, &del_dfa_state);
+    	del_vector(spec->states);
 	}
 
-	if (spec->middle)
-		{ del_vector(spec->middle); }
-	if (spec->final)
-		{ del_vector(spec->final); }
-
-	vector_t* states = NULL;
-
-	spec->trans = build_state_table(master, &states);
-	spec->middle = build_middle_table(states);
-	spec->final = build_final_table(states, spec->entry_vect);
-
-	foreach_vector(states, &del_bitset);
-	del_vector(states);
+	spec->states = build_state_table(master);
+	build_middle_table(spec->states);
+    spec->size_final = build_final_table(spec->states);
 }
 
 #ifdef DFA_OPTIMIZE

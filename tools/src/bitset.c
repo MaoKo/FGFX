@@ -189,6 +189,8 @@ hash_bitset(bitset_t const* bs) {
 	return (count);
 }
 
+// Check if bset2 is a subset of bset1
+
 bool
 is_subset_bitset(bitset_t const* bset1, bitset_t const* bset2) {
 	if (!bset1 || !bset2)

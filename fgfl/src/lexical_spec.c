@@ -6,6 +6,7 @@
 #include "lexical_spec.h"
 #include "preprocess_regex.h"
 #include "regex.h"
+#include "dfa.h"
 #include "nfa.h"
 #include "lexer.h"
 #include "buffer.h"
@@ -19,7 +20,7 @@ del_spec_entry(spec_entry_t* entry) {
 			if (entry->active == REGEX)	
 				{ del_regex_node(entry->reg); }
 //			else if (entry->active == NFA && entry->frag)
-//				{ FREE_FRAG(entry->frag); }
+//				{ del_nfa_state(entry->frag); }
 			del_trans_list(entry->state_begin_lst);
 		}
 		FREE(entry->name);
@@ -47,7 +48,7 @@ new_lexical_spec(int filde) {
 
 void
 del_lexical_spec(lexical_spec_t* spec) {
-	if (spec) {
+  	if (spec) {
 		foreach_vector(spec->entry_vect, &del_spec_entry);
 		foreach_vector(spec->state_vect, &del_spec_entry);
 	
@@ -56,11 +57,8 @@ del_lexical_spec(lexical_spec_t* spec) {
 
 		del_lexer(spec->lex);
 
-		foreach_vector(spec->trans, &del_trans_list);
-		del_vector(spec->trans);
-
-		del_vector(spec->middle);
-		del_vector(spec->final);
+	    foreach_vector(spec->states, &del_dfa_state);
+     	del_vector(spec->states);
 	}
 	FREE(spec);
 }

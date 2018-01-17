@@ -30,8 +30,9 @@ del_nfa_automaton(nfa_automaton_t* nfa_m) {
 void
 del_nfa_record(void) {
     foreach_vector(record_nfa_state, &del_nfa_state);
-    foreach_vector(record_nfa_automata, &del_nfa_automaton);
     del_vector(record_nfa_state);
+    foreach_vector(record_nfa_automata, &del_nfa_automaton);
+    del_vector(record_nfa_automata);
 }
 
 static nfa_automaton_t*
@@ -120,6 +121,8 @@ new_nfa_state(int symbol_edge, ...) {
         default:
             state->out_state = va_arg(args, nfa_state_t*);
     }
+
+    state->final_type = NO_FINAL;
 
 	state->index = SIZE_VECTOR(record_nfa_state);
 	PUSH_BACK_VECTOR(record_nfa_state, state);
@@ -387,7 +390,7 @@ transform_regex_nfa(spec_entry_t* crt_entry) {
 	if ((crt_entry->frag = dfs_regex_node(root)) == NULL_AUTOMATON)
 		{ exit_st = ERROR; }
     else
-        { STATE_FINAL(crt_entry->frag->head_state, GET_INDEX(crt_entry) + 1); }
+        { STATE_FINAL(crt_entry->frag->head_state, GET_INDEX(crt_entry)); }
 
 	del_regex_node(root);
 	crt_entry->active = NFA;

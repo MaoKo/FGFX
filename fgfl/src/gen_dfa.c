@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "lexical_spec.h"
 #include "nfa.h"
+#include "dfa.h"
 
 void
 gen_state_enum(int filde, lexical_spec_t const* spec) {
@@ -56,19 +57,21 @@ gen_state_name(int filde, spec_entry_t const* entry) {
 void
 gen_state_table(int filde, lexical_spec_t const* spec,
 							char const* header, spec_entry_t const* state) {
-	size_t size_trans = SIZE_VECTOR(spec->trans);
+	size_t size_states = SIZE_VECTOR(spec->states);
 
-	dprintf(filde, STATIC SP "uint%u_t" NL, min_size_type(size_trans, true));
+	dprintf(filde, STATIC SP "uint%u_t" NL, min_size_type(size_states, true));
 	gen_verbatim_file(filde, header);
 
 	dprintf(filde, SEP);
 	gen_state_name(filde, state);
 
 	dprintf(filde, "state_table[%zu][%d] = "
-									BEG_BLOCK NL, size_trans, MAX_ASCII);
+									BEG_BLOCK NL, size_states, MAX_ASCII);
 
-	for (size_t i = 0; i < size_trans; ++i) {
-		trans_list_t const* list = (trans_list_t*)AT_VECTOR(spec->trans, i);
+	for (size_t i = 1; i < size_states; ++i) {
+		dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
+        trans_list_t const* list = crt_state->trans;
+
 		dprintf(filde, "/* %3zu */" TAB BEG_BLOCK, i);
 		while (list) {
 			trans_list_t const* next = list->next;
@@ -92,23 +95,24 @@ gen_state_table(int filde, lexical_spec_t const* spec,
 void
 gen_middle_table(int filde, lexical_spec_t const* spec,
 							char const* header, spec_entry_t const* state) {
-	if (!spec->middle)
-		{ return; }
+    bool first_seen = false;
+	size_t size_states = SIZE_VECTOR(spec->states);
 
-	size_t size_middle = SIZE_VECTOR(spec->middle);
+	for (size_t i = 1; i < size_states; ++i) {
+		dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
+        if (!crt_state->middle)
+            { continue; }
+        else if (!first_seen) {
+        	dprintf(filde, STATIC SP "uint8_t" NL);
+        	gen_verbatim_file(filde, header);
 
-	dprintf(filde, STATIC SP "uint8_t" NL);
-	gen_verbatim_file(filde, header);
+        	dprintf(filde, SEP);
+        	gen_state_name(filde, state);
 
-	dprintf(filde, SEP);
-	gen_state_name(filde, state);
-
-	dprintf(filde, "middle_table[%zu] = " BEG_BLOCK NL,
-											SIZE_VECTOR(spec->trans));
-
-	for (size_t i = 0; i < size_middle; ++i) {
-		long beg_state = (long)AT_VECTOR(spec->middle, i);
-		dprintf(filde, TAB "[%ld]=true" COMMA NL, beg_state);
+        	dprintf(filde, "middle_table[%zu] = " BEG_BLOCK NL, size_states);
+            first_seen = true;
+        }
+		dprintf(filde, TAB "[%ld]=true" COMMA NL, i);
 	}
 	dprintf(filde, END_BLOCK SEMI NL NL);
 }
@@ -116,25 +120,27 @@ gen_middle_table(int filde, lexical_spec_t const* spec,
 void
 gen_final_table(int filde, lexical_spec_t const* spec,
 							char const* header, spec_entry_t const* state) {
-	size_t size_final = SIZE_VECTOR(spec->final);
-	
+	size_t size_states = SIZE_VECTOR(spec->states);
+
 	dprintf(filde, STATIC SP "uint%u_t" NL,
-								min_size_type(SIZE_VECTOR(spec->trans), true));
+								min_size_type(size_states, true));
 	gen_verbatim_file(filde, header);
 
 	dprintf(filde, SEP);
 	gen_state_name(filde, state);
 
-	size_t count_final = size_final / 2;
-	dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, count_final + 1);
+	dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, spec->size_final + 1);
+	for (size_t i = 1; i < size_states; ++i) {
+        dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
+        if (crt_state->group == FINAL_GROUP)
+            { continue; }
 
-	for (size_t i = 0; i < count_final; ++i) {
-		long final_state = (long)AT_VECTOR(spec->final, i*2);
-		char const* token_name = (char const*)AT_VECTOR(spec->final, (i*2) + 1);
+        spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect,
+                                                    crt_state->final_entry); 
 
 		dprintf(filde,	TAB BEG_BLOCK SP "%ld" COMMA SP
 							TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
-							final_state, token_name);
+							i, crt_entry->name);
 	}
 	dprintf(filde, TAB BEG_BLOCK SP "0" SP END_BLOCK COMMA NL);
 	dprintf(filde, END_BLOCK SEMI NL NL);

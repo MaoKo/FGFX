@@ -4,7 +4,14 @@
 #include "fgfl.h"
 #include "vector.h"
 
+#define START_GROUP     (-1)
+#define FINAL_GROUP     (-2)
+
+#define NULL_DFA_STATE  (NULL)
+
 void equivalent_state(vector_t*, vector_t*);
+
+void del_dfa_state(dfa_state_t*);
 void build_dfa_table(nfa_state_t*, lexical_spec_t*);
 
 #endif /* DFA_H */

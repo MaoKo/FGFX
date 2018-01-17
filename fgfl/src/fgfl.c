@@ -94,12 +94,12 @@ main(int argc, char const* argv[]) {
 	}
 
 //	print_token_entry(spec);
-	if (build_nfa(spec) == ERROR) {
+    if (build_nfa(spec) == ERROR) {
         errorf(0, "Impossible to construct the NFA automaton.");
         return (EXIT_FAILURE);
     }
 
-	int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
+    int exit_st = gen_fgfl_file(spec, get_filename(argv[1]));
 	del_lexical_spec(spec);
 
 	if (close(filde) == -1) {

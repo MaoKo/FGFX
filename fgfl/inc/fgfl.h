@@ -12,7 +12,7 @@
 
 typedef struct regex_node_t {
 	enum {
-		AST_UNION,
+        AST_UNION,
         AST_CONCAT,
 // TODO
         AST_STAR,
@@ -20,7 +20,7 @@ typedef struct regex_node_t {
         AST_QUES,
         AST_LOOK,
 // TODO
-		AST_CLOSURE,
+        AST_CLOSURE,
         AST_BOUND_NAME,
         AST_SYMBOL,
         AST_EPSILON,
@@ -46,9 +46,9 @@ typedef struct regex_node_t {
 typedef struct nfa_automaton_t nfa_automaton_t;
 
 typedef struct nfa_state_t {
-	size_t index;
-	int final_type;
-	bool beg_look;
+    size_t index;
+    int final_type;
+    bool beg_look;
     int symbol_edge;
     union {
         struct {
@@ -94,10 +94,12 @@ struct nfa_automaton_t {
 };
 
 typedef struct {
-	bitset_t* set_state;
-	size_t hash_state;
-	trans_list_t* edge;
-    size_t group;
+    bitset_t* set_state;
+    size_t hash_state;
+    trans_list_t* trans;
+    size_t final_entry;
+    bool middle;
+    int group;
 } dfa_state_t;
 
 typedef struct {
@@ -105,15 +107,17 @@ typedef struct {
 	int kind;
 	bool is_used;
 	char* name;
-	union {
-		struct { // if TERMINAL
-			bool is_igcase;
-			bool is_frag;
-
-			bool use_look;
+    union {
+        struct { // if TERMINAL
+            bool is_igcase;
+            bool is_frag;
             bool use_upper_lower;
-
-			bool skip;
+#if 0
+            bool useless_lower;
+            bool useless_upper;
+#endif
+            bool use_look;
+            bool skip;
 
 			enum { REGEX, NFA } active;
 			union {
@@ -132,8 +136,8 @@ typedef struct {
 				bool is_defined;
 				bool is_reach;
 			};
-			size_t count;
-		};
+            size_t count;
+        };
 	};
 } spec_entry_t;
 
@@ -144,12 +148,8 @@ typedef struct {
 	int start_state;
 	bool miss_regex;
 	nfa_state_t* master;
-
-	// Table generated during the build of the DFA
-    // TODO construct own struct
-	vector_t* trans;
-	vector_t* final;
-	vector_t* middle;
+	vector_t* states;
+    size_t size_final;
 } lexical_spec_t;
 
 #endif /* FGFL_H */
