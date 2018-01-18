@@ -120,8 +120,8 @@ gen_middle_table(int filde, lexical_spec_t const* spec,
 }
 
 void
-gen_final_table(int filde, lexical_spec_t const* spec,
-                            char const* header, spec_entry_t const* state) {
+gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
+                            spec_entry_t const* state, size_t kind) {
     size_t size_states = SIZE_VECTOR(spec->states);
 
     dprintf(filde, STATIC SP "uint%u_t" NL,
@@ -131,18 +131,25 @@ gen_final_table(int filde, lexical_spec_t const* spec,
     dprintf(filde, SEP);
     gen_state_name(filde, state);
 
-    dprintf(filde, "final_table[%zu][2] = " BEG_BLOCK NL, spec->size_final + 1);
+    dprintf(filde, "%sfinal_table[%zu][2] = " BEG_BLOCK NL,
+                (kind != FINAL_TABLE) ? "anchor_" : "", ((kind != FINAL_TABLE) 
+                ? spec->size_final_anchor : spec->size_final) + 1);
+
     for (size_t i = 1; i < size_states; ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
+
         if (crt_state->group != FINAL_GROUP)
+            { continue; }
+        else if ((kind != FINAL_TABLE)
+                            && (crt_state->final_anchor_entry == NO_ANCHOR))
             { continue; }
 
         spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect,
-                                                    crt_state->final_entry); 
+            (kind != FINAL_TABLE) ? (size_t)crt_state->final_anchor_entry
+                                                : crt_state->final_entry); 
 
-        dprintf(filde,  TAB BEG_BLOCK SP "%ld" COMMA SP
-                            TAB TOKEN_PREFIX SEP "%s" SP END_BLOCK COMMA NL,
-                            i, crt_entry->name);
+        dprintf(filde,  TAB BEG_BLOCK SP "%ld" COMMA SP TAB TOKEN_PREFIX
+                        SEP "%s" SP END_BLOCK COMMA NL, i, crt_entry->name);
     }
     dprintf(filde, TAB BEG_BLOCK SP "0" SP END_BLOCK COMMA NL);
     dprintf(filde, END_BLOCK SEMI NL NL);

@@ -29,9 +29,17 @@
 #define GEN_SKIP_TABLE(f, s, h) gen_terminated_table(f, s, h, SKIP_TABLE)
 #define GEN_LOOK_TABLE(f, s, h) gen_terminated_table(f, s, h, LOOK_TABLE)
 
+#define GEN_FINAL_TABLE(f, s, h, st)        \
+                        (gen_kind_final_table(f, s, h, st, FINAL_TABLE))
+
+#define GEN_ANCHOR_FINAL_TABLE(f, s, h, st) \
+                        (gen_kind_final_table(f, s, h, st, ANCHOR_FINAL_TABLE))
+
 enum {
     LOOK_TABLE,
     SKIP_TABLE,
+    FINAL_TABLE,
+    ANCHOR_FINAL_TABLE,
 };
 
 void gen_state_enum(int, lexical_spec_t const*);
@@ -42,8 +50,8 @@ void gen_state_table(int, lexical_spec_t const*,
                             char const*, spec_entry_t const*);
 void gen_middle_table(int, lexical_spec_t const*,
                             char const*, spec_entry_t const*);
-void gen_final_table(int, lexical_spec_t const*,
-                            char const*, spec_entry_t const*);
+void gen_kind_final_table(int, lexical_spec_t const*, char const*,
+                            spec_entry_t const*, size_t);
 void gen_change_state(int, char const*, lexical_spec_t*);
 void gen_terminated_table(int, lexical_spec_t const*, char const*, size_t);
 

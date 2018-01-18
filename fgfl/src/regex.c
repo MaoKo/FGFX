@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
@@ -84,7 +83,11 @@ regex_node_t*
 build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
     regex_spec = spec;
     regex_entry = entry;
-    // TODO anchor ( '^' and '$' )
+    if (peek_token(spec->lex) == T_REG_CARET) {
+        advance_token(spec->lex);
+        entry->beg_line = true;
+    }
+    // TODO anchor ( missing '$' )
     return (regex_look());
 }
 
@@ -133,7 +136,7 @@ regex_cat(void) {
         { return (NULL_NODE); }
 
     while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION,
-                                    T_REG_RPAREN, T_END_REGEX, T_EOF, -1)) {
+                                    T_REG_RPAREN, T_CLOSE_REGEX, T_EOF, -1)) {
          regex_node_t* right_op = regex_closure();
         if (!right_op) {
             del_regex_node(root);
@@ -210,7 +213,7 @@ regex_atom(void) {
         }
         else {
             errorf(CURRENT_LINE(regex_spec->lex),
-                                            "Missing a char in the regex.");
+                        "Unrecognized rule. Missing a char in the regex.");
             return (NULL_NODE);
         }
     }
@@ -254,6 +257,7 @@ regex_fullccl(void) {
     if (!root)
         { return (NULL_NODE); }
 
+    bool encounter_op = false;
     while (in_first(regex_spec->lex, T_REG_DIFF_CLASS, T_REG_UNION_CLASS, -1)) {
         int kind_op = advance_token(regex_spec->lex);
         if (peek_token(regex_spec->lex) != T_REG_LBRACK) {
@@ -271,6 +275,15 @@ regex_fullccl(void) {
                 { UNION_BITSET(root->class, right_op->class); }
             del_regex_node(right_op);
         }
+        encounter_op = true;
+    }
+    if (is_empty_bitset(root->class)) {
+        if (encounter_op) {
+            warnf(CURRENT_LINE(regex_spec->lex),
+                    "Generated epsilon with class operator.");
+        }
+        del_bitset(root->class);
+        root->kind_ast = AST_EPSILON;
     }
     return (root);
 }

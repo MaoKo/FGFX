@@ -5,7 +5,7 @@ $EXTERN
 
 $PRODUCTION
 {
-    <regex>         ->  /* [ '^' ] */ [ <regex_look> ] /* [ '$' ] */ ;
+    <regex>         ->  [ '^' ] [ <regex_look> ]  [ '$' ] ;
 
     <regex_look>    ->  <regex_union> [ '/' <regex_union> ] ;
 	

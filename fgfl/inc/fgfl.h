@@ -47,6 +47,7 @@ typedef struct nfa_automaton_t nfa_automaton_t;
 typedef struct nfa_state_t {
     size_t index;
     int final_type;
+    bool is_anchor;
     bool beg_look;
     int symbol_edge;
     struct nfa_state_t* out_state;
@@ -93,6 +94,7 @@ typedef struct {
     size_t hash_state;
     trans_list_t* trans;
     size_t final_entry;
+    int final_anchor_entry;
     bool middle;
     int group;
 } dfa_state_t;
@@ -109,6 +111,10 @@ typedef struct {
 
             bool use_lower;
             bool use_upper;
+
+            bool beg_line;
+//          TODO
+//          bool end_line;
 
             bool use_look;
             bool skip;
@@ -141,6 +147,7 @@ typedef struct {
     nfa_state_t* master;
     vector_t* states;
     size_t size_final;
+    size_t size_final_anchor;
 } lexical_spec_t;
 
 #endif /* FGFL_H */

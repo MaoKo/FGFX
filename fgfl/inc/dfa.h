@@ -4,6 +4,8 @@
 #include "fgfl.h"
 #include "vector.h"
 
+#define NO_ANCHOR       (-1)
+
 #define START_GROUP     (-1)
 #define FINAL_GROUP     (-2)
 

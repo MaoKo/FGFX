@@ -7,21 +7,22 @@
 enum {
 	DUMMY_STATE,
 	S_GLOBAL,
-	S_IN_REGEX,
-	S_STRING,
-	S_FINITE_SEQ,
+	S_BEG_REGEX,
+	S_BODY_REGEX,
 	S_BEG_CCL,
 	S_BODY_CCL,
+	S_STRING,
+	S_FINITE_SEQ,
 };
 
-#define TOTAL_STATE	7
+#define TOTAL_STATE	8
 #define INIT_STATE	S_GLOBAL
 
 enum {
 	T_EQUAL,
 	T_STAR,
-	T_BEG_REGEX,
-	T_END_REGEX,
+	T_OPEN_REGEX,
+	T_CLOSE_REGEX,
 	T_REG_UNION,
 	T_REG_STAR,
 	T_REG_PLUS,
@@ -33,15 +34,15 @@ enum {
 	T_REG_QUOTE,
 	T_REG_BOUND_NAME,
 	T_REG_LBRACE,
+	T_REG_RBRACE,
 	T_DIGIT,
 	T_REG_COMMA,
-	T_REG_RBRACE,
 	T_REG_DIFF_CLASS,
 	T_REG_UNION_CLASS,
 	T_REG_LBRACK,
+	T_REG_RBRACK,
 	T_REG_CARET,
 	T_REG_HYPHEN,
-	T_REG_RBRACK,
 	T_CCE,
 	T_N_CCE,
 	T_OCT_NUM,
@@ -122,19 +123,28 @@ enum {
 
 static int8_t
 fgfx_begin_table[TOTAL_TOKEN][TOTAL_STATE] = {
-	[T_BEG_REGEX][S_GLOBAL] = S_IN_REGEX, 
-	[T_END_REGEX][S_IN_REGEX] = S_GLOBAL, 
-	[T_REG_QUOTE][S_IN_REGEX] = S_STRING, [T_REG_QUOTE][S_STRING] = S_IN_REGEX, 
-	[T_REG_LBRACE][S_IN_REGEX] = S_FINITE_SEQ, 
-	[T_REG_RBRACE][S_FINITE_SEQ] = S_IN_REGEX, 
-	[T_REG_LBRACK][S_IN_REGEX] = S_BEG_CCL, 
-	[T_REG_CARET][S_BEG_CCL] = S_BODY_CCL, 
-	[T_REG_RBRACK][S_BEG_CCL] = S_IN_REGEX, [T_REG_RBRACK][S_BODY_CCL] = S_IN_REGEX, 
+	[T_OPEN_REGEX][S_GLOBAL] = S_BEG_REGEX, 
+	[T_CLOSE_REGEX][S_BEG_REGEX] = S_GLOBAL, [T_CLOSE_REGEX][S_BODY_REGEX] = S_GLOBAL, 
+	[T_REG_UNION][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_STAR][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_PLUS][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_QUES][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_LPAREN][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_RPAREN][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_DOT][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_LOOK][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_QUOTE][S_BEG_REGEX] = S_STRING, [T_REG_QUOTE][S_BODY_REGEX] = S_STRING, [T_REG_QUOTE][S_STRING] = S_BODY_REGEX, 
+	[T_REG_BOUND_NAME][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_LBRACE][S_BEG_REGEX] = S_FINITE_SEQ, [T_REG_LBRACE][S_BODY_REGEX] = S_FINITE_SEQ, 
+	[T_REG_RBRACE][S_FINITE_SEQ] = S_BODY_REGEX, 
+	[T_REG_LBRACK][S_BEG_REGEX] = S_BEG_CCL, [T_REG_LBRACK][S_BODY_REGEX] = S_BEG_CCL, 
+	[T_REG_RBRACK][S_BEG_CCL] = S_BODY_REGEX, [T_REG_RBRACK][S_BODY_CCL] = S_BODY_REGEX, 
+	[T_REG_CARET][S_BEG_REGEX] = S_BODY_REGEX, [T_REG_CARET][S_BEG_CCL] = S_BODY_CCL, 
 	[T_CCE][S_BEG_CCL] = S_BODY_CCL, 
 	[T_N_CCE][S_BEG_CCL] = S_BODY_CCL, 
-	[T_OCT_NUM][S_BEG_CCL] = S_BODY_CCL, 
-	[T_HEX_NUM][S_BEG_CCL] = S_BODY_CCL, 
-	[T_REG_CHAR][S_BEG_CCL] = S_BODY_CCL, 
+	[T_OCT_NUM][S_BEG_CCL] = S_BODY_CCL, [T_OCT_NUM][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_HEX_NUM][S_BEG_CCL] = S_BODY_CCL, [T_HEX_NUM][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_REG_CHAR][S_BEG_CCL] = S_BODY_CCL, [T_REG_CHAR][S_BEG_REGEX] = S_BODY_REGEX, 
 };
 
 #define START_STATE	1
@@ -187,7 +197,7 @@ fgfx_GLOBAL_final_table[23][2] = {
 	{ 6, 	T_RPAREN },
 	{ 7, 	T_STAR },
 	{ 8, 	T_COMMA },
-	{ 10, 	T_BEG_REGEX },
+	{ 10, 	T_OPEN_REGEX },
 	{ 11, 	T_SEMI },
 	{ 13, 	T_EQUAL },
 	{ 14, 	T_TERMINAL },
@@ -198,7 +208,7 @@ fgfx_GLOBAL_final_table[23][2] = {
 	{ 19, 	T_RBRACE },
 	{ 20, 	T_DIRECTIVE },
 	{ 23, 	T_ARROW },
-	{ 24, 	T_BEG_REGEX },
+	{ 24, 	T_OPEN_REGEX },
 	{ 26, 	T_COMMENT },
 	{ 28, 	T_BARROW },
 	{ 29, 	T_LITERAL },
@@ -208,7 +218,74 @@ fgfx_GLOBAL_final_table[23][2] = {
 };
 
 static uint8_t
-fgfx_IN_REGEX_state_table[32][256] = {
+fgfx_BEG_REGEX_state_table[29][256] = {
+/*   0 */	{},
+/*   1 */	{[125 ... 255]=2, [124]=16, [123]=15, [95 ... 122]=2, [94]=14, [93]=2, [92]=13, [91]=12, [64 ... 90]=2, [63]=11, [48 ... 62]=2, [47]=10, [46]=9, [44 ... 45]=2, [43]=8, [42]=7, [41]=6, [40]=5, [35 ... 39]=2, [34]=4, [33]=2, [32]=3, [11 ... 31]=2, [9]=3, [0 ... 8]=2},
+/*   2 */	{},
+/*   3 */	{[47]=18, [32]=17, [9]=17},
+/*   4 */	{},
+/*   5 */	{},
+/*   6 */	{},
+/*   7 */	{},
+/*   8 */	{},
+/*   9 */	{},
+/*  10 */	{[59]=19, [45]=20, [44]=19, [32]=18, [9 ... 10]=18},
+/*  11 */	{},
+/*  12 */	{},
+/*  13 */	{[121 ... 255]=2, [120]=22, [89 ... 119]=2, [88]=22, [56 ... 87]=2, [48 ... 55]=21, [0 ... 47]=2},
+/*  14 */	{},
+/*  15 */	{[97 ... 122]=23, [95]=23, [65 ... 90]=23},
+/*  16 */	{},
+/*  17 */	{[47]=18, [32]=17, [9]=17},
+/*  18 */	{[59]=19, [45]=20, [44]=19, [32]=18, [9 ... 10]=18},
+/*  19 */	{},
+/*  20 */	{[62]=19},
+/*  21 */	{[48 ... 55]=24},
+/*  22 */	{[97 ... 102]=25, [65 ... 70]=25, [48 ... 57]=25},
+/*  23 */	{[125]=26, [97 ... 122]=23, [95]=23, [65 ... 90]=23, [48 ... 57]=23},
+/*  24 */	{[48 ... 55]=27},
+/*  25 */	{[97 ... 102]=28, [65 ... 70]=28, [48 ... 57]=28},
+/*  26 */	{},
+/*  27 */	{},
+/*  28 */	{},
+};
+
+static uint8_t
+fgfx_BEG_REGEX_middle_table[29] = {
+	[10]=true,
+	[18]=true,
+};
+
+static uint8_t
+fgfx_BEG_REGEX_final_table[24][2] = {
+	{ 2, 	T_REG_CHAR },
+	{ 3, 	T_REG_CHAR },
+	{ 4, 	T_REG_QUOTE },
+	{ 5, 	T_REG_LPAREN },
+	{ 6, 	T_REG_RPAREN },
+	{ 7, 	T_REG_STAR },
+	{ 8, 	T_REG_PLUS },
+	{ 9, 	T_REG_DOT },
+	{ 10, 	T_REG_LOOK },
+	{ 11, 	T_REG_QUES },
+	{ 12, 	T_REG_LBRACK },
+	{ 13, 	T_REG_CHAR },
+	{ 14, 	T_REG_CARET },
+	{ 15, 	T_REG_LBRACE },
+	{ 16, 	T_REG_UNION },
+	{ 19, 	T_CLOSE_REGEX },
+	{ 21, 	T_OCT_NUM },
+	{ 22, 	T_REG_CHAR },
+	{ 24, 	T_OCT_NUM },
+	{ 25, 	T_HEX_NUM },
+	{ 26, 	T_REG_BOUND_NAME },
+	{ 27, 	T_OCT_NUM },
+	{ 28, 	T_HEX_NUM },
+	{ 0 },
+};
+
+static uint8_t
+fgfx_BODY_REGEX_state_table[32][256] = {
 /*   0 */	{},
 /*   1 */	{[125 ... 255]=2, [124]=15, [123]=14, [93 ... 122]=2, [92]=13, [91]=12, [64 ... 90]=2, [63]=11, [48 ... 62]=2, [47]=10, [46]=9, [44 ... 45]=2, [43]=8, [42]=7, [41]=6, [40]=5, [35 ... 39]=2, [34]=4, [33]=2, [32]=3, [11 ... 31]=2, [9]=3, [0 ... 8]=2},
 /*   2 */	{},
@@ -244,13 +321,13 @@ fgfx_IN_REGEX_state_table[32][256] = {
 };
 
 static uint8_t
-fgfx_IN_REGEX_middle_table[32] = {
+fgfx_BODY_REGEX_middle_table[32] = {
 	[10]=true,
 	[17]=true,
 };
 
 static uint8_t
-fgfx_IN_REGEX_final_table[25][2] = {
+fgfx_BODY_REGEX_final_table[25][2] = {
 	{ 2, 	T_REG_CHAR },
 	{ 3, 	T_REG_CHAR },
 	{ 4, 	T_REG_QUOTE },
@@ -265,7 +342,7 @@ fgfx_IN_REGEX_final_table[25][2] = {
 	{ 13, 	T_REG_CHAR },
 	{ 14, 	T_REG_LBRACE },
 	{ 15, 	T_REG_UNION },
-	{ 18, 	T_END_REGEX },
+	{ 18, 	T_CLOSE_REGEX },
 	{ 20, 	T_OCT_NUM },
 	{ 21, 	T_REG_CHAR },
 	{ 25, 	T_OCT_NUM },
@@ -275,52 +352,6 @@ fgfx_IN_REGEX_final_table[25][2] = {
 	{ 29, 	T_REG_BOUND_NAME },
 	{ 30, 	T_OCT_NUM },
 	{ 31, 	T_HEX_NUM },
-	{ 0 },
-};
-
-static uint8_t
-fgfx_STRING_state_table[11][256] = {
-/*   0 */	{},
-/*   1 */	{[93 ... 255]=2, [92]=4, [35 ... 91]=2, [34]=3, [11 ... 33]=2, [0 ... 9]=2},
-/*   2 */	{},
-/*   3 */	{},
-/*   4 */	{[121 ... 255]=2, [120]=6, [89 ... 119]=2, [88]=6, [56 ... 87]=2, [48 ... 55]=5, [0 ... 47]=2},
-/*   5 */	{[48 ... 55]=7},
-/*   6 */	{[97 ... 102]=8, [65 ... 70]=8, [48 ... 57]=8},
-/*   7 */	{[48 ... 55]=9},
-/*   8 */	{[97 ... 102]=10, [65 ... 70]=10, [48 ... 57]=10},
-/*   9 */	{},
-/*  10 */	{},
-};
-
-static uint8_t
-fgfx_STRING_final_table[10][2] = {
-	{ 2, 	T_REG_CHAR },
-	{ 3, 	T_REG_QUOTE },
-	{ 4, 	T_REG_CHAR },
-	{ 5, 	T_OCT_NUM },
-	{ 6, 	T_REG_CHAR },
-	{ 7, 	T_OCT_NUM },
-	{ 8, 	T_HEX_NUM },
-	{ 9, 	T_OCT_NUM },
-	{ 10, 	T_HEX_NUM },
-	{ 0 },
-};
-
-static uint8_t
-fgfx_FINITE_SEQ_state_table[5][256] = {
-/*   0 */	{},
-/*   1 */	{[125]=4, [48 ... 57]=3, [44]=2},
-/*   2 */	{},
-/*   3 */	{[48 ... 57]=3},
-/*   4 */	{},
-};
-
-static uint8_t
-fgfx_FINITE_SEQ_final_table[4][2] = {
-	{ 2, 	T_REG_COMMA },
-	{ 3, 	T_DIGIT },
-	{ 4, 	T_REG_RBRACE },
 	{ 0 },
 };
 
@@ -417,9 +448,55 @@ fgfx_BODY_CCL_final_table[15][2] = {
 	{ 0 },
 };
 
+static uint8_t
+fgfx_STRING_state_table[11][256] = {
+/*   0 */	{},
+/*   1 */	{[93 ... 255]=2, [92]=4, [35 ... 91]=2, [34]=3, [11 ... 33]=2, [0 ... 9]=2},
+/*   2 */	{},
+/*   3 */	{},
+/*   4 */	{[121 ... 255]=2, [120]=6, [89 ... 119]=2, [88]=6, [56 ... 87]=2, [48 ... 55]=5, [0 ... 47]=2},
+/*   5 */	{[48 ... 55]=7},
+/*   6 */	{[97 ... 102]=8, [65 ... 70]=8, [48 ... 57]=8},
+/*   7 */	{[48 ... 55]=9},
+/*   8 */	{[97 ... 102]=10, [65 ... 70]=10, [48 ... 57]=10},
+/*   9 */	{},
+/*  10 */	{},
+};
+
+static uint8_t
+fgfx_STRING_final_table[10][2] = {
+	{ 2, 	T_REG_CHAR },
+	{ 3, 	T_REG_QUOTE },
+	{ 4, 	T_REG_CHAR },
+	{ 5, 	T_OCT_NUM },
+	{ 6, 	T_REG_CHAR },
+	{ 7, 	T_OCT_NUM },
+	{ 8, 	T_HEX_NUM },
+	{ 9, 	T_OCT_NUM },
+	{ 10, 	T_HEX_NUM },
+	{ 0 },
+};
+
+static uint8_t
+fgfx_FINITE_SEQ_state_table[5][256] = {
+/*   0 */	{},
+/*   1 */	{[125]=4, [48 ... 57]=3, [44]=2},
+/*   2 */	{},
+/*   3 */	{[48 ... 57]=3},
+/*   4 */	{},
+};
+
+static uint8_t
+fgfx_FINITE_SEQ_final_table[4][2] = {
+	{ 2, 	T_REG_COMMA },
+	{ 3, 	T_DIGIT },
+	{ 4, 	T_REG_RBRACE },
+	{ 0 },
+};
+
 static int8_t
 fgfx_look_table[3] = {
-	T_END_REGEX,
+	T_CLOSE_REGEX,
 	T_REG_HYPHEN,
 	-1,
 };

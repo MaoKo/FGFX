@@ -1,11 +1,10 @@
 $STATE
 {
     GLOBAL => $INITIAL,
-    IN_REGEX,
+    BEG_REGEX, BODY_REGEX,
+    BEG_CCL, BODY_CCL,
     STRING,
     FINITE_SEQ,
-    BEG_CCL,
-    BODY_CCL,
 };
 
 $TOKEN
@@ -18,51 +17,58 @@ $TOKEN
 
     EQUAL = /  = / ;
     STAR  = / \* / ;
-    ( GLOBAL ) BEG_REGEX   = / \/[[:blank:]]* /,  ( $BEGIN IN_REGEX ) ;
+    ( GLOBAL ) OPEN_REGEX = / \/[[:blank:]]* /,  ( $BEGIN BEG_REGEX ) ;
    
     /* Regex */
 
-    ( IN_REGEX ) END_REGEX = / [[:blank:]]*\//{SPACE}*(,|;|->) /,
-                                            ( $BEGIN GLOBAL   ) ;
+    ( BEG_REGEX, BODY_REGEX )
+                        CLOSE_REGEX = / [[:blank:]]*\//{SPACE}*(,|;|->) /,
+                        ( $BEGIN GLOBAL, $ALL ) ;
 
-    ( IN_REGEX ) REG_UNION = / \| / ;
-    ( IN_REGEX ) REG_STAR = / \* / ;
-    ( IN_REGEX ) REG_PLUS = / \+ / ;
-    ( IN_REGEX ) REG_QUES = / \? / ;
-    ( IN_REGEX ) REG_LPAREN = / \( / ;
-    ( IN_REGEX ) REG_RPAREN = / \) / ;
-    ( IN_REGEX ) REG_DOT = / \. / ;
-    ( IN_REGEX ) REG_LOOK = / \/ / ;
+    ( BEG_REGEX, BODY_REGEX ) REG_UNION  = / \| /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_STAR   = / \* /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_PLUS   = / \+ /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_QUES   = / \? /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_LPAREN = / \( /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_RPAREN = / \) /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_DOT    = / \. /, ( $BEGIN BODY_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_LOOK   = / \/ /, ( $BEGIN BODY_REGEX ) ;
 
-    ( IN_REGEX, STRING ) REG_QUOTE = / \" /, ( $BEGIN STRING, IN_REGEX ) ;
+    ( BEG_REGEX, BODY_REGEX, STRING ) REG_QUOTE = / \" /,
+                            ( $BEGIN STRING, STRING, BODY_REGEX ) ;
 
-    ( IN_REGEX ) REG_BOUND_NAME = / \{{LETTER}({LETTER}|{DIGIT})*\} /;
+    ( BEG_REGEX, BODY_REGEX ) REG_BOUND_NAME = 
+                    / \{{LETTER}({LETTER}|{DIGIT})*\} /, ( $BEGIN BODY_REGEX ) ;
     
-    ( IN_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN FINITE_SEQ ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_LBRACE = / \{ /,
+                            ( $BEGIN FINITE_SEQ, $ALL ) ;
+
+    ( FINITE_SEQ ) REG_RBRACE = / } /, ( $BEGIN BODY_REGEX ) ;
+
     ( FINITE_SEQ ) DIGIT = / [[:digit:]]+ / ;
     ( FINITE_SEQ ) REG_COMMA = / , / ;
-    ( FINITE_SEQ ) REG_RBRACE = / \} /, ( $BEGIN IN_REGEX ) ;
 
-    ( IN_REGEX ) REG_DIFF_CLASS = / "{-}" / ;
-    ( IN_REGEX ) REG_UNION_CLASS = / "{+}" / ;
+    ( BODY_REGEX ) REG_DIFF_CLASS  = / "{-}" / ;
+    ( BODY_REGEX ) REG_UNION_CLASS = / "{+}" / ;
 
-    ( IN_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL ) ;
-    ( BEG_CCL ) REG_CARET = / ^ /, ( $BEGIN BODY_CCL ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL, $ALL ) ;
+    ( BEG_CCL, BODY_CCL ) REG_RBRACK = / ] /, ( $BEGIN BODY_REGEX, $ALL ) ;
 
+    ( BEG_REGEX, BEG_CCL ) REG_CARET = / \^ /, ( $BEGIN BODY_REGEX, BODY_CCL ) ;
     ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
-    ( BEG_CCL, BODY_CCL ) REG_RBRACK = / \] /, ( $BEGIN IN_REGEX, $ALL ) ;
 
     ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /,  ( $BEGIN BODY_CCL ) ;
     ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}+":]" /, ( $BEGIN BODY_CCL ) ;
 
-    ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) OCT_NUM = / \\[0-7]{1,3} /,
-                            ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
+    ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
+            OCT_NUM = / \\[0-7]{1,3} /, ( $BEGIN BODY_CCL, BODY_REGEX ) ;
 
-    ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) HEX_NUM = / \\x[a-f0-9]{1,2} /
-                    -> { $IGCASE }, ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
+    ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
+            HEX_NUM = / \\[xX][[:xdigit:]]{1,2} /,
+            ( $BEGIN BODY_CCL, BODY_REGEX ) ;
 
-    ( IN_REGEX, STRING, BEG_CCL, BODY_CCL, ) REG_CHAR = / .|\\(.|\n) /,
-                            ( $BEGIN $NONE, $NONE, BODY_CCL, $NONE ) ;
+    ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
+            REG_CHAR = / .|\\(.|\n) /, ( $BEGIN BODY_CCL, BODY_REGEX ) ;
 
     /* FGFP */
 

@@ -44,7 +44,7 @@ get_next_token(void) {
     beg_lexeme = stream;
     while (*stream && (state != DEAD_STATE)) {
         state = /* NAME PREFIX */state_table[state][(int)*stream];
-        if (state != DEAD_STATE)
+        if (state == DEAD_STATE)
             { break; }
 
         ++stream;
@@ -95,11 +95,6 @@ peek_token(void) {
     if (peek == -1)
         { peek = advance_token(); }
     return (peek);
-}
-
-void
-set_stream(char const* str) {
-    stream = str;
 }
 
 #endif /* 0 */

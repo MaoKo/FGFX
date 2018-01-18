@@ -345,7 +345,7 @@ spec_regex_assign(lexical_spec_t* spec,
             { entry->skip = true; }
         advance_token(spec->lex);
     
-        if (advance_token(spec->lex) != T_BEG_REGEX) {
+        if (advance_token(spec->lex) != T_OPEN_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
                         "No found regex after %s = .", entry->name);
             return (ERROR);
@@ -361,7 +361,7 @@ spec_regex_assign(lexical_spec_t* spec,
         }
     
         entry->reg_ast = root;
-        if (advance_token(spec->lex) != T_END_REGEX) {
+        if (advance_token(spec->lex) != T_CLOSE_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
                             "No found the end of the regex '/'.");
             return (ERROR);

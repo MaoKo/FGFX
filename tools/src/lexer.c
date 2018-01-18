@@ -68,9 +68,14 @@ get_next_token(lexer_t* lex) {
                 final_table = fgfx_GLOBAL_final_table;
                 break;
 
-            case S_IN_REGEX:
-                state_table = fgfx_IN_REGEX_state_table;
-                final_table = fgfx_IN_REGEX_final_table;
+            case S_BEG_REGEX:
+                state_table = fgfx_BEG_REGEX_state_table;
+                final_table = fgfx_BEG_REGEX_final_table;
+                break;
+
+            case S_BODY_REGEX:
+                state_table = fgfx_BODY_REGEX_state_table;
+                final_table = fgfx_BODY_REGEX_final_table;
                 break;
 
             case S_STRING:
@@ -128,8 +133,11 @@ get_next_token(lexer_t* lex) {
             if (lex->crt_state == S_BODY_CCL
                                 && fgfx_BODY_CCL_middle_table[state])
                 { unget_input = true; }
-            if (lex->crt_state == S_IN_REGEX
-                                && fgfx_IN_REGEX_middle_table[state])
+            else if (lex->crt_state == S_BEG_REGEX
+                                && fgfx_BEG_REGEX_middle_table[state])
+                { unget_input = true; }
+            else if (lex->crt_state == S_BODY_REGEX
+                                && fgfx_BODY_REGEX_middle_table[state])
                 { unget_input = true; }
         }
 

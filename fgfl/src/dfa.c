@@ -6,6 +6,8 @@
 #include "nfa.h"
 #include "utils.h"
 
+static bool do_eclos = false;
+
 static void
 nfa_automaton_edges(nfa_automaton_t* nfa_m, int symbol, bitset_t* result) {
     switch (nfa_m->kind_nfa) {
@@ -89,17 +91,21 @@ epsilon_closure(bitset_t* set_state) {
         while ((i = IT_NEXT(set_state)) != IT_NULL) {
             if (!IS_PRESENT(seen_state, (size_t)i)) {
                 nfa_state_t* crt_state = STATE_AT(i);
-                if (crt_state->eclos) {
-                    if (!is_subset_bitset(set_state, crt_state->eclos))
-                        { UNION_BITSET(set_state, crt_state->eclos); }
-                    else
-                        { continue; }
+                if (!do_eclos) {
+                    if (crt_state->eclos) {
+                        if (!is_subset_bitset(set_state, crt_state->eclos))
+                            { UNION_BITSET(set_state, crt_state->eclos); }
+                        else
+                            { continue; }
+                    }
+                    else {
+                        nfa_state_edges(STATE_AT(i), EPSILON, set_state);
+                        ADD_BITSET(seen_state, (size_t)i);
+                    }
+                    change = true;
                 }
-                else {
-                    nfa_state_edges(STATE_AT(i), EPSILON, set_state);
-                    ADD_BITSET(seen_state, (size_t)i);
-                }
-                change = true;
+                else
+                    { UNION_BITSET(set_state, crt_state->eclos); }
             }
         }
         IT_RESET(set_state);
@@ -137,6 +143,8 @@ new_dfa_state(bitset_t* set_state) {
     state->set_state = set_state;
     state->hash_state = hash_bitset(set_state);
 
+    state->final_anchor_entry = NO_ANCHOR;
+
     state->group = START_GROUP;
     return (state);
 }
@@ -154,7 +162,7 @@ static vector_t*
 build_state_table(nfa_state_t* master) {
     vector_t* states = new_vector();
     
-    PUSH_BACK_VECTOR(states, NULL_DFA_STATE);
+    PUSH_BACK_VECTOR(states, NULL_DFA_STATE); //  Dead State
     PUSH_BACK_VECTOR(states, new_dfa_state(dup_bitset(master->eclos)));
     
     size_t j = 1;
@@ -210,50 +218,71 @@ build_middle_table(vector_t* states) {
     }
 }
 
-static size_t
-build_final_table(vector_t* states) {
+static void
+build_final_table(vector_t* states, lexical_spec_t* spec) {
     size_t count_final = 0;
+    size_t count_anchor = 0;
+
     for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
-        int min_tok = NO_FINAL;
+
+        int min_final = NO_FINAL;
+        int min_anchor = NO_ANCHOR;
 
         int it;
         while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
             nfa_state_t* nfa_state = STATE_AT(it);
+
             if (nfa_state->final_type != NO_FINAL) {
-                if ((min_tok == NO_FINAL)
-                                    || (min_tok > nfa_state->final_type))
-                    { min_tok = nfa_state->final_type; }
+                if ((!nfa_state->is_anchor) && ((min_final == NO_FINAL)
+                                || (min_final > nfa_state->final_type)))
+                    { min_final = nfa_state->final_type; }
+                else if ((nfa_state->is_anchor) && ((min_anchor == NO_FINAL)
+                                || (min_anchor > nfa_state->final_type)))
+                    { min_anchor = nfa_state->final_type; }
             }
         }
         IT_RESET(crt_state->set_state);
 
-        if (min_tok != NO_FINAL) {
-            crt_state->final_entry = min_tok;
+        if ((min_final != NO_FINAL) || (min_anchor != NO_ANCHOR)) {
+            crt_state->final_entry = min_final;
+            if (min_anchor <= min_final)
+                { crt_state->final_anchor_entry = min_anchor; }
+
             crt_state->group = FINAL_GROUP;
-            ++count_final;
+
+            if (min_final != NO_FINAL)
+                { ++count_final; }
+            if ((min_anchor != NO_FINAL) && (min_anchor <= min_final))
+                { ++count_anchor; }
         }
     }
-    return (count_final);
+
+    spec->size_final = count_final;
+    spec->size_final_anchor = count_anchor;
 }
 
-static inline void
-precompute_epsilon_closure(nfa_state_t* state) {
-    if (state->eclos)
+static void
+precompute_epsilon_closure(void) {
+    if (do_eclos)
         { return; }
-    bitset_t* result_set = new_bitset();
-    ADD_BITSET(result_set, GET_INDEX(state));
-    state->eclos = epsilon_closure(result_set);
+
+    for (size_t i = 0; i < MAX_SIZE_STATE; ++i) {
+        nfa_state_t* state = STATE_AT(i);
+        if (state->eclos)
+            { continue; }
+
+        bitset_t* result_set = new_bitset();
+        ADD_BITSET(result_set, GET_INDEX(state));
+        state->eclos = epsilon_closure(result_set);
+    }
+
+    do_eclos = true;
 }
 
 void
 build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
-    static bool do_eclos = false;
-    if (!do_eclos) {
-        for (size_t i = 0; i < MAX_SIZE_STATE; ++i)
-            { precompute_epsilon_closure(STATE_AT(i)); }
-        do_eclos = true;
-    }
+    precompute_epsilon_closure();
 
     if (spec->states) {
         foreach_vector(spec->states, &del_dfa_state);
@@ -262,7 +291,7 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
 
     spec->states = build_state_table(master);
     build_middle_table(spec->states);
-    spec->size_final = build_final_table(spec->states);
+    build_final_table(spec->states, spec);
 }
 
 #ifdef DFA_OPTIMIZE

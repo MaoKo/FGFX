@@ -21,7 +21,8 @@ gen_dfa_final_tables(int filde, lexical_spec_t* spec, nfa_state_t* master,
 #endif /* DFA_OPTIMIZE */
     gen_state_table(filde, spec, header, state);
     gen_middle_table(filde, spec, header, state);
-    gen_final_table(filde, spec, header, state);
+    GEN_FINAL_TABLE(filde, spec, header, state);
+    GEN_ANCHOR_FINAL_TABLE(filde, spec, header, state);
 }
 
 static int 

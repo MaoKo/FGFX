@@ -9,7 +9,7 @@
 
 int
 lr_parser(char const* stream) {
-    set_stream(stream);
+    SET_STREAM(stream);
 
     int value_stack[/* Size of value_stack */];
     int value_top = 0;

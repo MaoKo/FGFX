@@ -11,6 +11,10 @@
 vector_t* record_nfa_state = NULL;
 vector_t* record_nfa_automata = NULL;
 
+static bool crt_igcase = false;
+
+static nfa_automaton_t* dfs_regex_node(regex_node_t*);
+
 static void
 del_nfa_state(nfa_state_t* state) {
     if (state) {
@@ -131,9 +135,6 @@ new_nfa_state(int symbol_edge, ...) {
     va_end(args);
     return (state);
 }
-
-static nfa_automaton_t* dfs_regex_node(regex_node_t*);
-static bool crt_igcase = false;
 
 static nfa_automaton_t*
 regex_node_class(regex_node_t* root) {
@@ -336,13 +337,14 @@ transform_regex_nfa(spec_entry_t* crt_entry) {
     else
         { STATE_FINAL(crt_entry->nfa_m->head_state, GET_INDEX(crt_entry)); }
 
+    if (crt_entry->beg_line)
+        { STATE_ANCHOR(crt_entry->nfa_m->head_state); }
+
     del_regex_node(root);
     crt_entry->reg_ast = NULL_NODE;
 
     return (exit_st);
 }
-
-#include <stdio.h>
 
 static int
 build_nfa_from_state(lexical_spec_t* spec) {

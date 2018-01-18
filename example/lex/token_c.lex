@@ -6,112 +6,112 @@
 
 $TOKEN
 {
-	ESC_UN		=	/(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})/ -> { $FRAG };
-	LETTER		=	/[A-Za-z_]/ -> { $FRAG };
-	DIGIT		=	/[0-9]/ -> { $FRAG };
-	IDENT		= 	/({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})*/ ;
+    ESC_UN      =   /(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})/ -> { $FRAG };
+    LETTER      =   /[A-Za-z_]/ -> { $FRAG };
+    DIGIT       =   /[0-9]/ -> { $FRAG };
+    IDENT       =   /({LETTER}|{ESC_UN})({LETTER}|{DIGIT}|{ESC_UN})*/ ;
 
-	/* C Char token */
+    /* C Char token */
 
-	ESC_OCT		=	/(\\[0-7]{1,3})/ -> { $FRAG };
-	ESC_HEX		=	/(\\x[0-9a-fA-F]+)/ -> { $FRAG };
-	ESC_SEQ		=	/(\\'|\\\"|\\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)/
-							-> { $FRAG };
+    ESC_OCT     =   /(\\[0-7]{1,3})/ -> { $FRAG };
+    ESC_HEX     =   /(\\x[0-9a-fA-F]+)/ -> { $FRAG };
+    ESC_SEQ     =   /(\\'|\\\"|\\\?|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)/
+                            -> { $FRAG };
 
-	REG_ESCAPE	=	/({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN})/ -> { $FRAG } ;
-	CHAR		=	/[LuU]?'([^\n'\\]|{REG_ESCAPE})+'/ ;
+    REG_ESCAPE  =   /({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UN})/ -> { $FRAG } ;
+    CHAR        =   /[LuU]?'([^\n'\\]|{REG_ESCAPE})+'/ ;
 
-	/* C String token */
+    /* C String token */
 
-	STR			=	/(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"/ ;
+    STR         =   /(u8?|[UL])?\"([^\n"\\]|{REG_ESCAPE})*\"/ ;
 
-	/* C Punctuation */
+    /* C Punctuation */
 
-	COMMA		=	/,/	;
-	SEMICOLON	=	/\;/	;
-	LPAREN		=	/\(/	;
-	RPAREN		=	/\)/	; 
-	LBRACK		=	/\{/	;
-	RBRACK		=	/}/	;
-	LSUB		=	/\[/	;
-	RSUB		=	/]/	;
-	QUES		=	/\?/	;
-	ELLIP		=	/"..."/	;
-	EXCLA		=	/!/	;
+    COMMA       =   /,/ ;
+    SEMICOLON   =   /\;/    ;
+    LPAREN      =   /\(/    ;
+    RPAREN      =   /\)/    ; 
+    LBRACK      =   /\{/    ;
+    RBRACK      =   /}/ ;
+    LSUB        =   /\[/    ;
+    RSUB        =   /]/ ;
+    QUES        =   /\?/    ;
+    ELLIP       =   /"..."/ ;
+    EXCLA       =   /!/ ;
 
-	PLUS		=	/\+/	;
-	PLUSPLUS	=	/"++"/	;
-	MINUS		=	/-/	;
-	MINUSMINUS	=	/--/	;
-	DIV			=	/\//	;
-	MUL			=	/\*/	;
-	MOD			=	/%/	;
-	XOR			=	/^/	;
-	ORB			=	/\|/	;
-	ANDB		=	/&/	;
-	ORL			=	/"||"/	;
-	ANDL		=	/&&/	;
-	TILDE		=	/~/	;
-	ASSIGN		=	/=/	;
+    PLUS        =   /\+/    ;
+    PLUSPLUS    =   /"++"/  ;
+    MINUS       =   /-/ ;
+    MINUSMINUS  =   /--/    ;
+    DIV         =   /\//    ;
+    MUL         =   /\*/    ;
+    MOD         =   /%/ ;
+    XOR         =   /\^/ ;
+    ORB         =   /\|/    ;
+    ANDB        =   /&/ ;
+    ORL         =   /"||"/  ;
+    ANDL        =   /&&/    ;
+    TILDE       =   /~/ ;
+    ASSIGN      =   /=/ ;
 
-	PLUSE		=	/\+=/	;
-	MINUSE		=	/-=/	;
-	DIVE		=	/\/=/	;
-	MULE		=	/\*=/	;
-	MODE		=	/%=/	;
-	XORE		=	/^=/	;
-	ORBE		=	/\|=/	;
-	ANDBE		=	/&=/	;
-	ORLE		=	/"||="/	;
-	ANDLE		=	/&&=/	;
-	TILDEE		=	/~=/	;
+    PLUSE       =   /\+=/   ;
+    MINUSE      =   /-=/    ;
+    DIVE        =   /\/=/   ;
+    MULE        =   /\*=/   ;
+    MODE        =   /%=/    ;
+    XORE        =   /^=/    ;
+    ORBE        =   /\|=/   ;
+    ANDBE       =   /&=/    ;
+    ORLE        =   /"||="/ ;
+    ANDLE       =   /&&=/   ;
+    TILDEE      =   /~=/    ;
 
-	EQ			=	/==/	;
-	NEQ			=	/!=/	;
-	LESS		=	/</	;
-	GREAT		=	/>/	;
-	LESSE		=	/<=/	;
-	GREATE		=	/>=/	;
+    EQ          =   /==/    ;
+    NEQ         =   /!=/    ;
+    LESS        =   /</ ;
+    GREAT       =   />/ ;
+    LESSE       =   /<=/    ;
+    GREATE      =   />=/    ;
 
-	COLON		=	/:/	;
-	DASH		=	/#/	;
+    COLON       =   /:/ ;
+    DASH        =   /#/ ;
 
-	/* C Number */
+    /* C Number */
 
-	/* C Int */
+    /* C Int */
 
-	DEC			=	/([1-9][0-9]*)/ -> { $FRAG };
-	OCT			=	/(0[0-7]*)/ -> { $FRAG };
-	HEX			=	/(0[xX][0-9a-fA-F]+)/ -> { $FRAG };
-	U_S			=	/[uU]/ -> { $FRAG };
-	L_S			=	/[lL]/ -> { $FRAG };
-	LL_S		=	/(ll|LL)/ -> { $FRAG };
+    DEC         =   /([1-9][0-9]*)/ -> { $FRAG };
+    OCT         =   /(0[0-7]*)/ -> { $FRAG };
+    HEX         =   /(0[xX][0-9a-fA-F]+)/ -> { $FRAG };
+    U_S         =   /[uU]/ -> { $FRAG };
+    L_S         =   /[lL]/ -> { $FRAG };
+    LL_S        =   /(ll|LL)/ -> { $FRAG };
 
-	INT_S		=	/(({U_S}{L_S}?)|({U_S}{LL_S})|\
-									({L_S}{U_S}?)|({LL_S}{U_S}?))/ -> { $FRAG };
+    INT_S       =   /(({U_S}{L_S}?)|({U_S}{LL_S})|\
+                                    ({L_S}{U_S}?)|({LL_S}{U_S}?))/ -> { $FRAG };
 
-	INTEGER		=	/({DEC}|{OCT}|{HEX}){INT_S}?/ ;
+    INTEGER     =   /({DEC}|{OCT}|{HEX}){INT_S}?/ ;
 
-	/* C Float */
-	SIGN		=	/[-+]/	 -> { $FRAG };
-	F_S			=	/[flFL]/ -> { $FRAG };
+    /* C Float */
+    SIGN        =   /[-+]/   -> { $FRAG };
+    F_S         =   /[flFL]/ -> { $FRAG };
 
-	SCF_EXP		=	/[eE]{SIGN}?{DIGIT}+/ -> { $FRAG };
-	BIN_EXP		=	/[pP]{SIGN}?{DIGIT}+/ -> { $FRAG };
+    SCF_EXP     =   /[eE]{SIGN}?{DIGIT}+/ -> { $FRAG };
+    BIN_EXP     =   /[pP]{SIGN}?{DIGIT}+/ -> { $FRAG };
 
-	D_FRACT		=	/({DIGIT}+\.)/ -> { $FRAG };
+    D_FRACT     =   /({DIGIT}+\.)/ -> { $FRAG };
 
-	DECF		=	/({D_FRACT}{SCF_EXP}?{F_S}?)|\
-									({DIGIT}+{SCF_EXP}{F_S}?)/ -> { $FRAG };
-	FLOAT		=	/{D_FRACT}/	;
+    DECF        =   /({D_FRACT}{SCF_EXP}?{F_S}?)|\
+                                    ({DIGIT}+{SCF_EXP}{F_S}?)/ -> { $FRAG };
+    FLOAT       =   /{D_FRACT}/ ;
 };
 
 $SKIP
 {
-	/* C Comment */
-	COMMENT		=	/(\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/)/ ;
+    /* C Comment */
+    COMMENT     =   /(\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/)/ ;
 
-	/* C Space */
-	SPACE		=	/[ \t\n]+/ ;
+    /* C Space */
+    SPACE       =   /[ \t\n]+/ ;
 };
 
