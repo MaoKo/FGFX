@@ -1,5 +1,6 @@
-$TOKEN {
-	A =	/ A\
-		  B\
-		  C / ;
+$TOKEN
+{
+    A = / A\
+          B\
+          C / ;
 };

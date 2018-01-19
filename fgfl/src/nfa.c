@@ -331,7 +331,6 @@ transform_regex_nfa(spec_entry_t* crt_entry) {
     crt_igcase = crt_entry->is_igcase;
 
     int exit_st = DONE;
-
     if ((crt_entry->nfa_m = dfs_regex_node(root)) == NULL_AUTOMATON)
         { exit_st = ERROR; }
     else

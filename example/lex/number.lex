@@ -1,3 +1,4 @@
-$TOKEN {
-	DIGIT = / [0-9]+ / ;
+$TOKEN
+{
+    DIGIT = / [[:digit:]]+ / ;
 };

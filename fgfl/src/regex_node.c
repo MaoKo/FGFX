@@ -72,6 +72,10 @@ cpy_regex_node(regex_node_t* root) {
             regex_node_t* left = cpy_regex_node(root->left);
             regex_node_t* right = cpy_regex_node(root->right);
 
+            int new_kind = root->kind_ast;
+            if (new_kind == AST_LOOK)
+                { new_kind = AST_CONCAT; }
+
             return (new_regex_node(root->kind_ast, left, right));
         }
     }

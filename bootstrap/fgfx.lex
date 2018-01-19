@@ -55,6 +55,8 @@ $TOKEN
     ( BEG_CCL, BODY_CCL ) REG_RBRACK = / ] /, ( $BEGIN BODY_REGEX, $ALL ) ;
 
     ( BEG_REGEX, BEG_CCL ) REG_CARET = / \^ /, ( $BEGIN BODY_REGEX, BODY_CCL ) ;
+    ( BODY_REGEX ) REG_DOLLAR = / $/[[:blank:]]*\/ / ;
+
     ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
 
     ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]" /,  ( $BEGIN BODY_CCL ) ;
@@ -68,7 +70,7 @@ $TOKEN
             ( $BEGIN BODY_CCL, BODY_REGEX ) ;
 
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
-            REG_CHAR = / .|\\(.|\n) /, ( $BEGIN BODY_CCL, BODY_REGEX ) ;
+            REG_CHAR = / \\?. /, ( $BEGIN BODY_CCL, BODY_REGEX ) ;
 
     /* FGFP */
 
@@ -101,6 +103,8 @@ $TOKEN
 $SKIP
 {
     SPACE   = / [ \t\n]+                              / ;
+    ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
+            MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
     COMMENT = / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
 };
 

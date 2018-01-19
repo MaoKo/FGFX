@@ -1,15 +1,15 @@
 $TOKEN
 {
-	PLUS	= /	"+"			/	;
-	MINUS	= /	"-"			/	;
-	MUL		= /	"*"			/	;
-	DIV		= /	"\/"		/	;
-	LPAREN	= /	"("			/	;
-	RPAREN	= /	")"			/	;
-	NUM		= /	[0-9]+		/	;
+    PLUS    = / "+"          /   ;
+    MINUS   = / "-"          /   ;
+    MUL     = / "*"          /   ;
+    DIV     = / "/"          /   ;
+    LPAREN  = / "("          /   ;
+    RPAREN  = / ")"          /   ;
+    NUM     = / [[:digit:]]+ /   ;
 };
 
 $SKIP
 {
-	SPACE	= /	[ \n\t]+	/	;
+    SPACE   = / [ \n\t]+     /   ;
 };

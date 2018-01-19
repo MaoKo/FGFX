@@ -122,6 +122,9 @@ gen_middle_table(int filde, lexical_spec_t const* spec,
 void
 gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
                             spec_entry_t const* state, size_t kind) {
+    if ((kind == ANCHOR_FINAL_TABLE) && (!spec->size_final_anchor))
+        { return; }
+
     size_t size_states = SIZE_VECTOR(spec->states);
 
     dprintf(filde, STATIC SP "uint%u_t" NL,
@@ -140,17 +143,20 @@ gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
 
         if (crt_state->group != FINAL_GROUP)
             { continue; }
-        else if ((kind != FINAL_TABLE)
+        else if ((kind == ANCHOR_FINAL_TABLE)
                             && (crt_state->final_anchor_entry == NO_ANCHOR))
+            { continue; }
+        else if ((kind == FINAL_TABLE) && (crt_state->final_entry == NO_FINAL))
             { continue; }
 
         spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect,
-            (kind != FINAL_TABLE) ? (size_t)crt_state->final_anchor_entry
-                                                : crt_state->final_entry); 
+            ((kind != FINAL_TABLE) ? (size_t)crt_state->final_anchor_entry
+                                   : (size_t)crt_state->final_entry)); 
 
         dprintf(filde,  TAB BEG_BLOCK SP "%ld" COMMA SP TAB TOKEN_PREFIX
                         SEP "%s" SP END_BLOCK COMMA NL, i, crt_entry->name);
     }
+
     dprintf(filde, TAB BEG_BLOCK SP "0" SP END_BLOCK COMMA NL);
     dprintf(filde, END_BLOCK SEMI NL NL);
 }

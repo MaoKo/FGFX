@@ -87,8 +87,14 @@ build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
         advance_token(spec->lex);
         entry->beg_line = true;
     }
-    // TODO anchor ( missing '$' )
-    return (regex_look());
+    regex_node_t* root = regex_look();
+    if (!root)
+        { return (NULL_NODE); }
+    if (peek_token(spec->lex) == T_REG_DOLLAR) {
+        advance_token(spec->lex);
+        root = new_regex_node(AST_LOOK, root, new_regex_node(AST_SYMBOL, '\n'));
+    }
+    return (root);
 }
 
 static regex_node_t*
@@ -135,8 +141,8 @@ regex_cat(void) {
     if (!root)
         { return (NULL_NODE); }
 
-    while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION,
-                                    T_REG_RPAREN, T_CLOSE_REGEX, T_EOF, -1)) {
+    while (!in_first(regex_spec->lex, T_REG_LOOK, T_REG_UNION, T_REG_RPAREN,
+                                    T_REG_DOLLAR, T_CLOSE_REGEX, T_EOF, -1)) {
          regex_node_t* right_op = regex_closure();
         if (!right_op) {
             del_regex_node(root);

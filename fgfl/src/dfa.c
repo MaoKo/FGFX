@@ -143,6 +143,7 @@ new_dfa_state(bitset_t* set_state) {
     state->set_state = set_state;
     state->hash_state = hash_bitset(set_state);
 
+    state->final_entry = NO_FINAL;
     state->final_anchor_entry = NO_ANCHOR;
 
     state->group = START_GROUP;
@@ -246,14 +247,15 @@ build_final_table(vector_t* states, lexical_spec_t* spec) {
 
         if ((min_final != NO_FINAL) || (min_anchor != NO_ANCHOR)) {
             crt_state->final_entry = min_final;
-            if (min_anchor <= min_final)
+            if ((min_final == NO_FINAL) || (min_anchor <= min_final))
                 { crt_state->final_anchor_entry = min_anchor; }
 
             crt_state->group = FINAL_GROUP;
 
             if (min_final != NO_FINAL)
                 { ++count_final; }
-            if ((min_anchor != NO_FINAL) && (min_anchor <= min_final))
+            if ((min_anchor != NO_FINAL)
+                    && ((min_final == NO_FINAL) || (min_anchor <= min_final)))
                 { ++count_anchor; }
         }
     }

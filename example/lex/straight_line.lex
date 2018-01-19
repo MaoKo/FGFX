@@ -5,8 +5,8 @@ $SKIP
 
 $TOKEN
 {
-	ID = / [a-zA-Z_]([a-zA-Z_]|[0-9])* / ;
-	NUM = / [0-9]+ / ;
+	ID = / [[:alpha:]_]([[:alpha:]_]|[[:digit:]])* / ;
+	NUM = / [[:digit:]]+ / ;
 	SEMI = / ; / ;
 	ASSIGN = / := / ;
 	LPAREN = / \( / ;

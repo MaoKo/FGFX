@@ -1,4 +1,5 @@
-$TOKEN {
+$TOKEN
+{
 	DIGIT		=	/[0-9]/	 -> { $FRAG };
 	SIGN		=	/[-+]/	 -> { $FRAG };
 

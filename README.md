@@ -32,8 +32,6 @@ Which create a file called token_c.h.lex ready for lexing.
     .   Check useless $BEGIN
     .   Gen begin table when occurs ( $BEGIN )
     .   Add several begin move for the same token name (fix when (*) occurs)
-    .   Add anchor to the regex '^' and '$'
-    .   Handling multi-line in the regex
     .   Add the minimizing partitionning algorithm for DFA
     .   Create the grammar and the lexical specification for regex
     .   Learn MarkDown :)

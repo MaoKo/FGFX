@@ -43,6 +43,11 @@ dependency_macro(lexical_spec_t* spec,
                     { *set_macro = new_bitset(); }
                 ADD_BITSET(*set_macro, GET_INDEX(crt_entry));
                 bound_node->index_token = index;
+
+                if (crt_entry->use_look) {
+                    warnf(0, "The token %s use lookahead operator. It's "
+                            "feature is disable when expand.", crt_entry->name);
+                }
             }
         }
         else {
