@@ -4,14 +4,10 @@
 #include "fgfl.h"
 #include "vector.h"
 
-#define NO_ANCHOR       (-1)
-
-#define START_GROUP     (-1)
-#define FINAL_GROUP     (-2)
-
 #define DFA_STATE_AT(spec, i)   (AT_VECTOR(spec->states, (size_t)i))
+#define NULL_DFA_STATE          (NULL)
 
-#define NULL_DFA_STATE  (NULL)
+#define START_GROUP             (1)
 
 void equivalent_state(vector_t*, vector_t*);
 

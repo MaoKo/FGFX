@@ -94,9 +94,10 @@ typedef struct {
     bitset_t* set_state;
     size_t hash_state;
     trans_list_t* trans;
+    bool middle;
+    bool is_final;
     int final_entry;
     int final_anchor_entry;
-    bool middle;
     int group;
 } dfa_state_t;
 

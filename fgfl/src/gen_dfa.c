@@ -141,10 +141,10 @@ gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
     for (size_t i = 1; i < size_states; ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
 
-        if (crt_state->group != FINAL_GROUP)
+        if (!crt_state->is_final)
             { continue; }
         else if ((kind == ANCHOR_FINAL_TABLE)
-                            && (crt_state->final_anchor_entry == NO_ANCHOR))
+                            && (crt_state->final_anchor_entry == NO_FINAL))
             { continue; }
         else if ((kind == FINAL_TABLE) && (crt_state->final_entry == NO_FINAL))
             { continue; }

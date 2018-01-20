@@ -16,9 +16,8 @@ static void
 gen_dfa_final_tables(int filde, lexical_spec_t* spec, nfa_state_t* master,
                                     char const* header, spec_entry_t* state) {
     build_dfa_table(master, spec);
-    minimizing_dfa(spec);
 #ifdef DFA_OPTIMIZE
-    equivalent_state(spec->trans, spec->final);
+    minimizing_dfa(spec);
 #endif /* DFA_OPTIMIZE */
     gen_state_table(filde, spec, header, state);
     gen_middle_table(filde, spec, header, state);

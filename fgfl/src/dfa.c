@@ -140,11 +140,13 @@ new_dfa_state(bitset_t* set_state, vector_t* states) {
         { return (NULL_DFA_STATE); }
     memset(state, 0, sizeof(*state));
 
-    state->set_state = set_state;
-    state->hash_state = hash_bitset(set_state);
+    if (set_state) {
+        state->set_state = set_state;
+        state->hash_state = hash_bitset(set_state);
+    }
 
     state->final_entry = NO_FINAL;
-    state->final_anchor_entry = NO_ANCHOR;
+    state->final_anchor_entry = NO_FINAL;
 
     state->group = START_GROUP;
 
@@ -232,7 +234,7 @@ build_final_table(vector_t* states, lexical_spec_t* spec) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
 
         int min_final = NO_FINAL;
-        int min_anchor = NO_ANCHOR;
+        int min_anchor = NO_FINAL;
 
         int it;
         while ((it = IT_NEXT(crt_state->set_state)) != IT_NULL) {
@@ -249,12 +251,12 @@ build_final_table(vector_t* states, lexical_spec_t* spec) {
         }
         IT_RESET(crt_state->set_state);
 
-        if ((min_final != NO_FINAL) || (min_anchor != NO_ANCHOR)) {
+        if ((min_final != NO_FINAL) || (min_anchor != NO_FINAL)) {
             crt_state->final_entry = min_final;
             if ((min_final == NO_FINAL) || (min_anchor <= min_final))
                 { crt_state->final_anchor_entry = min_anchor; }
 
-            crt_state->group = FINAL_GROUP;
+            crt_state->is_final = true;
 
             if (min_final != NO_FINAL)
                 { ++count_final; }
@@ -303,65 +305,7 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
     build_final_table(spec->states, spec);
 }
 
-#ifdef DFA_OPTIMIZE
-
-static void
-redirect_transition(vector_t* trans, long s1, long s2) {
-    del_trans_list(AT_VECTOR(trans, s2));
-    erase_vector(trans, s2);
-
-    for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
-        trans_list_t* list = (trans_list_t*)AT_VECTOR(trans, i);
-        redirect_trans_list(list, s1, s2);
-    }
-}
-
-static void
-redirect_final(vector_t* finalt, bool isf, size_t fs2, size_t max) {
-    if (isf) {
-        erase_vector(finalt, fs2);
-        erase_vector(finalt, fs2);
-    }
-    for (size_t i = 0; i < SIZE_VECTOR(finalt); i += 2) {
-        if ((size_t)AT_VECTOR(finalt, i) > max) {
-            long old = (long)AT_VECTOR(finalt, i) - 1;
-            SET_VECTOR(finalt, i, (void*)old);
-        }
-    }
-}
-
-void 
-equivalent_state(vector_t* trans, vector_t* finalt) {
-    bool repeat;
-    do {
-        repeat = false;
-        for (size_t i = 1; i < SIZE_VECTOR(trans); ++i) {
-            trans_list_t const* t1 = (trans_list_t*)AT_VECTOR(trans, i);
-            for (size_t j = i + 1; j < SIZE_VECTOR(trans); ++j) {
-                trans_list_t const* t2 = (trans_list_t*)
-                                AT_VECTOR(trans, j);
-                if (!cmp_trans_list(t1, t2))
-                    { continue; }
-            
-                int fs1 = get_index_vector(finalt, (void*)i, NULL);
-                int fs2 = get_index_vector(finalt, (void*)j, NULL);
-
-                bool final = (fs1 >= 0 && fs2 >= 0) &&
-                    (AT_VECTOR(finalt, fs1 + 1) == AT_VECTOR(finalt, fs2 + 1));
-            
-                bool nonfinal = (fs1 == -1 && fs2 == -1);
-        
-                if (final || nonfinal) {
-                    repeat = true;
-                    redirect_transition(trans, i, j);
-                    redirect_final(finalt, final, fs2, j);
-                }
-            }
-        }
-    } while (repeat);
-}
-
-#endif /* DFA_OPTIMIZE */
+#include <stdio.h>
 
 static vector_t*
 init_groups(lexical_spec_t* spec) {
@@ -373,19 +317,64 @@ init_groups(lexical_spec_t* spec) {
     //First split final and non final state
     for (size_t i = 1; i < SIZE_VECTOR(spec->states); ++i) {
         dfa_state_t* crt_state = DFA_STATE_AT(spec, i);
-        if (crt_state->group == START_GROUP)
+        if (!crt_state->is_final)
             { ADD_BITSET(non_final_group, GET_INDEX(crt_state)); }
-        else
-            { ADD_BITSET(final_group, GET_INDEX(crt_state)); }
+        else {
+            ADD_BITSET(final_group, GET_INDEX(crt_state));
+            crt_state->group = START_GROUP + 1;
+        }
     }
 
-    PUSH_BACK_VECTOR(groups, non_final_group);
+    if (!is_empty_bitset(non_final_group))
+        { PUSH_BACK_VECTOR(groups, non_final_group); }
     PUSH_BACK_VECTOR(groups, final_group);
+
+    for (size_t i = 1; i < SIZE_VECTOR(spec->entry_vect); ++i) {
+        spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
+        bitset_t* new_final_set = new_bitset();
+
+        int i;
+        while ((i = IT_NEXT(final_group)) != IT_NULL) {
+            dfa_state_t* crt_state = DFA_STATE_AT(spec, i);
+            if (crt_state->is_final && ((size_t)crt_state->final_entry 
+                                                    == GET_INDEX(crt_entry))) {
+                ADD_BITSET(new_final_set, (size_t)i);
+                OFF_BITSET(final_group, (size_t)i);
+
+                crt_state->group = SIZE_VECTOR(groups) + 1;
+            }
+        }
+        IT_RESET(final_group);
+        PUSH_BACK_VECTOR(groups, new_final_set);
+        print_bitset(new_final_set);
+    }
 
     return (groups);
 }
 
-#include <stdio.h>
+static void
+merge_dfa_state(lexical_spec_t* spec, vector_t* groups) {
+    vector_t* new_states = new_vector();
+    PUSH_BACK_VECTOR(new_states, NULL_DFA_STATE);
+
+    for (size_t i = 0; i < SIZE_VECTOR(groups); ++i) {
+        bitset_t* crt_group = (bitset_t*)AT_VECTOR(groups, i);
+        dfa_state_t* crt_state = DFA_STATE_AT(spec, (size_t)IT_NEXT(crt_group));
+
+        trans_list_t* list = crt_state->trans;
+        while (list) {
+            dfa_state_t* out_state = DFA_STATE_AT(spec, list->state);
+            if (out_state)
+                { list->state = out_state->group; }
+            list = list->next;
+        }
+
+        dfa_state_t* new_state = new_dfa_state(NULL_BITSET, new_states);
+        memcpy(new_state, crt_state, sizeof(*crt_state));
+    }
+
+    spec->states = new_states;
+}
 
 static size_t
 input_to_state(trans_list_t const* list, size_t input) {
@@ -403,7 +392,7 @@ minimizing_dfa(lexical_spec_t* spec) {
         { return; }
     vector_t* groups = init_groups(spec);
 
-    int next_group_id = START_GROUP;
+    int next_group_id = SIZE_VECTOR(groups);
     bool change;
 
     do {
@@ -461,4 +450,5 @@ minimizing_dfa(lexical_spec_t* spec) {
         bitset_t* crt_group = (bitset_t*)AT_VECTOR(groups, (size_t)i);
         print_bitset(crt_group);
     }
+    merge_dfa_state(spec, groups);
 }

@@ -58,7 +58,7 @@ $TOKEN
     DIVE        =   / \/=   / ;
     MULE        =   / \*=   / ;
     MODE        =   /  %=   / ;
-    XORE        =   /  ^=   / ;
+    XORE        =   / \^=   / ;
     ORBE        =   / \|=   / ;
     ANDBE       =   /  &=   / ;
     ORLE        =   / "||=" / ;
