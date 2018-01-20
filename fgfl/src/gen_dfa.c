@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "regex.h"
 #include "gen_dfa.h"
 #include "gen.h"
 #include "utils.h"

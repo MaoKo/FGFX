@@ -7,6 +7,7 @@
 #include "preprocess_regex.h"
 #include "nfa.h"
 #include "dfa.h"
+#include "dfa_minimization.h"
 #include "gen_dfa.h"
 #include "gen.h"
 #include "error.h"
@@ -16,8 +17,8 @@ static void
 gen_dfa_final_tables(int filde, lexical_spec_t* spec, nfa_state_t* master,
                                     char const* header, spec_entry_t* state) {
     build_dfa_table(master, spec);
-#ifdef DFA_OPTIMIZE
     minimizing_dfa(spec);
+#ifdef DFA_OPTIMIZE
 #endif /* DFA_OPTIMIZE */
     gen_state_table(filde, spec, header, state);
     gen_middle_table(filde, spec, header, state);

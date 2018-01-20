@@ -3,6 +3,7 @@
 #include <ctype.h>
 
 #include "lexical_spec.h"
+#include "regex.h"
 #include "regex_node.h"
 #include "nfa.h"
 #include "utils.h"
@@ -11,7 +12,7 @@
 vector_t* record_nfa_state = NULL;
 vector_t* record_nfa_automata = NULL;
 
-static bool crt_igcase = false;
+static bool nfa_igcase = false;
 
 static nfa_automaton_t* dfs_regex_node(regex_node_t*);
 
@@ -145,7 +146,7 @@ regex_node_class(regex_node_t* root) {
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
 
-    if (crt_igcase) {
+    if (nfa_igcase) {
         int i;
         while ((i = IT_NEXT(root->class)) != IT_NULL) {
             if (isalpha(i)) {
@@ -171,7 +172,7 @@ regex_node_symbol(regex_node_t* root) {
     if ((root->kind_ast != AST_SYMBOL))
         { return (NULL_AUTOMATON); }
 
-    if (crt_igcase && isalpha(root->symbol)) {
+    if (nfa_igcase && isalpha(root->symbol)) {
         root->kind_ast = AST_CLASS;
         size_t back_symbol = root->symbol;
         root->class = new_bitset();
@@ -328,7 +329,7 @@ dfs_regex_node(regex_node_t* root) {
 static int
 transform_regex_nfa(spec_entry_t* crt_entry) {
     regex_node_t* root = crt_entry->reg_ast;
-    crt_igcase = crt_entry->is_igcase;
+    nfa_igcase = crt_entry->is_igcase;
 
     int exit_st = DONE;
     if ((crt_entry->nfa_m = dfs_regex_node(root)) == NULL_AUTOMATON)

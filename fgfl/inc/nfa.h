@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "fgfl.h"
-#include "regex.h"
 
 #define STATE_FINAL(state, tok) ((state)->final_type = (tok))
 #define STATE_ANCHOR(state)     ((state)->is_anchor = true)
