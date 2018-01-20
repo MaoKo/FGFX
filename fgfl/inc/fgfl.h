@@ -90,6 +90,7 @@ struct nfa_automaton_t {
 };
 
 typedef struct {
+    size_t index;
     bitset_t* set_state;
     size_t hash_state;
     trans_list_t* trans;

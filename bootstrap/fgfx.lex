@@ -80,7 +80,7 @@ $TOKEN
     UNION  = / \| / ;
 
     LBRACK = / \[ / ;
-    RBRACK = / \] / ;
+    RBRACK = /  ] / ;
     
     /* Both FGFL & FGFP */
 
@@ -94,7 +94,7 @@ $TOKEN
     COMMA  =  / , / ;
 
     LBRACE = / \{ / ;
-    RBRACE = / \} / ;
+    RBRACE = /  } / ;
 
     LPAREN = / \( / ;
     RPAREN = / \) / ;
