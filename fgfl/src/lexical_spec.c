@@ -189,7 +189,7 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
     int kind = peek_token(spec->lex);
     bool valid_kind = !((kind != T_TERMINAL)
-                                    && (kind != T_ALL) && (kind != T_NONE));
+                                    && (kind != T_ALL) && (kind != T_STAY));
 
     if (!valid_kind) {
         errorf(CURRENT_LINE(spec->lex),
@@ -207,7 +207,7 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
         advance_token(spec->lex);
         if (kind == T_ALL)
             { seen_all = true; }
-        else if (kind == T_NONE)
+        else if (kind == T_STAY)
             { ++count_none; }
 
         if (seen_all) {
@@ -253,7 +253,7 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
         kind = peek_token(spec->lex);
         valid_kind = !((kind != T_TERMINAL)
-                                    && (kind != T_ALL) && (kind != T_NONE));
+                                    && (kind != T_ALL) && (kind != T_STAY));
     }
 
     if (count_none == ((seen_all) ? count_pos - 1 : count_pos)) {

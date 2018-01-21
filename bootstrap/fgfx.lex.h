@@ -13,9 +13,10 @@ enum {
 	S_BODY_CCL,
 	S_STRING,
 	S_FINITE_SEQ,
+	S_NESTED_COM,
 };
 
-#define TOTAL_STATE	8
+#define TOTAL_STATE	9
 #define INIT_STATE	S_GLOBAL
 
 enum {
@@ -65,8 +66,11 @@ enum {
 	T_LPAREN,
 	T_RPAREN,
 	T_SPACE,
+	T_SINGLE_LINE,
+	T_BEG_MULTI,
+	T_CHAR_COMMENT,
+	T_END_MULTI,
 	T_MULTI_LINE,
-	T_COMMENT,
 	T_SKIP,
 	T_TOKEN,
 	T_KEYWORD,
@@ -76,8 +80,8 @@ enum {
 	T_FRAG,
 	T_INITIAL,
 	T_ALL,
-	T_NONE,
-	T_REJECT,
+	T_STAY,
+	T_FAIL,
 	T_CC_FIRST,
 	T_CCE_ALNUM,
 	T_CCE_ALPHA,
@@ -119,7 +123,114 @@ enum {
 	T_EOF,
 };
 
-#define TOTAL_TOKEN	98
+#define TOTAL_TOKEN	101
+
+#if 0
+static uint8_t
+fgfx_token_name_table[101] = {
+	"EQUAL",
+	"STAR",
+	"OPEN_REGEX",
+	"CLOSE_REGEX",
+	"REG_UNION",
+	"REG_STAR",
+	"REG_PLUS",
+	"REG_QUES",
+	"REG_LPAREN",
+	"REG_RPAREN",
+	"REG_DOT",
+	"REG_LOOK",
+	"REG_QUOTE",
+	"REG_BOUND_NAME",
+	"REG_LBRACE",
+	"REG_RBRACE",
+	"DIGIT",
+	"REG_COMMA",
+	"REG_DIFF_CLASS",
+	"REG_UNION_CLASS",
+	"REG_LBRACK",
+	"REG_RBRACK",
+	"REG_CARET",
+	"REG_DOLLAR",
+	"REG_HYPHEN",
+	"CCE",
+	"N_CCE",
+	"OCT_NUM",
+	"HEX_NUM",
+	"REG_CHAR",
+	"NON_TERMINAL",
+	"LITERAL",
+	"UNION",
+	"LBRACK",
+	"RBRACK",
+	"DIRECTIVE",
+	"TERMINAL",
+	"ARROW",
+	"BARROW",
+	"SEMI",
+	"COMMA",
+	"LBRACE",
+	"RBRACE",
+	"LPAREN",
+	"RPAREN",
+	"SPACE",
+	"SINGLE_LINE",
+	"BEG_MULTI",
+	"CHAR_COMMENT",
+	"END_MULTI",
+	"MULTI_LINE",
+	"SKIP",
+	"TOKEN",
+	"KEYWORD",
+	"IGCASE",
+	"STATE",
+	"BEGIN",
+	"FRAG",
+	"INITIAL",
+	"ALL",
+	"STAY",
+	"FAIL",
+	"CC_FIRST",
+	"CCE_ALNUM",
+	"CCE_ALPHA",
+	"CCE_CNTRL",
+	"CCE_DIGIT",
+	"CCE_GRAPH",
+	"CCE_LOWER",
+	"CCE_PRINT",
+	"CCE_PUNCT",
+	"CCE_SPACE",
+	"CCE_BLANK",
+	"CCE_UPPER",
+	"CCE_XDIGIT",
+	"CC_MIDDLE",
+	"N_CCE_ALNUM",
+	"N_CCE_ALPHA",
+	"N_CCE_CNTRL",
+	"N_CCE_DIGIT",
+	"N_CCE_GRAPH",
+	"N_CCE_LOWER",
+	"N_CCE_PRINT",
+	"N_CCE_PUNCT",
+	"N_CCE_SPACE",
+	"N_CCE_BLANK",
+	"N_CCE_UPPER",
+	"N_CCE_XDIGIT",
+	"CC_LAST",
+	"EXTERN",
+	"PRODUCTION",
+	"ALIAS",
+	"PRECEDENCE",
+	"MIMIC",
+	"EMPTY",
+	"START",
+	"LEFT",
+	"RIGHT",
+	"NONASSOC",
+	"ERROR",
+	"EOF",
+};
+#endif
 
 #ifndef _ONLY_STATE_TOKEN_
 
@@ -147,23 +258,25 @@ fgfx_begin_table[TOTAL_TOKEN][TOTAL_STATE] = {
 	[T_OCT_NUM][S_BEG_CCL] = S_BODY_CCL, [T_OCT_NUM][S_BEG_REGEX] = S_BODY_REGEX, 
 	[T_HEX_NUM][S_BEG_CCL] = S_BODY_CCL, [T_HEX_NUM][S_BEG_REGEX] = S_BODY_REGEX, 
 	[T_REG_CHAR][S_BEG_CCL] = S_BODY_CCL, [T_REG_CHAR][S_BEG_REGEX] = S_BODY_REGEX, 
+	[T_BEG_MULTI][S_GLOBAL] = S_NESTED_COM, 
+	[T_END_MULTI][S_NESTED_COM] = S_GLOBAL, 
 };
 
 #define START_STATE	1
 #define DEAD_STATE	0
 
 static uint8_t
-fgfx_GLOBAL_state_table[36][256] = {
+fgfx_GLOBAL_state_table[34][256] = {
 /*   0 */	{},
-/*   1 */	{[125]=15, [124]=14, [123]=13, [97 ... 122]=10, [95]=10, [93]=12, [91]=11, [65 ... 90]=10, [61]=9, [60]=25, [59]=8, [47]=7, [45]=24, [44]=6, [42]=5, [41]=4, [40]=3, [39]=23, [36]=22, [32]=2, [9 ... 10]=2},
+/*   1 */	{[125]=15, [124]=14, [123]=13, [97 ... 122]=10, [95]=10, [93]=12, [91]=11, [65 ... 90]=10, [61]=9, [60]=26, [59]=8, [47]=7, [45]=25, [44]=6, [42]=5, [41]=4, [40]=3, [39]=24, [36]=23, [32]=2, [9 ... 10]=2},
 /*   2 */	{[32]=2, [9 ... 10]=2},
 /*   3 */	{},
 /*   4 */	{},
 /*   5 */	{},
 /*   6 */	{},
-/*   7 */	{[47]=18, [42]=29, [32]=28, [9]=28},
+/*   7 */	{[47]=19, [42]=18, [32]=29, [9]=29},
 /*   8 */	{},
-/*   9 */	{[62]=19},
+/*   9 */	{[62]=20},
 /*  10 */	{[97 ... 122]=10, [95]=10, [65 ... 90]=10, [48 ... 57]=10},
 /*  11 */	{},
 /*  12 */	{},
@@ -172,24 +285,22 @@ fgfx_GLOBAL_state_table[36][256] = {
 /*  15 */	{},
 /*  16 */	{[97 ... 122]=16, [95]=16, [65 ... 90]=16, [48 ... 57]=16},
 /*  17 */	{},
-/*  18 */	{[11 ... 255]=18, [0 ... 9]=18},
-/*  19 */	{},
+/*  18 */	{},
+/*  19 */	{[11 ... 255]=19, [0 ... 9]=19},
 /*  20 */	{},
 /*  21 */	{},
-/*  22 */	{[97 ... 122]=16, [95]=16, [65 ... 90]=16},
-/*  23 */	{[93 ... 255]=26, [92]=27, [40 ... 91]=26, [35 ... 38]=26, [11 ... 33]=26, [0 ... 9]=26},
-/*  24 */	{[62]=17},
-/*  25 */	{[97 ... 122]=30, [95]=30, [65 ... 90]=30},
-/*  26 */	{[93 ... 255]=26, [92]=27, [40 ... 91]=26, [39]=20, [35 ... 38]=26, [11 ... 33]=26, [0 ... 9]=26},
-/*  27 */	{[92]=26, [39]=26, [34]=26},
-/*  28 */	{[32]=28, [9]=28},
-/*  29 */	{[43 ... 255]=29, [42]=31, [0 ... 41]=29},
-/*  30 */	{[97 ... 122]=30, [95]=30, [65 ... 90]=30, [62]=21, [48 ... 57]=30, [39]=32},
-/*  31 */	{[48 ... 255]=29, [47]=33, [43 ... 46]=29, [42]=31, [0 ... 41]=29},
-/*  32 */	{[62]=21, [39]=34},
-/*  33 */	{},
-/*  34 */	{[62]=21, [39]=35},
-/*  35 */	{[62]=21},
+/*  22 */	{},
+/*  23 */	{[97 ... 122]=16, [95]=16, [65 ... 90]=16},
+/*  24 */	{[93 ... 255]=27, [92]=28, [40 ... 91]=27, [35 ... 38]=27, [11 ... 33]=27, [0 ... 9]=27},
+/*  25 */	{[62]=17},
+/*  26 */	{[97 ... 122]=30, [95]=30, [65 ... 90]=30},
+/*  27 */	{[93 ... 255]=27, [92]=28, [40 ... 91]=27, [39]=21, [35 ... 38]=27, [11 ... 33]=27, [0 ... 9]=27},
+/*  28 */	{[92]=27, [39]=27, [34]=27},
+/*  29 */	{[32]=29, [9]=29},
+/*  30 */	{[97 ... 122]=30, [95]=30, [65 ... 90]=30, [62]=22, [48 ... 57]=30, [39]=31},
+/*  31 */	{[62]=22, [39]=33},
+/*  32 */	{[62]=22},
+/*  33 */	{[62]=22, [39]=32},
 };
 
 static uint8_t
@@ -210,12 +321,12 @@ fgfx_GLOBAL_final_table[23][2] = {
 	{ 15, 	T_RBRACE },
 	{ 16, 	T_DIRECTIVE },
 	{ 17, 	T_ARROW },
-	{ 18, 	T_COMMENT },
-	{ 19, 	T_BARROW },
-	{ 20, 	T_LITERAL },
-	{ 21, 	T_NON_TERMINAL },
-	{ 28, 	T_OPEN_REGEX },
-	{ 33, 	T_COMMENT },
+	{ 18, 	T_BEG_MULTI },
+	{ 19, 	T_SINGLE_LINE },
+	{ 20, 	T_BARROW },
+	{ 21, 	T_LITERAL },
+	{ 22, 	T_NON_TERMINAL },
+	{ 29, 	T_OPEN_REGEX },
 	{ 0 },
 };
 
@@ -504,6 +615,27 @@ fgfx_FINITE_SEQ_final_table[4][2] = {
 	{ 0 },
 };
 
+static uint8_t
+fgfx_NESTED_COM_state_table[7][256] = {
+/*   0 */	{},
+/*   1 */	{[48 ... 255]=2, [47]=6, [43 ... 46]=2, [42]=5, [0 ... 41]=2},
+/*   2 */	{},
+/*   3 */	{},
+/*   4 */	{},
+/*   5 */	{[47]=3, [42]=5},
+/*   6 */	{[42]=4},
+};
+
+static uint8_t
+fgfx_NESTED_COM_final_table[6][2] = {
+	{ 2, 	T_CHAR_COMMENT },
+	{ 3, 	T_END_MULTI },
+	{ 4, 	T_BEG_MULTI },
+	{ 5, 	T_CHAR_COMMENT },
+	{ 6, 	T_CHAR_COMMENT },
+	{ 0 },
+};
+
 static int8_t
 fgfx_look_table[4] = {
 	T_CLOSE_REGEX,
@@ -513,10 +645,13 @@ fgfx_look_table[4] = {
 };
 
 static int8_t
-fgfx_skip_table[4] = {
+fgfx_skip_table[7] = {
 	T_SPACE,
+	T_SINGLE_LINE,
+	T_BEG_MULTI,
+	T_CHAR_COMMENT,
+	T_END_MULTI,
 	T_MULTI_LINE,
-	T_COMMENT,
 	-1,
 };
 

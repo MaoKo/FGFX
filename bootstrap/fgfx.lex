@@ -5,6 +5,7 @@ $STATE
     BEG_CCL, BODY_CCL,
     STRING,
     FINITE_SEQ,
+    NESTED_COM,
 };
 
 $TOKEN
@@ -102,20 +103,29 @@ $TOKEN
 
 $SKIP
 {
-    SPACE   = / [ \t\n]+                              / ;
+    /* Space */
+    SPACE       = / [ \t\n]+                          / ;
+
+    /* Comments */
+    SINGLE_LINE                         = / \/\/.* / ;
+    ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /, ( $BEGIN NESTED_COM ) ;
+
+    ( NESTED_COM ) CHAR_COMMENT         = / (.|\n) / ;
+    ( NESTED_COM ) END_MULTI            = / \*+\/  /, ( $BEGIN GLOBAL ) ;
+
+    /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
             MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
-    COMMENT = / (\/\/.*)|(\/\*(\*+[^*\/]|[^*])*\*+\/) / ;
 };
 
 $KEYWORD
 {
     // FGFL
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
-    BEGIN, FRAG, INITIAL, ALL, NONE,
+    BEGIN, FRAG, INITIAL, ALL, STAY,
 
     /* TODO */
-    REJECT,
+    FAIL,
 
     // Regex
     CC_FIRST, // Dummy

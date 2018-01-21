@@ -7,7 +7,7 @@
 #define STATE_TOKEN_STR         "_ONLY_STATE_TOKEN_"
 
 #define IFNDEF_ONLY_STATE_TOKEN(x)  dprintf(x, "#ifndef " STATE_TOKEN_STR NL NL)
-#define ENDIF_ONLY_STATE_TOKEN(x)   dprintf(x, "#endif /* "\
+#define ENDIF_ONLY_STATE_TOKEN(x)   dprintf(x, END_IF " /* "\
                                             STATE_TOKEN_STR " */" NL)
 
 #define DFA_START_STATE(x)      dprintf(x, DEFINE(START_STATE, 1) NL)
@@ -44,6 +44,8 @@ enum {
 
 void gen_state_enum(int, lexical_spec_t const*);
 void gen_token_enum(int, lexical_spec_t const*);
+void gen_token_name(int, lexical_spec_t const*, char const*);
+
 void gen_dfa_typedef(int, vector_t const*,
                             vector_t const*, spec_entry_t const*);
 void gen_state_table(int, lexical_spec_t const*,

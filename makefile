@@ -8,7 +8,7 @@ INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
 CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE))\
                 $(C_STD)  $(CC_OPTI) -g
 
-CC_MACRO	:=  -DPRINT_DEBUG #-DDFA_OPTIMIZE
+CC_MACRO	:=  -DPRINT_DEBUG
 LD_FLAGS	:=	# -pg
 
 include tools/makefile

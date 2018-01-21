@@ -25,14 +25,15 @@ Which create a file called token_c.h.lex ready for lexing.
             DFA transition table
 
     .   Add error recovery mechanism
-    .   Handle nested comment in FGFX
     .   Add in FGFP ( ... | ... )
+    .   Change $ALL to *
+    .   Add $FAIL to FGFL
+    .   Add ! not operator to regex
     .   Remove unreachable state
     .   Handle when the number of state is 1
     .   Check useless $BEGIN
     .   Gen begin table when occurs ( $BEGIN )
     .   Add several begin move for the same token name (fix when (*) occurs)
-    .   Add the minimizing partitionning algorithm for DFA
     .   Create the grammar and the lexical specification for regex
     .   Learn MarkDown :)
 

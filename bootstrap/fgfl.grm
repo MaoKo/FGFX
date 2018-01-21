@@ -24,7 +24,7 @@ $PRODUCTION
 	<state_prefix_item>	->	<token_list> | '*' ;
 
 	<regex_assign>		->	'=' REGEX [ '->' '{' <regex_property> '}' ]
-								[ ',' <change_state> ] ;
+								[ ',' <change_state> ] [ ',' <reject> ] ;
 
 	<regex_property>	->	'$IGCASE' [ ',' '$FRAG'   ]
 						|	'$FRAG'   [ ',' '$IGCASE' ]
@@ -37,13 +37,14 @@ $PRODUCTION
 								[ ',' <opt_state_list> ] | $EMPTY ;
 
 	<change_state>		->	'(' '$BEGIN' <change_list> ')' ;
+    <reject>            ->  '(' '$REJECT' ')' ;
 
 	<change_list>		->	<change_state_atom> [ ',' <opt_change_list> ] ;
 	<opt_change_list>	->	<change_state_atom> [ ',' <opt_change_list> ]
 						|	$EMPTY
 						;
 
-	<change_state_atom>	->	TERMINAL | '$NONE' | '$ALL' ;
+	<change_state_atom>	->	TERMINAL | '$STAY' | '*' ;
 
 	<FGFL> = $START;
 };
@@ -58,8 +59,8 @@ $ALIAS
 	(BEGIN		=> '$BEGIN')	,
 	(FRAG		=> '$FRAG')		,
 	(INITIAL	=> '$INITIAL')	,
-	(ALL		=> '$ALL')		,
-	(NONE		=> '$NONE')		,
+	(STAY		=> '$STAY')		,
+    (REJECT     => '$REJECT')   ,
 
 	(EQUAL		=> '=')			,
 

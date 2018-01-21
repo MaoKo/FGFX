@@ -48,6 +48,27 @@ gen_token_enum(int filde, lexical_spec_t const* spec) {
     dprintf(filde, DEFINE(%s, %zu) NL NL, MACRO_TOKEN, size_entry + 2);
 }
 
+void
+gen_token_name(int filde, lexical_spec_t const* spec, char const* header) {
+    dprintf(filde, NULL_IF NL);
+    size_t size_entry = SIZE_VECTOR(spec->entry_vect);
+
+    dprintf(filde, STATIC SP "uint%u_t" NL, min_size_type(size_entry, true));
+    gen_verbatim_file(filde, header);
+
+    dprintf(filde, SEP "token_name_table[%zu] = " BEG_BLOCK NL, size_entry + 2);
+    for (size_t i = 0; i < size_entry; ++i) {
+        spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
+        dprintf(filde, TAB "\"%s\"" COMMA NL, crt_entry->name);
+    }
+
+    dprintf(filde, TAB "\"ERROR\"" COMMA NL);
+    dprintf(filde, TAB "\"EOF\"" COMMA NL);
+
+    dprintf(filde, END_BLOCK SEMI NL);
+    dprintf(filde, END_IF NL NL);
+}
+
 static inline void
 gen_state_name(int filde, spec_entry_t const* entry) {
     char const* sep = ((entry) ? SEP : "");

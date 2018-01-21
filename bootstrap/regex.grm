@@ -11,29 +11,34 @@ $PRODUCTION
 	
     <regex_union>   ->  <regex_cat>
                             { '|' <regex_cat> } => ( $RIGHT ) ;
+
     <regex_cat>     ->  <regex_closure>
                             { <regex_closure> } => ( $RIGHT ) ;
-    <regex_closure> ->  <regex_atom>
-                            { '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
 
+    <regex_closure> ->  <regex_not>
+                            { '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
     <finite_seq>    ->  '{' DIGIT [ ',' [ DIGIT ] ] '}' ;
 
-    <regex_atom>    ->  <fullccl>
-					|   <string>
+    <regex_not>     ->  [ '!' ] <regex_atom> ;
+
+    <regex_atom>    ->  <regex_fullccl>
+					|   <regex_string>
 					|   '(' <regex_union> ')'
 					|   '.'
 					|   BOUND_NAME
 					|   <regex_char>
                     ;
 
-    <fullccl>       ->  <loneccl> { <kind_fullccl> <loneccl> } => ( $RIGHT ) ;
+    <regex_fullccl> ->  <regex_loneccl> 
+                            { <kind_fullccl> <regex_loneccl> } => ( $RIGHT ) ;
+
     <kind_fullccl>  ->  DIFF_CLASS | UNION_CLASS ;
 
-    <loneccl>       ->  '[' [ '^' ] <ccl> ']' ;
-    <ccl>           ->  { <regex_char> [ '-' <regex_char> ] } => ( $RIGHT ) ;
+    <regex_loneccl> ->  '[' [ '^' ] <regex_ccl> ']' ;
 
-    <string>        ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
+    <regex_ccl>     ->  { <regex_char> [ '-' <regex_char> ] } => ( $RIGHT ) ;
 
+    <regex_string>  ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
     <regex_char>    ->  CHAR | OCT_NUM | HEX_NUM ;
 };
 
@@ -55,5 +60,6 @@ $ALIAS
     (REG_HYPHEN =>  '-')    ,
     (REG_COMMA  =>  ',')    ,
     (REG_DOT    =>  '.')    ,
+    (REG_NOT    =>  '!')    ,
     (REG_QUOTE  =>  '\"')   ,
 };

@@ -50,6 +50,52 @@ is_final_state(int state, uint8_t (*final_table)[2]) {
     return (T_ERROR);
 }
 
+static void
+change_lexer_state(lexer_t* lex,
+                uint8_t (**state_table)[256], uint8_t (**final_table)[2]) {
+    switch (lex->crt_state) {
+        case S_GLOBAL:
+            (*state_table) = fgfx_GLOBAL_state_table;
+            (*final_table) = fgfx_GLOBAL_final_table;
+            break;
+
+        case S_BEG_REGEX:
+            (*state_table) = fgfx_BEG_REGEX_state_table;
+            (*final_table) = fgfx_BEG_REGEX_final_table;
+            break;
+
+        case S_BODY_REGEX:
+            (*state_table) = fgfx_BODY_REGEX_state_table;
+            (*final_table) = fgfx_BODY_REGEX_final_table;
+            break;
+
+        case S_STRING:
+            (*state_table) = fgfx_STRING_state_table;
+            (*final_table) = fgfx_STRING_final_table;
+            break;
+
+        case S_FINITE_SEQ:
+            (*state_table) = fgfx_FINITE_SEQ_state_table;
+            (*final_table) = fgfx_FINITE_SEQ_final_table;
+            break;
+
+        case S_BEG_CCL:
+            (*state_table) = fgfx_BEG_CCL_state_table;
+            (*final_table) = fgfx_BEG_CCL_final_table;
+            break;
+
+        case S_BODY_CCL:
+            (*state_table) = fgfx_BODY_CCL_state_table;
+            (*final_table) = fgfx_BODY_CCL_final_table;
+            break;
+
+        case S_NESTED_COM:
+            (*state_table) = fgfx_NESTED_COM_state_table;
+            (*final_table) = fgfx_NESTED_COM_final_table;
+            break;
+    }
+}
+
 static int
 get_next_token(lexer_t* lex) {
     static uint8_t (*state_table)[256] = NULL;
@@ -62,42 +108,8 @@ get_next_token(lexer_t* lex) {
     int rd = 0;
 
     if (need_recompute) {
-        switch (lex->crt_state) {
-            case S_GLOBAL:
-                state_table = fgfx_GLOBAL_state_table;
-                final_table = fgfx_GLOBAL_final_table;
-                break;
-
-            case S_BEG_REGEX:
-                state_table = fgfx_BEG_REGEX_state_table;
-                final_table = fgfx_BEG_REGEX_final_table;
-                break;
-
-            case S_BODY_REGEX:
-                state_table = fgfx_BODY_REGEX_state_table;
-                final_table = fgfx_BODY_REGEX_final_table;
-                break;
-
-            case S_STRING:
-                state_table = fgfx_STRING_state_table;
-                final_table = fgfx_STRING_final_table;
-                break;
-
-            case S_FINITE_SEQ:
-                state_table = fgfx_FINITE_SEQ_state_table;
-                final_table = fgfx_FINITE_SEQ_final_table;
-                break;
-
-            case S_BEG_CCL:
-                state_table = fgfx_BEG_CCL_state_table;
-                final_table = fgfx_BEG_CCL_final_table;
-                break;
-
-            case S_BODY_CCL:
-                state_table = fgfx_BODY_CCL_state_table;
-                final_table = fgfx_BODY_CCL_final_table;
-                break;
-        }
+        change_lexer_state(lex, &state_table, &final_table);
+        need_recompute = false;
     }
 
     size_t i;
@@ -183,10 +195,17 @@ get_next_token(lexer_t* lex) {
         }
     }
 
-    if (fgfx_begin_table[last_match][lex->crt_state]) {
+    if (last_match == T_BEG_MULTI)
+        { ++(lex->nested_com); }
+    else if (last_match == T_END_MULTI)
+        { --(lex->nested_com); }
+
+    if ((fgfx_begin_table[last_match][lex->crt_state])
+            && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
         lex->crt_state = fgfx_begin_table[last_match][lex->crt_state];
         need_recompute = true; 
     }
+
     return (last_match);
 }
 
@@ -237,8 +256,8 @@ advance_token(lexer_t* lex) {
             { (void*)T_RIGHT,       "$RIGHT" },
             { (void*)T_NONASSOC,    "$NONASSOC" },
             { (void*)T_ALL,         "$ALL" },
-            { (void*)T_NONE,        "$NONE" },
-//          { (void*)T_REJECT,      "$REJECT" },
+            { (void*)T_STAY,        "$STAY" },
+            { (void*)T_FAIL,        "$FAIL" },
         };
         for (size_t i = 0; i < *(&directive_tab + 1) - directive_tab; ++i) {
             if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

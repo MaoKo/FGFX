@@ -37,7 +37,9 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
     bool active_state = (spec->start_state != -1);
     if (active_state)
         { gen_state_enum(filde, spec); }
+ 
     gen_token_enum(filde, spec);
+    gen_token_name(filde, spec, header);
 
     if (!spec->miss_regex) {
         IFNDEF_ONLY_STATE_TOKEN(filde);
