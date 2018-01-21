@@ -103,16 +103,17 @@ get_next_token(lexer_t* lex) {
     size_t i;
     for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
         int char_at = CHAR_AT(lex->push_back, i);
-        write_char_buffer(lex->last_lexeme, char_at);
-
-        if (char_at == '\n')
-            { ++(lex->lineno); }
-
         state = state_table[state][char_at];
+
+        write_char_buffer(lex->last_lexeme, char_at);
         if (state == DEAD_STATE)
             { break; }
-        else if (is_final_state(state, final_table) != T_ERROR)
-            { last_match = is_final_state(state, final_table); }
+        else { 
+            if (char_at == '\n')
+                { ++(lex->lineno); }
+            if (is_final_state(state, final_table) != T_ERROR)
+                { last_match = is_final_state(state, final_table); }
+        }
     }
 
     unget_char_front_buffer(lex->push_back, i);
@@ -149,7 +150,7 @@ get_next_token(lexer_t* lex) {
         if (unget_input)
             { write_char_buffer(lex->push_back, rd); }
         else {
-            if (rd == '\n' && state != DEAD_STATE)
+            if ((rd == '\n') && (state != DEAD_STATE))
                 { ++(lex->lineno); }
             write_char_buffer(lex->last_lexeme, rd);
         }

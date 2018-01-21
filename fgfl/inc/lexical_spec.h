@@ -11,7 +11,7 @@
                                     ((x == T_KEYWORD) ? "KEYWORD" : "STATE"))
 
 #define REGEX_LST_SECT(x)       ((x == T_TOKEN) ?  "$TOKEN" : "$SKIP")
-#define STATE_TOKEN_LST_SECT(x) ((x == T_STATE) ?  "$STATE" : "$KEYWORD")
+#define STATE_TYPE_LST_SECT(x)  ((x == T_STATE) ?  "$STATE" : "$KEYWORD")
 
 #define USED_ENTRY(entry)       (entry->is_used = true)
 #define NONE_BEGIN              (-1)

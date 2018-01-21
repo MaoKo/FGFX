@@ -2,6 +2,7 @@
 
 #include "regex.h"
 #include "dfa.h"
+#include "dfa_minimization.h"
 #include "gen_dfa.h"
 #include "lexical_spec.h"
 #include "nfa.h"
@@ -227,10 +228,7 @@ build_middle_table(vector_t* states) {
 }
 
 static void
-build_final_table(vector_t* states, lexical_spec_t* spec) {
-    size_t count_final = 0;
-    size_t count_anchor = 0;
-
+build_final_table(vector_t* states) {
     for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
 
@@ -258,17 +256,8 @@ build_final_table(vector_t* states, lexical_spec_t* spec) {
                 { crt_state->final_anchor_entry = min_anchor; }
 
             crt_state->is_final = true;
-
-            if (min_final != NO_FINAL)
-                { ++count_final; }
-            if ((min_anchor != NO_FINAL)
-                    && ((min_final == NO_FINAL) || (min_anchor <= min_final)))
-                { ++count_anchor; }
         }
     }
-
-    spec->size_final = count_final;
-    spec->size_final_anchor = count_anchor;
 }
 
 static void
@@ -303,5 +292,19 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
     spec->states = build_state_table(master);
 
     build_middle_table(spec->states);
-    build_final_table(spec->states, spec);
+    build_final_table(spec->states);
+
+    minimizing_dfa(spec);
+    spec->size_final = spec->size_final_anchor = 0;
+    
+    for (size_t i = 1; i < SIZE_VECTOR(spec->states); ++i) {
+        dfa_state_t* crt_state =  DFA_STATE_AT(spec, i);
+        if (!crt_state->is_final)
+            { continue; }
+
+        if (crt_state->final_entry != NO_FINAL)
+            { ++(spec->size_final); }
+        else
+            { ++(spec->size_final_anchor); }
+    }
 }

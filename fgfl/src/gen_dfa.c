@@ -127,7 +127,6 @@ gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
         { return; }
 
     size_t size_states = SIZE_VECTOR(spec->states);
-
     dprintf(filde, STATIC SP "uint%u_t" NL,
                                 min_size_type(size_states, true));
     gen_verbatim_file(filde, header);

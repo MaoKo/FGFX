@@ -25,6 +25,7 @@ Which create a file called token_c.h.lex ready for lexing.
             DFA transition table
 
     .   Add error recovery mechanism
+    .   Handle nested comment in FGFX
     .   Add in FGFP ( ... | ... )
     .   Remove unreachable state
     .   Handle when the number of state is 1

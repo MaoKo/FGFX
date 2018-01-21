@@ -475,7 +475,7 @@ spec_state_token_list(lexical_spec_t* spec, int kind_section) {
     else {
         errorf(CURRENT_LINE(spec->lex),
                             "Expected identifier in the %s section.",
-                            STATE_TOKEN_LST_SECT(kind_section));
+                            STATE_TYPE_LST_SECT(kind_section));
         return (ERROR);
     }
     return (DONE);
@@ -486,10 +486,13 @@ spec_token_entry_section(lexical_spec_t* spec) {
     int kind = advance_token(spec->lex);
     int (*section_ptr)(lexical_spec_t*, int) = NULL;
 
+    bool regex_list = false;
     switch (kind) {
         case T_TOKEN: case T_SKIP:
             section_ptr = &spec_regex_list;
+            regex_list = true;
             break;
+
         case T_STATE: case T_KEYWORD:
             section_ptr = &spec_state_token_list;
             break;
@@ -507,7 +510,9 @@ spec_token_entry_section(lexical_spec_t* spec) {
             || (miss_c = ';', advance_token(spec->lex) != T_SEMI)) {
         if (miss_c) {
             errorf(CURRENT_LINE(spec->lex),
-                            "Missing a '%c' after the directive.", miss_c);
+                            "Missing a '%c' after the directive %s.",
+                            miss_c, (regex_list) 
+                            ? REGEX_LST_SECT(kind) : STATE_TYPE_LST_SECT(kind));
         }
         return (ERROR);
     }

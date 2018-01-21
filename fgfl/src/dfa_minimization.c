@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 
 #include "dfa_minimization.h"
@@ -9,50 +8,40 @@
 static vector_t*
 init_groups(lexical_spec_t* spec) {
     vector_t* groups = new_vector();
-
     bitset_t* non_final_group = new_bitset();
-    bitset_t* final_group = new_bitset();
 
-    //First split final and non final state
+    //First select non final state 
     for (size_t i = 1; i < SIZE_VECTOR(spec->states); ++i) {
         dfa_state_t* crt_state = DFA_STATE_AT(spec, i);
         if (!crt_state->is_final)
             { ADD_BITSET(non_final_group, GET_INDEX(crt_state)); }
-        else {
-            ADD_BITSET(final_group, GET_INDEX(crt_state));
-            crt_state->group = START_GROUP + 1;
-        }
     }
-
     if (!is_empty_bitset(non_final_group))
         { PUSH_BACK_VECTOR(groups, non_final_group); }
-    PUSH_BACK_VECTOR(groups, final_group);
+    bitset_t* seen_final = new_bitset();
+   
+    //Second select final state
+    for (size_t i = 1; i < SIZE_VECTOR(spec->states); ++i) {
+        dfa_state_t* crt_state = DFA_STATE_AT(spec, i);
+        if (!crt_state->is_final)
+                { continue; }
+        else if (IS_PRESENT(seen_final, GET_INDEX(crt_state)))
+            { continue; }
+        bitset_t* final_group = new_bitset();
+ 
+        for (size_t j = i; j < SIZE_VECTOR(spec->states); ++j) {
+            dfa_state_t* cmp_state = DFA_STATE_AT(spec, j);
 
-    for (size_t i = 1; i < SIZE_VECTOR(spec->entry_vect); ++i) {
-        spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-        bitset_t* new_final_set = new_bitset();
+            if ((cmp_state->final_anchor_entry == crt_state->final_anchor_entry)
+                    && (cmp_state->final_entry == crt_state->final_entry)) {
 
-        int i;
-        while ((i = IT_NEXT(final_group)) != IT_NULL) {
-            dfa_state_t* crt_state = DFA_STATE_AT(spec, i);
-            if (crt_state->is_final) {
-                if (crt_state->final_entry != NO_FINAL 
-                        && ((size_t)crt_state->final_entry
-                        != GET_INDEX(crt_entry)))
-                    { continue; }
-                else if (crt_state->final_anchor_entry != NO_FINAL 
-                        && ((size_t)crt_state->final_anchor_entry
-                        != GET_INDEX(crt_entry)))
-                    { continue; }
+                ADD_BITSET(final_group, GET_INDEX(cmp_state));
+                ADD_BITSET(seen_final, GET_INDEX(cmp_state));
 
-                ADD_BITSET(new_final_set, (size_t)i);
-                OFF_BITSET(final_group, (size_t)i);
-
-                crt_state->group = SIZE_VECTOR(groups) + 1;
+                cmp_state->group = SIZE_VECTOR(groups) + 1;
             }
         }
-        IT_RESET(final_group);
-        PUSH_BACK_VECTOR(groups, new_final_set);
+        PUSH_BACK_VECTOR(groups, final_group);
     }
     return (groups);
 }
