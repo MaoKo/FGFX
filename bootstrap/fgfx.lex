@@ -6,6 +6,7 @@ $STATE
     STRING,
     FINITE_SEQ,
     NESTED_COM,
+    BEG_GROUP_COM, BODY_GROUP_COM,
 };
 
 $TOKEN
@@ -115,6 +116,16 @@ $SKIP
     /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
             MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
+
+    /* (?# Comment ) pattern */
+
+    ( BEG_REGEX, BODY_REGEX ) BEG_REG_COM = / "(?#" /,
+            ( $BEGIN BEG_GROUP_COM, BODY_GROUP_COM ) ;
+
+    ( BEG_GROUP_COM, BODY_GROUP_COM ) END_REG_COM = / \) /,
+            ( $BEGIN BEG_REGEX, BODY_REGEX ) ;
+
+    ( BEG_GROUP_COM, BODY_GROUP_COM ) REG_CHAR_COM = / [^)]* / ;
 };
 
 $KEYWORD

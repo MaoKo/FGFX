@@ -93,6 +93,16 @@ change_lexer_state(lexer_t* lex,
             (*state_table) = fgfx_NESTED_COM_state_table;
             (*final_table) = fgfx_NESTED_COM_final_table;
             break;
+
+        case S_BEG_GROUP_COM:
+            (*state_table) = fgfx_BEG_GROUP_COM_state_table;
+            (*final_table) = fgfx_BEG_GROUP_COM_final_table;
+            break;
+
+        case S_BODY_GROUP_COM:
+            (*state_table) = fgfx_BODY_GROUP_COM_state_table;
+            (*final_table) = fgfx_BODY_GROUP_COM_final_table;
+            break;
     }
 }
 
@@ -144,13 +154,13 @@ get_next_token(lexer_t* lex) {
         // Change state
         if (!unget_input) {
             if (lex->crt_state == S_BODY_CCL
-                                && fgfx_BODY_CCL_middle_table[state])
+                                && fgfx_BODY_CCL_ahead_table[state])
                 { unget_input = true; }
             else if (lex->crt_state == S_BEG_REGEX
-                                && fgfx_BEG_REGEX_middle_table[state])
+                                && fgfx_BEG_REGEX_ahead_table[state])
                 { unget_input = true; }
             else if (lex->crt_state == S_BODY_REGEX
-                                && fgfx_BODY_REGEX_middle_table[state])
+                                && fgfx_BODY_REGEX_ahead_table[state])
                 { unget_input = true; }
         }
 

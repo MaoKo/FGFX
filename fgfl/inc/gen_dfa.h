@@ -50,7 +50,7 @@ void gen_dfa_typedef(int, vector_t const*,
                             vector_t const*, spec_entry_t const*);
 void gen_state_table(int, lexical_spec_t const*,
                             char const*, spec_entry_t const*);
-void gen_middle_table(int, lexical_spec_t const*,
+void gen_ahead_table(int, lexical_spec_t const*,
                             char const*, spec_entry_t const*);
 void gen_kind_final_table(int, lexical_spec_t const*, char const*,
                             spec_entry_t const*, size_t);

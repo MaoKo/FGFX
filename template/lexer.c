@@ -50,7 +50,7 @@ get_next_token(void) {
         ++stream;
 
 #ifndef LOOK_TABLE_NOT_DEFINE
-        if (/* NAME PREFIX */middle_table[state] && !unget_input) {
+        if (/* NAME PREFIX */ahead_table[state] && !unget_input) {
             unget_input = true;
             backup_str = stream;
         }

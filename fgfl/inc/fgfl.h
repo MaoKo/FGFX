@@ -94,7 +94,7 @@ typedef struct {
     bitset_t* set_state;
     size_t hash_state;
     trans_list_t* trans;
-    bool middle;
+    bool must_ahead;
     bool is_final;
     int final_entry;
     int final_anchor_entry;

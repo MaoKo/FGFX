@@ -116,14 +116,14 @@ gen_state_table(int filde, lexical_spec_t const* spec,
 }
 
 void
-gen_middle_table(int filde, lexical_spec_t const* spec,
+gen_ahead_table(int filde, lexical_spec_t const* spec,
                             char const* header, spec_entry_t const* state) {
     bool first_seen = false;
     size_t size_states = SIZE_VECTOR(spec->states);
 
     for (size_t i = 1; i < size_states; ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(spec->states, i);
-        if (!crt_state->middle)
+        if (!crt_state->must_ahead)
             { continue; }
         else if (!first_seen) {
             dprintf(filde, STATIC SP "uint8_t" NL);
@@ -132,7 +132,7 @@ gen_middle_table(int filde, lexical_spec_t const* spec,
             dprintf(filde, SEP);
             gen_state_name(filde, state);
 
-            dprintf(filde, "middle_table[%zu] = " BEG_BLOCK NL, size_states);
+            dprintf(filde, "ahead_table[%zu] = " BEG_BLOCK NL, size_states);
             first_seen = true;
         }
         dprintf(filde, TAB "[%ld]=true" COMMA NL, i);
