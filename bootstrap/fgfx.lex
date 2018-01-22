@@ -22,9 +22,8 @@ $TOKEN
    
     /* Regex */
 
-    ( BEG_REGEX, BODY_REGEX )
-                        CLOSE_REGEX = / [[:blank:]]*\//{SPACE}*(,|;|->) /,
-                        ( $BEGIN GLOBAL, $ALL ) ;
+    ( BEG_REGEX, BODY_REGEX ) 
+        CLOSE_REGEX = / [[:blank:]]*\//{SPACE}*(,|;|->) /, ( $BEGIN GLOBAL,* ) ;
 
     ( BEG_REGEX, BODY_REGEX ) REG_UNION  = / \| /, ( $BEGIN BODY_REGEX ) ;
     ( BEG_REGEX, BODY_REGEX ) REG_STAR   = / \* /, ( $BEGIN BODY_REGEX ) ;
@@ -40,11 +39,11 @@ $TOKEN
 
     ( BEG_REGEX, BODY_REGEX ) REG_BOUND_NAME = 
                     / \{{LETTER}({LETTER}|{DIGIT})*\} /, ( $BEGIN BODY_REGEX ) ;
-    
-    ( BEG_REGEX, BODY_REGEX ) REG_LBRACE = / \{ /,
-                            ( $BEGIN FINITE_SEQ, $ALL ) ;
-
-    ( FINITE_SEQ ) REG_RBRACE = / } /, ( $BEGIN BODY_REGEX ) ;
+ 
+    ( BEG_REGEX, BODY_REGEX ) REG_NOT    = / \! / ;
+   
+    ( BEG_REGEX, BODY_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN FINITE_SEQ,* ) ;
+    ( FINITE_SEQ )            REG_RBRACE = /  } /, ( $BEGIN BODY_REGEX ) ;
 
     ( FINITE_SEQ ) DIGIT = / [[:digit:]]+ / ;
     ( FINITE_SEQ ) REG_COMMA = / , / ;
@@ -52,8 +51,8 @@ $TOKEN
     ( BODY_REGEX ) REG_DIFF_CLASS  = / "{-}" / ;
     ( BODY_REGEX ) REG_UNION_CLASS = / "{+}" / ;
 
-    ( BEG_REGEX, BODY_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL, $ALL ) ;
-    ( BEG_CCL, BODY_CCL ) REG_RBRACK = / ] /, ( $BEGIN BODY_REGEX, $ALL ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL,* ) ;
+    ( BEG_CCL, BODY_CCL )     REG_RBRACK = /  ] /, ( $BEGIN BODY_REGEX,* ) ;
 
     ( BEG_REGEX, BEG_CCL ) REG_CARET = / \^ /, ( $BEGIN BODY_REGEX, BODY_CCL ) ;
     ( BODY_REGEX ) REG_DOLLAR = / $/[[:blank:]]*\/ / ;
@@ -122,10 +121,7 @@ $KEYWORD
 {
     // FGFL
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
-    BEGIN, FRAG, INITIAL, ALL, STAY,
-
-    /* TODO */
-    FAIL,
+    BEGIN, FRAG, INITIAL, STAY, FAIL,
 
     // Regex
     CC_FIRST, // Dummy

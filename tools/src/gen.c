@@ -43,7 +43,7 @@ gen_require_macro(int filde, char const* header) {
 
 void
 gen_endif(int filde, char const* header) {
-    dprintf(filde, END_IF " /* ");
+    dprintf(filde, "#endif /* ");
     gen_include_macro(filde, header);
     dprintf(filde, " */" NL);
 }

@@ -43,6 +43,8 @@ init_groups(lexical_spec_t* spec) {
         }
         PUSH_BACK_VECTOR(groups, final_group);
     }
+    
+    del_bitset(seen_final);
     return (groups);
 }
 

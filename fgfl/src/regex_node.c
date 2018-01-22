@@ -112,13 +112,16 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
         if (root->left->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
                 AT_VECTOR(spec->entry_vect, root->left->index_token))->reg_ast;
+
             del_regex_node(root->left);
             root->left = cpy_regex_node(target_node);
         }
+
         /* Check for '*' operator */
         if (root->right && root->right->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
                 AT_VECTOR(spec->entry_vect, root->right->index_token))->reg_ast;
+
             del_regex_node(root->right);
             root->right = cpy_regex_node(target_node);
         }
@@ -129,8 +132,55 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
     else if (root->kind_ast == AST_BOUND_NAME) {
         regex_node_t* target_node = cpy_regex_node(((spec_entry_t*)
                     AT_VECTOR(spec->entry_vect, root->index_token))->reg_ast);
+
         FREE(root->bound_name);
         memcpy(root, target_node, sizeof(*root));
+
         FREE(target_node);
     }
 }
+
+void
+invert_node_language(regex_node_t* root) {
+    if (root) {
+        bitset_t* negate_lang = NULL_BITSET;
+
+        switch (root->kind_ast) {
+            case AST_SYMBOL: ;
+                negate_lang = new_bitset();
+                ADD_BITSET(negate_lang, (size_t)root->symbol);
+
+                root->class = COMPL_BITSET(negate_lang);  
+                root->kind_ast = AST_CLASS;
+              
+                break;
+
+            case AST_CLASS:
+                root->class = COMPL_BITSET(root->class);  
+                break;
+
+            case AST_UNION:
+                invert_node_language(root->left);
+                invert_node_language(root->right);
+
+                root->kind_ast = AST_CONCAT;
+
+                break;
+
+            case AST_LOOK:
+            case AST_CONCAT:
+                negate_lang = new_bitset();
+                
+                // TODO
+                // Invert the concat operator
+
+                invert_node_language(root->right);
+                
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+

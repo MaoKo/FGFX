@@ -25,6 +25,7 @@ static regex_node_t* regex_look(void);
 static regex_node_t* regex_union(void);
 static regex_node_t* regex_cat(void);
 static regex_node_t* regex_closure(void);
+static regex_node_t* regex_not(void);
 static regex_node_t* regex_atom(void);
 static regex_node_t* regex_string(void);
 static regex_node_t* regex_fullccl(void);
@@ -91,6 +92,12 @@ build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
     if (!root)
         { return (NULL_NODE); }
     if (peek_token(spec->lex) == T_REG_DOLLAR) {
+        if (root->kind_ast == AST_LOOK) {
+            del_regex_node(root);
+            errorf(CURRENT_LINE(regex_spec->lex),
+                                "$ can't follow the / operator.");
+            return (NULL_NODE);
+        }
         advance_token(spec->lex);
         root = new_regex_node(AST_LOOK, root, new_regex_node(AST_SYMBOL, '\n'));
     }
@@ -155,7 +162,7 @@ regex_cat(void) {
 
 static regex_node_t*
 regex_closure(void) {
-    regex_node_t* root = regex_atom();
+    regex_node_t* root = regex_not();
     if (!root)
         { return (NULL_NODE); }
 
@@ -181,6 +188,26 @@ regex_closure(void) {
         if (!root)
             { return (NULL_NODE); }
     }
+    return (root);
+}
+
+static regex_node_t*
+regex_not(void) {
+    size_t count_not = 0;
+
+    while (peek_token(regex_spec->lex) == T_REG_NOT) {
+        advance_token(regex_spec->lex);
+        ++count_not;
+    }
+
+    regex_node_t* root = regex_atom();
+    if (!root)
+        { return (NULL_NODE); }
+
+    // if count_not is odd
+    if (count_not % 2)
+        { invert_node_language(root); }
+
     return (root);
 }
 

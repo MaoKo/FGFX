@@ -189,12 +189,11 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
     int kind = peek_token(spec->lex);
     bool valid_kind = !((kind != T_TERMINAL)
-                                    && (kind != T_ALL) && (kind != T_STAY));
+                        && (kind != T_STAR) && (kind != T_STAY));
 
     if (!valid_kind) {
         errorf(CURRENT_LINE(spec->lex),
-                            "Either a token name, $ALL or "
-                            "$NONE must follow the $BEGIN.");
+                "Either a token name, a * or $STAY must follow the $BEGIN.");
         return (ERROR);
     }
 
@@ -205,27 +204,27 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
     while (valid_kind) {
         advance_token(spec->lex);
-        if (kind == T_ALL)
+        if (kind == T_STAR)
             { seen_all = true; }
         else if (kind == T_STAY)
             { ++count_none; }
 
         if (seen_all) {
             if (!count_pos) {
-                errorf(CURRENT_LINE(spec->lex), "There must be a state name"
-                            " before the $ALL directive.");
+                errorf(CURRENT_LINE(spec->lex),
+                            "There must be a state name before the * token.");
                 return (ERROR);
             }
-            else if (kind != T_ALL) {
+            else if (kind != T_STAR) {
                 errorf(CURRENT_LINE(spec->lex),
-                        "A state name can't follow the $ALL directive.");
+                        "A state name can't follow the * token.");
                 return (ERROR);
             }
         }
         trans_list_t* equiv_state = trans_list_at(
                                         entry->state_begin_lst, count_pos);
 
-        if (!equiv_state) {
+        if ((!equiv_state) && (!entry->all_state)) {
             errorf(CURRENT_LINE(spec->lex),
                         "More begin move than the number of state.");
             return (ERROR);
@@ -236,11 +235,22 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
                 { return (ERROR); }
             else if (!entry->is_frag)
                 { crt_state->is_reach = true; }
-            equiv_state->state = GET_INDEX(crt_state);
+
+            if (!entry->all_state)
+                { equiv_state->state = GET_INDEX(crt_state); }
+            else
+                { entry->default_state = GET_INDEX(crt_state); }
         }
         else if (seen_all) {
-            int prev_index = (trans_list_at(entry->state_begin_lst,
-                                                count_pos - 1))->state;
+            if (entry->all_state) {
+                errorf(CURRENT_LINE(spec->lex),
+                    "You can't use star in token which is valid in all state.");
+                return (ERROR);
+            }
+
+            int prev_index = (trans_list_at(
+                                entry->state_begin_lst, count_pos - 1))->state;
+
             while (equiv_state) {
                 equiv_state->state = prev_index;
                 equiv_state = equiv_state->next;
@@ -249,16 +259,22 @@ spec_change_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
         if (peek_token(spec->lex) == T_COMMA)
             { advance_token(spec->lex); }
+
         ++count_pos;
 
         kind = peek_token(spec->lex);
         valid_kind = !((kind != T_TERMINAL)
-                                    && (kind != T_ALL) && (kind != T_STAY));
+                                    && (kind != T_STAR) && (kind != T_STAY));
     }
 
-    if (count_none == ((seen_all) ? count_pos - 1 : count_pos)) {
-        warnf(CURRENT_LINE(spec->lex), "The $BEGIN directive us useless"
-                " because it goes always to the $NONE directive.");
+    if (entry->all_state && count_pos > 1) {
+        errorf(CURRENT_LINE(spec->lex),
+            "A token in all state can't have more than one outgoing begin.");
+        return (ERROR);
+    }
+    else if (count_none == ((seen_all) ? count_pos - 1 : count_pos)) {
+        warnf(CURRENT_LINE(spec->lex), "The $BEGIN directive is useless"
+                " because it goes always to the $STAY directive.");
     }
 
     // TODO
@@ -549,7 +565,7 @@ set_used_state(spec_entry_t* crt_state) {
 
 static int
 check_validity_token(lexical_spec_t* spec) {
-    bool state_present = !EMPTY_VECTOR(spec->state_vect);
+    bool state_present = !(EMPTY_VECTOR(spec->state_vect));
     int exit_st = DONE;
 
     for (int i = SIZE_VECTOR(spec->entry_vect) - 1; i >= 0; --i) {
@@ -557,11 +573,8 @@ check_validity_token(lexical_spec_t* spec) {
                                     AT_VECTOR(spec->entry_vect, (size_t)i);
 
         if (crt_entry->kind == T_TERMINAL) {
-            if (crt_entry->all_state) {
-                foreach_vector(spec->state_vect, &set_used_state);
-//              add_range_bitset(crt_entry->valid_state,
-//                                      0, SIZE_VECTOR(spec->state_vect));
-            }
+            if (crt_entry->all_state)
+                { foreach_vector(spec->state_vect, &set_used_state); }
 
             if (crt_entry->is_frag) {
                 if (!crt_entry->is_used) {
@@ -592,21 +605,16 @@ check_validity_token(lexical_spec_t* spec) {
 }
 
 /*
-static void
+
+static inline void
 del_useless_state(lexical_spec_t* spec, size_t base) {
     erase_vector(spec->state_vect, base);
 }
+
 */
 
 static int
 check_validity_state(lexical_spec_t* spec) {
-    if (spec->start_state == -1) {
-        if (EMPTY_VECTOR(spec->state_vect))
-            { return (DONE); }
-        warnf(0, "Initial state not defined. Default set to state 0.");
-        spec->start_state = 0;
-    }
-
     int exit_st = DONE;
     for (size_t i = 0; i < SIZE_VECTOR(spec->state_vect); ++i) {
         spec_entry_t* crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, i);
@@ -631,11 +639,13 @@ check_validity_state(lexical_spec_t* spec) {
                                 crt_state->name, crt_state->count);
         }
     }
+
     if ((exit_st != ERROR) && (SIZE_VECTOR(spec->state_vect) == 1)) {
         warnf(0, "Useless to have only 1 state. It's an implicit state.");
         POP_BACK_VECTOR(spec->state_vect);
         spec->start_state = -1;
     }
+
     return (exit_st);
 }
 
@@ -643,12 +653,20 @@ int
 spec_sanity_check(lexical_spec_t* spec) {
     if (!spec)
         { return (ERROR); }
-    else if (expand_macro_regex(spec) == ERROR)
-        { return (ERROR); }
-    else if (check_validity_state(spec) == ERROR)
+    else if (spec->start_state == -1) {
+        if (EMPTY_VECTOR(spec->state_vect))
+            { return (DONE); }
+        warnf(0, "Initial state not defined. Default set to state 0.");
+        spec->start_state = 0;
+    }
+
+    if (expand_macro_regex(spec) == ERROR)
         { return (ERROR); }
     else if (check_validity_token(spec) == ERROR)
         { return (ERROR); }
+    else if (check_validity_state(spec) == ERROR)
+        { return (ERROR); }
+
     return (DONE);
 }
 

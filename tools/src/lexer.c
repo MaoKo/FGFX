@@ -255,7 +255,6 @@ advance_token(lexer_t* lex) {
             { (void*)T_LEFT,        "$LEFT" },
             { (void*)T_RIGHT,       "$RIGHT" },
             { (void*)T_NONASSOC,    "$NONASSOC" },
-            { (void*)T_ALL,         "$ALL" },
             { (void*)T_STAY,        "$STAY" },
             { (void*)T_FAIL,        "$FAIL" },
         };

@@ -58,6 +58,7 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
                                 crt_state->state_master, header, crt_state);
             }
         }
+
         del_nfa_record();
 
         GEN_LOOK_TABLE(filde, spec, header);

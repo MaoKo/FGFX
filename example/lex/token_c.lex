@@ -2,8 +2,6 @@
 // C Token Definition (C11) //
 //////////////////////////////
 
-/* C Identifier token */
-
 $TOKEN
 {
     IDENTIFIER  =   / ({LETTER}|{ESC_UNV})({LETTER}|{DIGIT}|{ESC_UNV})*/ ;
@@ -43,7 +41,6 @@ $TOKEN
                         ({LONG_SUFF}{UNSIGN_SUFF}?)|\
                         ({LGLG_SUFF}{UNSIGN_SUFF}?) / -> { $FRAG };
 
-
     /* C Float Fragment */
 
     SIGN        =   / [-+]   / -> { $FRAG };
@@ -70,7 +67,7 @@ $TOKEN
     LBRACE      =   / \{    / ;
     RBRACE      =   /  }    / ;
     DOT         =   / \.    / ;
-    ARROW       =   / ->    / ;
+    ARROW       =   /  ->   / ;
 
     PLUSPLUS    =   / "++"  / ;
     MINUSMINUS  =   /  --   / ;

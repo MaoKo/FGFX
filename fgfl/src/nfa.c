@@ -358,7 +358,8 @@ build_nfa_from_state(lexical_spec_t* spec) {
 
                 if ((GET_INDEX(crt_state) == (size_t)entry->default_state)
                         || (cmp_input_trans_list(entry->state_begin_lst,
-                            GET_INDEX(crt_state)) != -1))
+                                                GET_INDEX(crt_state)) != -1)
+                        || (entry->all_state))
 
                     { ADD_BITSET(set_frag, GET_INDEX(entry->nfa_m)); }
             }

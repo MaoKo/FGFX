@@ -7,7 +7,7 @@
 #define STATE_TOKEN_STR         "_ONLY_STATE_TOKEN_"
 
 #define IFNDEF_ONLY_STATE_TOKEN(x)  dprintf(x, "#ifndef " STATE_TOKEN_STR NL NL)
-#define ENDIF_ONLY_STATE_TOKEN(x)   dprintf(x, END_IF " /* "\
+#define ENDIF_ONLY_STATE_TOKEN(x)   dprintf(x, "#endif /* "\
                                             STATE_TOKEN_STR " */" NL)
 
 #define DFA_START_STATE(x)      dprintf(x, DEFINE(START_STATE, 1) NL)

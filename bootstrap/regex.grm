@@ -19,7 +19,7 @@ $PRODUCTION
                             { '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
     <finite_seq>    ->  '{' DIGIT [ ',' [ DIGIT ] ] '}' ;
 
-    <regex_not>     ->  [ '!' ] <regex_atom> ;
+    <regex_not>     ->  { '!' } => ( $RIGHT ) <regex_atom> ;
 
     <regex_atom>    ->  <regex_fullccl>
 					|   <regex_string>
