@@ -47,14 +47,14 @@ get_next_token(void) {
         if (state == DEAD_STATE)
             { break; }
 
-        ++stream;
-
 #ifndef LOOK_TABLE_NOT_DEFINE
-        if (/* NAME PREFIX */ahead_table[state] && !unget_input) {
+        if (/* NAME PREFIX */ahead_table[state]) {
             unget_input = true;
             backup_str = stream;
         }
 #endif /* LOOK_TABLE_NOT_DEFINE */
+ 
+        ++stream;
 
         size_t i = 0;
         while (* /* NAME PREFIX */final_table[i]) {

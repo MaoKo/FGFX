@@ -544,13 +544,25 @@ spec_token_section(lexical_spec_t* spec) {
         empty = false;
     }
     if (empty)
-        { warnf(CURRENT_LINE(spec->lex), "Empty file."); }
+        { warnf(0, "Empty file. No output generated."); }
     return (DONE);
 }
 
 lexical_spec_t*
 parse_lexical_spec(int filde) {
     lexical_spec_t* crt_spec = new_lexical_spec(filde);
+
+#if 0
+    printf("Advance = %s\n", 
+        fgfx_token_name_table[advance_token(crt_spec->lex)]);
+    printf("Advance = %s\n", 
+        fgfx_token_name_table[advance_token(crt_spec->lex)]);
+    printf("Advance = %s\n", 
+        fgfx_token_name_table[advance_token(crt_spec->lex)]);
+    printf("Advance = %s\n", 
+        fgfx_token_name_table[advance_token(crt_spec->lex)]);
+#endif
+
     if (spec_token_section(crt_spec) == ERROR) {
         del_lexical_spec(crt_spec);
         return (NULL);

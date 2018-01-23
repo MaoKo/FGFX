@@ -19,7 +19,7 @@ $TOKEN
 
     EQUAL = /  = / ;
     STAR  = / \* / ;
-    ( GLOBAL ) OPEN_REGEX = / \/[[:blank:]]* /,  ( $BEGIN BEG_REGEX ) ;
+    ( GLOBAL ) OPEN_REGEX = / \/[[:blank:]]* /, ( $BEGIN BEG_REGEX ) ;
    
     /* Regex */
 
@@ -51,6 +51,7 @@ $TOKEN
 
     ( BODY_REGEX ) REG_DIFF_CLASS  = / "{-}" / ;
     ( BODY_REGEX ) REG_UNION_CLASS = / "{+}" / ;
+    ( BODY_REGEX ) REG_INTER_CLASS = / "{&}" / ;
 
     ( BEG_REGEX, BODY_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN BEG_CCL,* ) ;
     ( BEG_CCL, BODY_CCL )     REG_RBRACK = /  ] /, ( $BEGIN BODY_REGEX,* ) ;
@@ -108,10 +109,10 @@ $SKIP
 
     /* Comments */
     SINGLE_LINE                         = / \/\/.* / ;
-    ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /, ( $BEGIN NESTED_COM ) ;
+    ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /,  ( $BEGIN NESTED_COM ) ;
 
     ( NESTED_COM ) CHAR_COMMENT         = / (.|\n) / ;
-    ( NESTED_COM ) END_MULTI            = / \*+\/  /, ( $BEGIN GLOBAL ) ;
+    ( NESTED_COM ) END_MULTI            = / \*+\/  /,  ( $BEGIN GLOBAL ) ;
 
     /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
@@ -134,7 +135,7 @@ $KEYWORD
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
     BEGIN, FRAG, INITIAL, STAY, FAIL,
 
-    // Regex
+    // POSIX character set
     CC_FIRST, // Dummy
 
     // Character Class Expression

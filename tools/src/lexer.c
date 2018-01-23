@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -106,6 +108,31 @@ change_lexer_state(lexer_t* lex,
     }
 }
 
+static inline bool
+must_look_ahead(int crt_state, int state) {
+    if (crt_state == S_BODY_CCL && fgfx_BODY_CCL_ahead_table[state])
+        { return (true); }
+    else if (crt_state == S_BEG_REGEX && fgfx_BEG_REGEX_ahead_table[state])
+        { return (true); }
+    else if (crt_state == S_BODY_REGEX && fgfx_BODY_REGEX_ahead_table[state])
+        { return (true); }
+    return (false);
+}
+
+static inline void
+change_state(lexer_t* lex, int last_match, bool* need_recompute) {
+    if (last_match == T_BEG_MULTI)
+        { ++(lex->nested_com); }
+    else if (last_match == T_END_MULTI)
+        { --(lex->nested_com); }
+
+    if ((fgfx_begin_table[last_match][lex->crt_state])
+            && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
+        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state];
+        (*need_recompute) = true; 
+    }
+}
+
 static int
 get_next_token(lexer_t* lex) {
     static uint8_t (*state_table)[256] = NULL;
@@ -115,6 +142,7 @@ get_next_token(lexer_t* lex) {
 
     int state = START_STATE;
     int last_match = T_ERROR;
+
     int rd = 0;
 
     if (need_recompute) {
@@ -152,21 +180,17 @@ get_next_token(lexer_t* lex) {
         }
 
         // Change state
-        if (!unget_input) {
-            if (lex->crt_state == S_BODY_CCL
-                                && fgfx_BODY_CCL_ahead_table[state])
-                { unget_input = true; }
-            else if (lex->crt_state == S_BEG_REGEX
-                                && fgfx_BEG_REGEX_ahead_table[state])
-                { unget_input = true; }
-            else if (lex->crt_state == S_BODY_REGEX
-                                && fgfx_BODY_REGEX_ahead_table[state])
-                { unget_input = true; }
-        }
-
         state = state_table[state][rd];
         if (is_final_state(state, final_table) != T_ERROR)
             { last_match = is_final_state(state, final_table); }
+
+        if (must_look_ahead(lex->crt_state, state)) {
+            if (unget_input) {
+                append_buffer(lex->last_lexeme, lex->push_back);
+                reset_buffer(lex->push_back);
+            }
+            unget_input = true;
+        }
 
         // Write on buffer
         if (unget_input)
@@ -205,17 +229,7 @@ get_next_token(lexer_t* lex) {
         }
     }
 
-    if (last_match == T_BEG_MULTI)
-        { ++(lex->nested_com); }
-    else if (last_match == T_END_MULTI)
-        { --(lex->nested_com); }
-
-    if ((fgfx_begin_table[last_match][lex->crt_state])
-            && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
-        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state];
-        need_recompute = true; 
-    }
-
+    change_state(lex, last_match, &need_recompute);
     return (last_match);
 }
 

@@ -27,6 +27,8 @@ Which create a file called token_c.h.lex ready for lexing.
     .   Add in FGFP ( ... | ... )
     .   Add $FAIL to FGFL
     .   Add ! not operator to regex (25%)
+    .   Add option (?r-s:pattern) to FGFL
+    .   Handle a/b*c lookahead
     .   Remove unreachable state
     .   Handle when the number of state is 1
     .   Check useless $BEGIN

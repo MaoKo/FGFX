@@ -294,7 +294,7 @@ build_dfa_table(nfa_state_t* master, lexical_spec_t* spec) {
     build_ahead_table(spec->states);
     build_final_table(spec->states);
 
-    minimizing_dfa(spec);
+//  minimizing_dfa(spec);
     spec->size_final = spec->size_final_anchor = 0;
     
     for (size_t i = 1; i < SIZE_VECTOR(spec->states); ++i) {

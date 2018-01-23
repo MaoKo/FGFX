@@ -240,6 +240,40 @@ regex_node_union(regex_node_t* root) {
                                 left, right, new_tail_state, new_head_state));
 }
 
+static bool
+set_states_lookahead(nfa_automaton_t* right) {
+    switch (right->kind_nfa) {
+        case NFA_UNION: ;
+            bool once_false = true;
+            once_false = set_states_lookahead(right->right);
+            if (!set_states_lookahead(right->left))
+                { once_false = false; }
+            return (once_false);
+
+        case NFA_CONCAT:
+            if (!set_states_lookahead(right->left)
+                                && !set_states_lookahead(right->right))
+                { return (false); }
+            break;
+
+        case NFA_CLOSURE:
+            set_states_lookahead(right->middle);
+            return (false);
+ 
+        case NFA_CLASS:
+        case NFA_SYMBOL:
+            right->head_state->beg_look = true;
+            break;
+
+        case NFA_EPSILON:
+            return (false);
+
+        default:
+            break;
+    }
+    return (true);
+}
+
 static nfa_automaton_t*
 regex_node_concat(regex_node_t* root) {
     if ((root->kind_ast != AST_CONCAT) && (root->kind_ast != AST_LOOK))
@@ -263,7 +297,7 @@ regex_node_concat(regex_node_t* root) {
         { left->head_state->edge2 = right; }
 
     if (root->kind_ast == AST_LOOK)
-        { left->head_state->beg_look = true; }
+        { set_states_lookahead(right); }
 
     return (new_nfa_automaton(NFA_CONCAT, left, right, right->head_state));
 }

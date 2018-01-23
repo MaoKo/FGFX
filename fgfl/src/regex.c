@@ -291,21 +291,27 @@ regex_fullccl(void) {
         { return (NULL_NODE); }
 
     bool encounter_op = false;
-    while (in_first(regex_spec->lex, T_REG_DIFF_CLASS, T_REG_UNION_CLASS, -1)) {
+    while (in_first(regex_spec->lex, T_REG_DIFF_CLASS,
+                                T_REG_UNION_CLASS, T_REG_INTER_CLASS, -1)) {
+
         int kind_op = advance_token(regex_spec->lex);
+
         if (peek_token(regex_spec->lex) != T_REG_LBRACK) {
             del_regex_node(root);
             errorf(CURRENT_LINE(regex_spec->lex),
                                 "Missing character class operand to %s.",
-                                (kind_op == T_REG_DIFF_CLASS) ? "{-}" : "{+}");
+                                (kind_op == T_REG_DIFF_CLASS)  ? "{-}" :
+                                (kind_op == T_REG_UNION_CLASS) ? "{+}" : "{&}");
             return (NULL_NODE);
         }
         else {
             regex_node_t* right_op = regex_loneccl();
             if (kind_op == T_REG_DIFF_CLASS)
                 { DIFF_BITSET(root->class, right_op->class); }
-            else
+            else if (kind_op == T_REG_UNION_CLASS)
                 { UNION_BITSET(root->class, right_op->class); }
+            else
+                { INTERSECT_BITSET(root->class, right_op->class); }
             del_regex_node(right_op);
         }
         encounter_op = true;
