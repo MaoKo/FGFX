@@ -119,7 +119,7 @@ typedef struct {
             bool use_look;
             bool skip;
 
-            regex_node_t* reg_ast;
+            regex_node_t* regex_ast;
             nfa_automaton_t* nfa_m;
 
             int default_state;

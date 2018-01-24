@@ -76,7 +76,7 @@ $TOKEN
     PLUS        =   / \+    / ;
     MINUS       =   /  -    / ;
     TILDE       =   /  ~    / ;
-    EXCLA       =   /  !    / ;
+    EXCLA       =   / \!    / ;
 
     DIV         =   / \/    / ;
     MOD         =   /  %    / ;

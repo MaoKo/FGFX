@@ -362,7 +362,7 @@ dfs_regex_node(regex_node_t* root) {
 
 static int
 transform_regex_nfa(spec_entry_t* crt_entry) {
-    regex_node_t* root = crt_entry->reg_ast;
+    regex_node_t* root = crt_entry->regex_ast;
     nfa_igcase = crt_entry->is_igcase;
 
     int exit_st = DONE;
@@ -375,7 +375,7 @@ transform_regex_nfa(spec_entry_t* crt_entry) {
         { STATE_ANCHOR(crt_entry->nfa_m->head_state); }
 
     del_regex_node(root);
-    crt_entry->reg_ast = NULL_NODE;
+    crt_entry->regex_ast = NULL_NODE;
 
     return (exit_st);
 }

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "regex_node.h"
@@ -111,7 +112,8 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
     else if (CHILD_NODE(root->kind_ast)) {
         if (root->left->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
-                AT_VECTOR(spec->entry_vect, root->left->index_token))->reg_ast;
+                                        AT_VECTOR(spec->entry_vect,
+                                        root->left->index_token))->regex_ast;
 
             del_regex_node(root->left);
             root->left = cpy_regex_node(target_node);
@@ -120,7 +122,8 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
         /* Check for '*' operator */
         if (root->right && root->right->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
-                AT_VECTOR(spec->entry_vect, root->right->index_token))->reg_ast;
+                                        AT_VECTOR(spec->entry_vect,
+                                        root->right->index_token))->regex_ast;
 
             del_regex_node(root->right);
             root->right = cpy_regex_node(target_node);
@@ -131,7 +134,7 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
     }
     else if (root->kind_ast == AST_BOUND_NAME) {
         regex_node_t* target_node = cpy_regex_node(((spec_entry_t*)
-                    AT_VECTOR(spec->entry_vect, root->index_token))->reg_ast);
+                    AT_VECTOR(spec->entry_vect, root->index_token))->regex_ast);
 
         FREE(root->bound_name);
         memcpy(root, target_node, sizeof(*root));
@@ -181,6 +184,73 @@ invert_node_language(regex_node_t* root) {
             default:
                 break;
         }
+    }
+}
+
+bool
+remove_useless_epsilon(regex_node_t* root) {
+    if (!root)
+        { return (false); }
+
+    switch (root->kind_ast) {
+        case AST_SYMBOL:
+        case AST_CLASS:
+            return (false);
+
+        case AST_EPSILON:
+            return (true);
+
+        case AST_UNION:
+            if ((remove_useless_epsilon(root->left))
+                    && (remove_useless_epsilon(root->right))) {
+                del_regex_node(root->left);
+                del_regex_node(root->right);
+
+                root->kind_ast = AST_EPSILON;
+                return (true);
+            }
+            else
+                { return (false); }
+
+        case AST_LOOK:
+        case AST_CONCAT: ;
+            bool left = remove_useless_epsilon(root->left);
+            bool right = remove_useless_epsilon(root->right);
+
+            if (left || right) {
+                if (left)
+                    { del_regex_node(root->left); }
+                if (right)
+                    { del_regex_node(root->right); }
+
+                if (left && right) {
+                    root->kind_ast = AST_EPSILON;
+                    return (true);
+                }
+                else {
+                    regex_node_t* src_node = NULL_NODE;
+                    if (!left)
+                        { src_node = root->left; }
+                    else
+                        { src_node = root->right; }
+                    memcpy(root, src_node, sizeof(*src_node));
+                    FREE(src_node);
+                }
+            }
+            return (false);
+
+        case AST_CLOSURE:
+            if (remove_useless_epsilon(root->left)) {
+                del_regex_node(root->left);
+                root->kind_ast = AST_EPSILON;
+
+                return (true);
+            }
+            
+            return (false);
+
+        default:
+            return (false);
     }
 }
 

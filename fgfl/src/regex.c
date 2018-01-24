@@ -269,9 +269,9 @@ regex_string(void) {
             { root_concat = symbol; }
         else
             { root_concat = new_regex_node(AST_CONCAT, root_concat, symbol); }
-        empty_str = true;
+        empty_str = false;
     }
-    if (!empty_str)
+    if (empty_str)
         { root_concat = new_regex_node(AST_EPSILON); }
     if (!root_concat)
          { return (NULL_NODE); }

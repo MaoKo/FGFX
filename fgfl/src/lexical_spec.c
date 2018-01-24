@@ -17,7 +17,7 @@ static void
 del_spec_entry(spec_entry_t* entry) {
     if (entry) {
         if (entry->kind == T_TERMINAL) {
-            del_regex_node(entry->reg_ast);
+            del_regex_node(entry->regex_ast);
             del_trans_list(entry->state_begin_lst);
         }
         FREE(entry->name);
@@ -370,13 +370,13 @@ spec_regex_assign(lexical_spec_t* spec,
         regex_node_t* root = build_regex(spec, entry);
         if (!root)
             { return (ERROR); }
-        else if (entry->reg_ast) {
+        else if (entry->regex_ast) {
             errorf(CURRENT_LINE(spec->lex),
                            "Attempt to re-assign the token '%s'", entry->name);
             return (ERROR);
         }
     
-        entry->reg_ast = root;
+        entry->regex_ast = root;
         if (advance_token(spec->lex) != T_CLOSE_REGEX) {
             errorf(CURRENT_LINE(spec->lex),
                             "No found the end of the regex '/'.");
@@ -551,18 +551,6 @@ spec_token_section(lexical_spec_t* spec) {
 lexical_spec_t*
 parse_lexical_spec(int filde) {
     lexical_spec_t* crt_spec = new_lexical_spec(filde);
-
-#if 0
-    printf("Advance = %s\n", 
-        fgfx_token_name_table[advance_token(crt_spec->lex)]);
-    printf("Advance = %s\n", 
-        fgfx_token_name_table[advance_token(crt_spec->lex)]);
-    printf("Advance = %s\n", 
-        fgfx_token_name_table[advance_token(crt_spec->lex)]);
-    printf("Advance = %s\n", 
-        fgfx_token_name_table[advance_token(crt_spec->lex)]);
-#endif
-
     if (spec_token_section(crt_spec) == ERROR) {
         del_lexical_spec(crt_spec);
         return (NULL);
@@ -665,9 +653,7 @@ int
 spec_sanity_check(lexical_spec_t* spec) {
     if (!spec)
         { return (ERROR); }
-    else if (spec->start_state == -1) {
-        if (EMPTY_VECTOR(spec->state_vect))
-            { return (DONE); }
+    else if (spec->start_state == -1 && !EMPTY_VECTOR(spec->state_vect)) {
         warnf(0, "Initial state not defined. Default set to state 0.");
         spec->start_state = 0;
     }
@@ -690,7 +676,7 @@ print_token_entry(lexical_spec_t* spec) {
         spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
         printf("Token %s, is_igcase %d, is_frag %d.\n",
                     crt_entry->name, crt_entry->is_igcase, crt_entry->is_frag);
-        printf("Root node = %p\n", crt_entry->reg_ast);
+        printf("Root node = %p\n", crt_entry->regex_ast);
     }
 }
 
