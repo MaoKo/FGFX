@@ -188,11 +188,8 @@ regex_node_symbol(regex_node_t* root) {
     }
 }
 
-static nfa_automaton_t*
-regex_node_epsilon(regex_node_t* root) {
-    if ((root->kind_ast != AST_EPSILON))
-        { return (NULL_AUTOMATON); }
-
+static inline nfa_automaton_t*
+regex_node_epsilon(void) {
     nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
@@ -304,16 +301,28 @@ regex_node_concat(regex_node_t* root) {
 
 static nfa_automaton_t*
 regex_node_closure(regex_node_t* root) {
-    if (root->kind_ast != AST_CLOSURE)
-//  if (!IS_CLOSURE(root->kind_ast))
+    if (!IS_CLOSURE(root->kind_ast))
         { return (NULL_AUTOMATON); }
+
+    if (root->kind_ast == AST_QUES) {
+        root->right = new_regex_node(AST_EPSILON);
+        root->kind_ast = AST_UNION;
+
+        return (regex_node_union(root));
+    }
+    else if (root->kind_ast == AST_PLUS) {
+        root->right = new_regex_node(AST_STAR, cpy_regex_node(root->left));
+        root->kind_ast = AST_CONCAT;
+
+        return (regex_node_concat(root));
+    }
 
     nfa_automaton_t* middle = dfs_regex_node(root->left);
     if (!middle)
         { return (NULL_AUTOMATON); }
 
     nfa_state_t* new_head_state = new_nfa_state(EDGE_AUTOMATA,
-                                                    middle, NULL_AUTOMATON);
+                                            middle, NULL_AUTOMATON);
 
     if (!new_head_state) {
         del_nfa_automaton(middle);
@@ -341,14 +350,16 @@ dfs_regex_node(regex_node_t* root) {
             case AST_CONCAT:
                 return (regex_node_concat(root));
 
-            case AST_CLOSURE:
+            case AST_QUES:
+            case AST_PLUS:
+            case AST_STAR:
                 return (regex_node_closure(root));
 
             case AST_SYMBOL:
                 return (regex_node_symbol(root));
 
             case AST_EPSILON:
-                return (regex_node_epsilon(root));
+                return (regex_node_epsilon());
 
             case AST_CLASS:
                 return (regex_node_class(root));

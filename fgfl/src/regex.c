@@ -67,7 +67,7 @@ finite_seq(regex_node_t* root) {
         }
         else {
             rep_node = new_regex_node(AST_CONCAT, rep_node,
-                new_regex_node(AST_CLOSURE, cpy_regex_node(rep_node), NULL));
+                new_regex_node(AST_STAR, cpy_regex_node(rep_node)));
         }
     }
 
@@ -171,16 +171,16 @@ regex_closure(void) {
         int closure_kind = advance_token(regex_spec->lex);
         switch (closure_kind) {
             case T_REG_PLUS:
-                root = new_regex_node(AST_CONCAT, root,
-                    new_regex_node(AST_CLOSURE, cpy_regex_node(root), NULL));
+                if (root->kind_ast != AST_PLUS)
+                    { root = new_regex_node(AST_PLUS, root); }
                 break;
             case T_REG_QUES:
-                root = new_regex_node(AST_UNION, root,
-                    new_regex_node(AST_EPSILON));
+                if (root->kind_ast != AST_QUES)
+                    { root = new_regex_node(AST_QUES, root); }
                 break;
             case T_REG_STAR:
-                if (root->kind_ast != AST_CLOSURE)
-                    { root = new_regex_node(AST_CLOSURE, root, NULL); }
+                if (root->kind_ast != AST_STAR)
+                    { root = new_regex_node(AST_STAR, root); }
                 break;
             case T_REG_LBRACE: root = finite_seq(root);
                 break;

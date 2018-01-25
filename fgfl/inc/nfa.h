@@ -13,8 +13,6 @@
 
 #define MAX_SIZE_STATE          (SIZE_VECTOR(record_nfa_state))
 
-#define IS_CLOSURE(kind)        ((kind == AST_STAR) || (kind == AST_PLUS)\
-                                                    || (kind == AST_QUES))
 #define NULL_AUTOMATON          (NULL)
 #define NULL_NFA_STATE          (NULL)
 

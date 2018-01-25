@@ -14,13 +14,10 @@ typedef struct regex_node_t {
     enum {
         AST_UNION,
         AST_CONCAT,
-// TODO
+        AST_QUES,
         AST_STAR,
         AST_PLUS,
-        AST_QUES,
-// TODO
         AST_LOOK,
-        AST_CLOSURE,
         AST_BOUND_NAME,
         AST_SYMBOL,
         AST_EPSILON,

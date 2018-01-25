@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -158,7 +157,7 @@ expand_macro_regex(lexical_spec_t* spec) {
 
 #if 0
             if (IS_LOOK(crt_entry->regex_ast))
-                { puts(crt_entry->name); }
+                { readjust_opt_ast(crt_entry->regex_ast->right); }
 #endif
         }
     }

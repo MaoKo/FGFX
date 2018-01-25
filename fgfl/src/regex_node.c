@@ -25,9 +25,18 @@ new_regex_node(int kind, ...) {
         case AST_BOUND_NAME:
             node->bound_name = va_arg(args, char const*);
             node->index_token = -1;
+
             break;
 
         case AST_EPSILON:
+            break;
+
+        case AST_STAR:
+        case AST_QUES:
+        case AST_PLUS:
+            node->left = va_arg(args, regex_node_t*);
+            node->right = NULL_NODE;
+
             break;
 
         default:
@@ -119,7 +128,7 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
             root->left = cpy_regex_node(target_node);
         }
 
-        /* Check for '*' operator */
+        /* Check for '*', '?', '+' operator */
         if (root->right && root->right->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
                                         AT_VECTOR(spec->entry_vect,
@@ -203,6 +212,7 @@ remove_useless_epsilon(regex_node_t* root) {
         case AST_UNION:
             if ((remove_useless_epsilon(root->left))
                     && (remove_useless_epsilon(root->right))) {
+
                 del_regex_node(root->left);
                 del_regex_node(root->right);
 
@@ -237,20 +247,91 @@ remove_useless_epsilon(regex_node_t* root) {
                     FREE(src_node);
                 }
             }
-            return (false);
+            else 
+                { return (false); }
 
-        case AST_CLOSURE:
+        case AST_STAR:
+        case AST_QUES:
+        case AST_PLUS:
             if (remove_useless_epsilon(root->left)) {
                 del_regex_node(root->left);
                 root->kind_ast = AST_EPSILON;
 
                 return (true);
             }
-            
-            return (false);
+            else
+                { return (false); }
 
         default:
             return (false);
     }
 }
 
+#if 0
+
+static bool
+can_generate_epsilon(regex_node_t* root) {
+    if (!root)
+        { return (false); }
+    switch (root->kind_ast) {
+        case AST_EPSILON:
+            return (true);
+
+        case AST_SYMBOL:
+        case AST_CLASS:
+            return (false);
+
+        case AST_UNION:
+            return (can_generate_epsilon(root->left)
+                                    || can_generate_epsilon(root->right));
+
+        case AST_CONCAT:
+            return (can_generate_epsilon(root->left)
+                                    && can_generate_epsilon(root->right));
+
+        default:
+            return (false);
+    }
+}
+
+static regex_node_t*
+add_node_suffix(regex_node_t* root, regex_node_t* suffix) {
+    if (!root)
+        { return (NULL_NODE); }
+    else if ((root->kind_ast == AST_UNION)
+                                && (root->right->kind_ast == AST_EPSILON)) {
+        del_regex_node(root->right);
+
+        root->right = cpy_regex_node(suffix);
+        root->kind_ast = AST_CONCAT;
+
+        return (root);
+    }
+    else {
+        root->left = add_node_suffix(root->left, root->right);
+        if (can_generate_epsilon(root->right))
+            { root->right = add_node_suffix(root->right, suffix); }
+
+        root->kind_ast = AST_UNION;
+    }
+    return (NULL_NODE);
+}
+
+void
+readjust_opt_ast(regex_node_t* root) {
+    if ((!root) && (root->kind_ast != AST_CONCAT))
+        { return; }
+
+    regex_node_t* new_root = root;
+    while (new_root->left->kind_ast == AST_CONCAT) {
+        new_root = new_root->left;
+        if (!can_generate_epsilon(new_root->right))
+            { root = new_root; }
+    }
+
+    if (!can_generate_epsilon(root->left))
+        { return; }
+    add_node_suffix(root, root->right);
+}
+
+#endif

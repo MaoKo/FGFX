@@ -8,7 +8,9 @@
 #include "vector.h"
 
 #define IS_LOOK(root)   ((root)->kind_ast == AST_LOOK)
-#define CHILD_NODE(k)   ((k == AST_CLOSURE) || (k == AST_CONCAT)\
+
+#define IS_CLOSURE(k)   ((k == AST_STAR) || (k == AST_QUES) || (k == AST_PLUS))
+#define CHILD_NODE(k)   (IS_CLOSURE(k) || (k == AST_CONCAT)\
                             || (k == AST_UNION) || (k == AST_LOOK))
 
 #define NULL_NODE       (NULL)
@@ -21,5 +23,6 @@ void search_kind_regex_node(regex_node_t*, size_t, vector_t*);
 void replace_bound_name_node(regex_node_t*, lexical_spec_t*);
 void invert_node_language(regex_node_t*);
 bool remove_useless_epsilon(regex_node_t*);
+//void readjust_opt_ast(regex_node_t*);
 
 #endif /* REGEX_NODE_H */
