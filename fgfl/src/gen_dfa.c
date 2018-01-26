@@ -196,12 +196,12 @@ print_begin_entry(int filde, bool* already_print, char const* entry_name,
 }
 
 void
-gen_change_state(int filde, char const* header, lexical_spec_t* spec) {
+gen_action_state(int filde, char const* header, lexical_spec_t* spec) {
     size_t size_entry = SIZE_VECTOR(spec->entry_vect);
     size_t size_state = SIZE_VECTOR(spec->state_vect);
 
-    dprintf(filde, STATIC SP "int%u_t" NL,
-                            min_size_type(size_entry, false));
+    dprintf(filde, STATIC SP "uint%u_t" NL,
+                            min_size_type(size_entry, true));
 
     gen_verbatim_file(filde, header);
     dprintf(filde, "_begin_table[%s][%s] = "
@@ -213,26 +213,36 @@ gen_change_state(int filde, char const* header, lexical_spec_t* spec) {
             { continue; }
 
         bool already_print = false;
-        if (crt_entry->all_state) {
-            spec_entry_t* out_state = (spec_entry_t*)
-                    AT_VECTOR(spec->state_vect, crt_entry->default_state);
+        if (((crt_entry->default_state != NONE_STATE) || crt_entry->all_state)
+                    && (crt_entry->default_action != NONE_ACTION)) {
 
-            for (size_t j = 0; j < size_state; ++j) {
-                spec_entry_t* crt_state = (spec_entry_t*)
-                            AT_VECTOR(spec->state_vect, j);
-                print_begin_entry(filde, &already_print, crt_entry->name,
+            spec_entry_t* out_state = (spec_entry_t*)AT_VECTOR(spec->state_vect,
+                                            crt_entry->default_action ^ _BEGIN);
+
+            spec_entry_t* crt_state = (spec_entry_t*)
+                            AT_VECTOR(spec->state_vect, spec->start_state);
+
+            if (crt_entry->all_state) {
+                for (size_t j = 0; j < size_state; ++j) {
+                    crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, j);
+                    print_begin_entry(filde, &already_print, crt_entry->name,
                             crt_state->name, out_state->name);
+                }
+            }
+            else {
+                print_begin_entry(filde, &already_print, crt_entry->name,
+                    crt_state->name, out_state->name);
             }
         }
         else {
-            trans_list_t* it_lst = crt_entry->state_begin_lst;
+            trans_list_t* it_lst = crt_entry->state_lst;
             while (it_lst) {
-                if (it_lst->state != NONE_BEGIN) {
+                if (it_lst->state != NONE_STATE) {
                     spec_entry_t* in_state = ((spec_entry_t*)AT_VECTOR(
                             spec->state_vect, (size_t)it_lst->input));
 
                     spec_entry_t* out_state = ((spec_entry_t*)AT_VECTOR(
-                            spec->state_vect, (size_t)it_lst->state));
+                            spec->state_vect, (size_t)it_lst->state ^ _BEGIN));
 
                     print_begin_entry(filde, &already_print, crt_entry->name,
                             in_state->name, out_state->name);
@@ -255,8 +265,8 @@ gen_terminated_table(int filde, lexical_spec_t const* spec,
 
     for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
         spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-        if ((entry->kind == T_TERMINAL) && (!entry->is_frag)) {
-            if (kind == SKIP_TABLE && entry->skip)
+        if ((entry->kind == T_TERMINAL) && (!entry->fragment)) {
+            if (kind == SKIP_TABLE && entry->must_skip)
                 { PUSH_BACK_VECTOR(dst_vect, entry); }
             else if (kind == LOOK_TABLE && entry->use_look)
                 { PUSH_BACK_VECTOR(dst_vect, entry); }

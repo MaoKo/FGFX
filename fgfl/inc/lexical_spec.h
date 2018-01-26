@@ -13,8 +13,23 @@
 #define REGEX_LST_SECT(x)       ((x == T_TOKEN) ?  "$TOKEN" : "$SKIP")
 #define STATE_TYPE_LST_SECT(x)  ((x == T_STATE) ?  "$STATE" : "$KEYWORD")
 
+#define KIND_IN2_ACTION(x)      ((x == T_BEGIN) ? "$BEGIN" :\
+                                    (x == T_PUSH) ? "$PUSH" : "$POP")
+
 #define USED_ENTRY(entry)       (entry->is_used = true)
-#define NONE_BEGIN              (-1)
+
+enum {
+    _BEGIN  = 0x1000,
+    _PUSH   = 0x2000,
+    _POP    = 0x4000,
+};
+
+#define BEGIN(x)                (x | _BEGIN)
+#define PUSH(x)                 (x | _PUSH)
+#define POP                     (_POP)
+
+#define NONE_STATE              (-1)
+#define NONE_ACTION             (-1)
 
 int cmp_token_entry(spec_entry_t*, char const*);
 lexical_spec_t* parse_lexical_spec(int);

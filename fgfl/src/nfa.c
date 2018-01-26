@@ -402,7 +402,7 @@ build_nfa_from_state(lexical_spec_t* spec) {
             if (entry->kind != T_KEYWORD && entry->nfa_m) {
 
                 if ((GET_INDEX(crt_state) == (size_t)entry->default_state)
-                        || (cmp_input_trans_list(entry->state_begin_lst,
+                        || (cmp_input_trans_list(entry->state_lst,
                                                 GET_INDEX(crt_state)) != -1)
                         || (entry->all_state))
 
@@ -425,7 +425,7 @@ build_nfa(lexical_spec_t* spec) {
     // Transform all regex to nfa
     for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
         spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-        if (entry->kind == T_KEYWORD || entry->is_frag)
+        if (entry->kind == T_KEYWORD || entry->fragment)
             { continue; }
         else if (transform_regex_nfa(entry) == ERROR)
             { return (ERROR); }

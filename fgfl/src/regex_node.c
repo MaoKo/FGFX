@@ -160,16 +160,21 @@ invert_node_language(regex_node_t* root) {
         switch (root->kind_ast) {
             case AST_SYMBOL: ;
                 negate_lang = new_bitset();
-                ADD_BITSET(negate_lang, (size_t)root->symbol);
 
-                root->class = COMPL_BITSET(negate_lang);  
-                root->kind_ast = AST_CLASS;
-              
+                ADD_BITSET(negate_lang, (size_t)root->symbol);
+                root->left = new_regex_node(AST_CLASS,
+                                                COMPL_BITSET(negate_lang));  
+                root->kind_ast = AST_STAR;
                 break;
 
             case AST_CLASS:
-                root->class = COMPL_BITSET(root->class);  
+                root->left = new_regex_node(AST_CLASS, 
+                                                COMPL_BITSET(root->class));
+                root->kind_ast = AST_STAR;  
                 break;
+
+            case AST_QUES:
+                
 
             case AST_UNION:
                 invert_node_language(root->left);
@@ -180,14 +185,21 @@ invert_node_language(regex_node_t* root) {
                 break;
 
             case AST_LOOK:
-            case AST_CONCAT:
-                negate_lang = new_bitset();
-                
-                // TODO
-                // Invert the concat operator
+            case AST_CONCAT: ;
+                regex_node_t** change_node = NULL_NODE;
+                if (CHILD_NODE(root->left->kind_ast))
+                    { change_node = &root->left->right; }
+                else
+                    { change_node = &root->left; }
+
+                regex_node_t* new_node = cpy_regex_node(*change_node);
+
+                invert_node_language(root->left);
+                (*change_node) = new_regex_node(AST_UNION,
+                                                    root->left, new_node);
 
                 invert_node_language(root->right);
-                
+
                 break;
 
             default:

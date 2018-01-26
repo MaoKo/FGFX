@@ -6,14 +6,13 @@ $STATE
     STRING,
     FINITE_SEQ,
     NESTED_COM,
-    BEG_GROUP_COM, BODY_GROUP_COM,
 };
 
 $TOKEN
 {
     /* Fragment */
 
-    LETTER = / [[:alpha:]_] / -> { $FRAG } ;
+    LETTER = / [[:alpha:]_] / -> { $FRAGMENT } ;
 
     /* FGFL */
 
@@ -44,7 +43,7 @@ $TOKEN
     ( BEG_REGEX, BODY_REGEX ) REG_NOT    = / \! / ;
    
     ( BEG_REGEX, BODY_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN FINITE_SEQ,* ) ;
-    ( FINITE_SEQ )            REG_RBRACE = /  } /, ( $BEGIN BODY_REGEX ) ;
+    ( FINITE_SEQ )            REG_RBRACE = /  } /, ( $BEGIN BODY_REGEX   ) ;
 
     ( FINITE_SEQ ) DIGIT = / [[:digit:]]+ / ;
     ( FINITE_SEQ ) REG_COMMA = / , / ;
@@ -105,7 +104,7 @@ $TOKEN
 $SKIP
 {
     /* Space */
-    SPACE       = / [ \t\n]+                          / ;
+    SPACE       = / [ \t\n]+ / ;
 
     /* Comments */
     SINGLE_LINE                         = / \/\/.* / ;
@@ -117,23 +116,13 @@ $SKIP
     /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
             MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
-
-    /* (?# Comment ) pattern */
-
-    ( BEG_REGEX, BODY_REGEX ) BEG_REG_COM = / "(?#" /,
-            ( $BEGIN BEG_GROUP_COM, BODY_GROUP_COM ) ;
-
-    ( BEG_GROUP_COM, BODY_GROUP_COM ) END_REG_COM = / \) /,
-            ( $BEGIN BEG_REGEX, BODY_REGEX ) ;
-
-    ( BEG_GROUP_COM, BODY_GROUP_COM ) REG_CHAR_COM = / [^)]* / ;
 };
 
 $KEYWORD
 {
     // FGFL
     SKIP, TOKEN, KEYWORD, IGCASE, STATE,
-    BEGIN, FRAG, INITIAL, STAY, FAIL,
+    BEGIN, FRAGMENT, INITIAL, STAY, PUSH, POP,
 
     // POSIX character set
     CC_FIRST, // Dummy

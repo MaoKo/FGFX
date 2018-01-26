@@ -43,6 +43,7 @@ typedef struct symbol_t {
 			bitset_t* first;
 			bitset_t* follow;
 			bitset_t* prod_lst;
+
 			// (Optional & List) elements
 			enum {
 				OPT, LST

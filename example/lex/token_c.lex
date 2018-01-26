@@ -12,49 +12,52 @@ $TOKEN
 
     /* C Identifier fragment */
 
-    LETTER      =   / [[:alpha:]_] / -> { $FRAG };
-    DIGIT       =   / [[:digit:]]  / -> { $FRAG };
+    LETTER      =   / [[:alpha:]_] / -> { $FRAGMENT };
+    DIGIT       =   / [[:digit:]]  / -> { $FRAGMENT };
 
     /* C Char/String fragment */
 
-    ESC_UNV     =   / (\\u[[:xdigit:]]{4}|\\U[[:xdigit:]]{8}) / -> { $FRAG };
-    ESC_OCT     =   / (\\[0-7]{1,3})     / -> { $FRAG };
-    ESC_HEX     =   / (\\x[[:xdigit:]]+) / -> { $FRAG };
-    ESC_SEQ     =   / \\['"?\\abfnrtv]   / -> { $FRAG } ;
+    ESC_UNV     =   / (\\u[[:xdigit:]]{4}|\\U[[:xdigit:]]{8}) /
+                        -> { $FRAGMENT };
 
-    REG_ESCAPE  =   / ({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UNV}) / -> { $FRAG } ;
+    ESC_OCT     =   / (\\[0-7]{1,3})     / -> { $FRAGMENT };
+    ESC_HEX     =   / (\\x[[:xdigit:]]+) / -> { $FRAGMENT };
+    ESC_SEQ     =   / \\['"?\\abfnrtv]   / -> { $FRAGMENT } ;
+
+    REG_ESCAPE  =   / ({ESC_SEQ}|{ESC_OCT}|{ESC_HEX}|{ESC_UNV}) /
+                        -> { $FRAGMENT } ;
 
     /* C Number Constant Fragment */
 
     /* C Integer Fragment */
 
-    DEC         =   / ([1-9][[:digit:]]*)  / -> { $FRAG };
-    OCT         =   / (0[0-7]*)            / -> { $FRAG };
-    HEX         =   / (0[xX][[:xdigit:]]+) / -> { $FRAG };
+    DEC         =   / ([1-9][[:digit:]]*)  / -> { $FRAGMENT };
+    OCT         =   / (0[0-7]*)            / -> { $FRAGMENT };
+    HEX         =   / (0[xX][[:xdigit:]]+) / -> { $FRAGMENT };
 
-    UNSIGN_SUFF =   / [uU]    / -> { $FRAG };
-    LONG_SUFF   =   / [lL]    / -> { $FRAG };
-    LGLG_SUFF   =   / (ll|LL) / -> { $FRAG };
+    UNSIGN_SUFF =   / [uU]    / -> { $FRAGMENT };
+    LONG_SUFF   =   / [lL]    / -> { $FRAGMENT };
+    LGLG_SUFF   =   / (ll|LL) / -> { $FRAGMENT };
 
     INT_SUFF    =   /   ({UNSIGN_SUFF}{LONG_SUFF}?)|\
                         ({UNSIGN_SUFF}{LGLG_SUFF})|\
                         ({LONG_SUFF}{UNSIGN_SUFF}?)|\
-                        ({LGLG_SUFF}{UNSIGN_SUFF}?) / -> { $FRAG };
+                        ({LGLG_SUFF}{UNSIGN_SUFF}?) / -> { $FRAGMENT };
 
     /* C Float Fragment */
 
-    SIGN        =   / [-+]   / -> { $FRAG };
-    FLOAT_SUFF  =   / [flFL] / -> { $FRAG };
+    SIGN        =   / [-+]   / -> { $FRAGMENT };
+    FLOAT_SUFF  =   / [flFL] / -> { $FRAGMENT };
 
-    SCF_EXP     =   / [eE]{SIGN}?{DIGIT}+ / -> { $FRAG };
-    BIN_EXP     =   / [pP]{SIGN}?{DIGIT}+ / -> { $FRAG };
+    SCF_EXP     =   / [eE]{SIGN}?{DIGIT}+ / -> { $FRAGMENT };
+    BIN_EXP     =   / [pP]{SIGN}?{DIGIT}+ / -> { $FRAGMENT };
 
-    DEC_FRACT   =   / ({DIGIT}+\.)|({DIGIT}+?\.{DIGIT}+) / -> { $FRAG };
+    DEC_FRACT   =   / ({DIGIT}+\.)|({DIGIT}+?\.{DIGIT}+) / -> { $FRAGMENT };
     HEX_FRACT   =   /   ([[:xdigit:]]+\.)|\
-                        ([[:xdigit:]]+?\.[[:xdigit:]]+) / -> { $FRAG };
+                        ([[:xdigit:]]+?\.[[:xdigit:]]+) /  -> { $FRAGMENT };
 
     DEC_FLOAT   =   /   ({DEC_FRACT}{SCF_EXP}?{FLOAT_SUFF}?)|\
-                        ({DIGIT}+{SCF_EXP}{FLOAT_SUFF}?) / -> { $FRAG };
+                        ({DIGIT}+{SCF_EXP}{FLOAT_SUFF}?) / -> { $FRAGMENT };
 
     HEX_FLOAT   =   / 0[xX]({HEX_FRACT}|[[:xdigit:]]){BIN_EXP}{FLOAT_SUFF} / ;
 
@@ -87,7 +90,7 @@ $TOKEN
     LESSE       =   /  <=   / ;
     GREATE      =   /  >=   / ;
     EQ          =   /  ==   / ;
-    NEQ         =   /  !=   / ;
+    NEQ         =   / \!=   / ;
     XOR         =   / \^    / ;
     ORB         =   / \|    / ;
     ORL         =   / "||"  / ;

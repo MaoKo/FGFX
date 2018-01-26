@@ -16,7 +16,7 @@ After you can do: ./efgfl example/lex/token_c.lex
 Which create a file called token_c.h.lex ready for lexing.
 
 ### TODO ###
-    .   More accurate handle of error in FGFX (FGFP (95%), FGFL(80%))
+    .   More accurate handle of error in FGFX
     .   Optimizing FOLLOW set
     .   Handle if file already exist
     .   Improve the algorithm for constructing the
@@ -24,8 +24,8 @@ Which create a file called token_c.h.lex ready for lexing.
             DFA transition table
 
     .   Add error recovery mechanism
-    .   Add in FGFP ( ... | ... )
-    .   Add $FAIL to FGFL
+    .   Add group element ( ... | ... ) in FGFP
+    .   Add $PUSH and $POP to FGFL
     .   Add ! not operator to regex (25%)
     .   Add option (?r-s:pattern) to FGFL
     .   Handle when the first char after the lookahead may be discarded

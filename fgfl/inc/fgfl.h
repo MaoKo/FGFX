@@ -105,24 +105,24 @@ typedef struct {
     char* name;
     union {
         struct { // if TERMINAL
-            bool is_igcase;
-            bool is_frag;
+            bool fragment;
+            bool beg_line;
+            bool use_look;
+            bool must_skip;
 
+// TODO REMOVE
+            bool is_igcase;
             bool use_lower;
             bool use_upper;
-
-            bool beg_line;
-
-            bool use_look;
-            bool skip;
+// TODO REMOVE
 
             regex_node_t* regex_ast;
             nfa_automaton_t* nfa_m;
 
             int default_state;
-
+            int default_action;
             bool all_state;
-            trans_list_t* state_begin_lst;
+            trans_list_t* state_lst;
         };
         struct { // if KEYWORD & STATE
             struct { // if STATE

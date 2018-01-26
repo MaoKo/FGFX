@@ -95,16 +95,6 @@ change_lexer_state(lexer_t* lex,
             (*state_table) = fgfx_NESTED_COM_state_table;
             (*final_table) = fgfx_NESTED_COM_final_table;
             break;
-
-        case S_BEG_GROUP_COM:
-            (*state_table) = fgfx_BEG_GROUP_COM_state_table;
-            (*final_table) = fgfx_BEG_GROUP_COM_final_table;
-            break;
-
-        case S_BODY_GROUP_COM:
-            (*state_table) = fgfx_BODY_GROUP_COM_state_table;
-            (*final_table) = fgfx_BODY_GROUP_COM_final_table;
-            break;
     }
 }
 
@@ -267,7 +257,9 @@ advance_token(lexer_t* lex) {
             { (void*)T_IGCASE,      "$IGCASE" },
             { (void*)T_STATE,       "$STATE" },
             { (void*)T_BEGIN,       "$BEGIN" },
-            { (void*)T_FRAG,        "$FRAG" },
+            { (void*)T_PUSH,        "$PUSH" },
+            { (void*)T_POP,         "$POP" },
+            { (void*)T_FRAGMENT,    "$FRAGMENT" },
             { (void*)T_INITIAL,     "$INITIAL" },
             { (void*)T_EXTERN,      "$EXTERN" },
             { (void*)T_ALIAS,       "$ALIAS" },
@@ -280,7 +272,6 @@ advance_token(lexer_t* lex) {
             { (void*)T_RIGHT,       "$RIGHT" },
             { (void*)T_NONASSOC,    "$NONASSOC" },
             { (void*)T_STAY,        "$STAY" },
-            { (void*)T_FAIL,        "$FAIL" },
         };
         for (size_t i = 0; i < *(&directive_tab + 1) - directive_tab; ++i) {
             if (!strcmp(C_LEXEME(lex), directive_tab[i][1]))

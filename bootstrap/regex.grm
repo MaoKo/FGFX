@@ -25,6 +25,7 @@ $PRODUCTION
 					|   <regex_string>
 					|   '(' <regex_union> ')'
 					|   '.'
+                    |   REG_SETTING <regex_union> '}'
 					|   BOUND_NAME
 					|   <regex_char>
                     ;

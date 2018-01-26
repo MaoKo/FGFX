@@ -54,7 +54,7 @@ void gen_ahead_table(int, lexical_spec_t const*,
                             char const*, spec_entry_t const*);
 void gen_kind_final_table(int, lexical_spec_t const*, char const*,
                             spec_entry_t const*, size_t);
-void gen_change_state(int, char const*, lexical_spec_t*);
+void gen_action_state(int, char const*, lexical_spec_t*);
 void gen_terminated_table(int, lexical_spec_t const*, char const*, size_t);
 
 #endif /* GEN_DFA_H */

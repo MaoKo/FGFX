@@ -123,7 +123,7 @@ topological_sort(lexical_spec_t* spec) {
     int exit_st = DONE;
     for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
         spec_entry_t* crt_entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
-        if (!((crt_entry->kind == T_TERMINAL) && (!crt_entry->is_frag)))
+        if (!((crt_entry->kind == T_TERMINAL) && (!crt_entry->fragment)))
             { continue; }
         else if (IS_PRESENT(seen_reg, GET_INDEX(crt_entry)))
             { continue; }

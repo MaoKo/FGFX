@@ -44,7 +44,7 @@ gen_fgfl_file(lexical_spec_t* spec, char const* base_file) {
     if (!spec->miss_regex) {
         IFNDEF_ONLY_STATE_TOKEN(filde);
         if (active_state)
-            { gen_change_state(filde, header, spec); }
+            { gen_action_state(filde, header, spec); }
 
         DFA_MACRO(filde);
 

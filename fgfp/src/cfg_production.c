@@ -280,9 +280,16 @@ unreachable_production(cfg_t const* cfg) {
 	int unreach = DONE;
 	for (int i = SIZE_VECTOR(cfg->non_terminal) - 1; i >= 0; --i) {
 		if (!IS_PRESENT(nter_seen, (size_t)i)) {
+            symbol_t* crt_symbol = (symbol_t*)AT_VECTOR(cfg->non_terminal, i);
 			unreach = ERROR;
-			warnf(0, "The nonterminal %s is unreachable.",
-					((symbol_t*)AT_VECTOR(cfg->non_terminal, i))->name);
+            if (crt_symbol->name) {
+			    warnf(0, "The nonterminal %s is unreachable.",
+                                                        crt_symbol->name);
+            }
+            else {
+                warnf(0, "A nonterminal created by a %s element is unreachable",
+                        ((crt_symbol->spec_kind == OPT) ? "optional" : "list"));
+            }
 			erase_vector(cfg->non_terminal, i);
 			shift_index(cfg, i);
 		}

@@ -5,76 +5,77 @@ $EXTERN
 
 $PRODUCTION
 {
-	<FGFL>				->	{ <section> } => ( $RIGHT ) ;
-	<section>			->	<skip_section>
-						|	<token_section>
-						|	<keyword_section>
-						|	<state_section>
-						;
+    <FGFL>              ->  { <section> } => ( $RIGHT ) ;
+    <section>           ->  <skip_section>
+                        |   <token_section>
+                        |   <keyword_section>
+                        |   <state_section>
+                        ;
 
-	<skip_section>		->	'$SKIP'		'{' <regex_list>		'}' ';' ;
-	<token_section>		->	'$TOKEN'	'{' <regex_list>		'}' ';' ;
-	<keyword_section>	->	'$KEYWORD'	'{' <opt_token_list>	'}' ';' ;
-	<state_section>		->	'$STATE'	'{' <opt_state_list>	'}' ';' ;
+    <skip_section>      ->  '$SKIP'     '{' <regex_list>        '}' ';' ;
+    <token_section>     ->  '$TOKEN'    '{' <regex_list>        '}' ';' ;
+    <keyword_section>   ->  '$KEYWORD'  '{' <opt_token_list>    '}' ';' ;
+    <state_section>     ->  '$STATE'    '{' <opt_state_list>    '}' ';' ;
 
-	<regex_list>		->	{ <state_prefix> TERMINAL <regex_assign> ';' }
-								=> ( $RIGHT ) ;
+    <regex_list>        ->  { <state_prefix> TERMINAL <regex_assign> ';' }
+                                => ( $RIGHT ) ;
 
-	<state_prefix>		->	'(' <state_prefix_item> ')' | $EMPTY ;
-	<state_prefix_item>	->	<token_list> | '*' ;
+    <state_prefix>      ->  '(' <state_prefix_item> ')' | $EMPTY ;
+    <state_prefix_item> ->  <token_list> | '*' ;
 
-	<regex_assign>		->	'=' REGEX [ '->' '{' <regex_property> '}' ]
-								[ ',' <change_state> ] [ ',' <reject> ] ;
+    <regex_assign>      ->  '=' REGEX [ '->' '$FRAGMENT' ]
+                                [ ',' <action_state> ] ;
 
-	<regex_property>	->	'$IGCASE' [ ',' '$FRAG'   ]
-						|	'$FRAG'   [ ',' '$IGCASE' ]
-						;
+    <token_list>        ->  TERMINAL [ ',' <opt_token_list> ] ;
+    <opt_token_list>    ->  TERMINAL [ ',' <opt_token_list> ] | $EMPTY ;
 
-	<token_list>		->	TERMINAL [ ',' <opt_token_list> ] ;
-	<opt_token_list>	->	TERMINAL [ ',' <opt_token_list> ] | $EMPTY ;
+    <opt_state_list>    ->  TERMINAL [ '=>' '$INITIAL' ]
+                                [ ',' <opt_state_list> ] | $EMPTY ;
 
-	<opt_state_list>	->	TERMINAL [ '=>' '$INITIAL' ]
-								[ ',' <opt_state_list> ] | $EMPTY ;
+    <action_state>      ->  '(' <action_pair> ')' ;
 
-	<change_state>		->	'(' '$BEGIN' <change_list> ')' ;
-    <reject>            ->  '(' '$REJECT' ')' ;
+    <action_pair>       ->  '$BEGIN' <action_list>
+                        |   '$PUSH'  <action_list>
+                        |   '$POP'
+                        ;
 
-	<change_list>		->	<change_state_atom> [ ',' <opt_change_list> ] ;
-	<opt_change_list>	->	<change_state_atom> [ ',' <opt_change_list> ]
-						|	$EMPTY
-						;
+    <action_list>       ->  <change_state_atom> [ ',' <opt_action_list> ] ;
+    <opt_action_list>   ->  <change_state_atom> [ ',' <opt_action_list> ]
+                        |   $EMPTY
+                        ;
 
-	<change_state_atom>	->	TERMINAL | '$STAY' | '*' ;
+    <change_state_atom> ->  '$STAY' | TERMINAL | '*'
+                        ;
 
-	<FGFL> = $START;
+    <FGFL> = $START;
 };
 
 $ALIAS
 {
-	(SKIP		=> '$SKIP')		,
-	(TOKEN		=> '$TOKEN')	,
-	(KEYWORD	=> '$KEYWORD')	,
-	(IGCASE		=> '$IGCASE')	,
-	(STATE		=> '$STATE')	,
-	(BEGIN		=> '$BEGIN')	,
-	(FRAG		=> '$FRAG')		,
-	(INITIAL	=> '$INITIAL')	,
-	(STAY		=> '$STAY')		,
-    (REJECT     => '$REJECT')   ,
+    (SKIP       => '$SKIP')     ,
+    (TOKEN      => '$TOKEN')    ,
+    (KEYWORD    => '$KEYWORD')  ,
+    (STATE      => '$STATE')    ,
+    (BEGIN      => '$BEGIN')    ,
+    (FRAGMENT   => '$FRAGMENT') ,
+    (INITIAL    => '$INITIAL')  ,
+    (STAY       => '$STAY')     ,
+    (PUSH       => '$PUSH')     ,
+    (POP        => '$POP')      ,
 
-	(EQUAL		=> '=')			,
+    (EQUAL      => '=')         ,
 
-	(LBRACE		=> '{')			,
-	(RBRACE		=> '}')			,
+    (LBRACE     => '{')         ,
+    (RBRACE     => '}')         ,
 
-	(LPAREN		=> '(')			,
-	(RPAREN		=> ')')			,
+    (LPAREN     => '(')         ,
+    (RPAREN     => ')')         ,
 
-	(SEMI		=> ';')			,
-	(COMMA		=> ',')			,
+    (SEMI       => ';')         ,
+    (COMMA      => ',')         ,
 
-	(ARROW		=> '->')		,
-	(BARROW		=> '=>')		,
+    (ARROW      => '->')        ,
+    (BARROW     => '=>')        ,
 
-	(STAR		=> '*')			,
+    (STAR       => '*')         ,
 };
