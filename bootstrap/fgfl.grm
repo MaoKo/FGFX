@@ -32,11 +32,15 @@ $PRODUCTION
     <opt_state_list>    ->  TERMINAL [ '=>' '$INITIAL' ]
                                 [ ',' <opt_state_list> ] | $EMPTY ;
 
-    <action_state>      ->  '(' <action_pair> ')' ;
+    <action_state>      ->  '(' <action_pair> <opt_action_pair> ')' ;
 
-    <action_pair>       ->  '$BEGIN' <action_list>
-                        |   '$PUSH'  <action_list>
+    <action_pair>       ->  '$BEGIN' '(' <action_list> ')'
+                        |   '$PUSH'  '(' <action_list> ')'
                         |   '$POP'
+                        ;
+
+    <opt_action_pair>   ->   ',' [ <action_pair> <opt_action_pair> ]
+                        |   $EMPTY
                         ;
 
     <action_list>       ->  <change_state_atom> [ ',' <opt_action_list> ] ;

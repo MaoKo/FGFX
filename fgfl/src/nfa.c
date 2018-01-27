@@ -401,10 +401,10 @@ build_nfa_from_state(lexical_spec_t* spec) {
             spec_entry_t* entry = (spec_entry_t*)AT_VECTOR(spec->entry_vect, i);
             if (entry->kind != T_KEYWORD && entry->nfa_m) {
 
-                if ((GET_INDEX(crt_state) == (size_t)entry->default_state)
-                        || (cmp_input_trans_list(entry->state_lst,
+                if ((cmp_input_trans_list(entry->state_lst,
                                                 GET_INDEX(crt_state)) != -1)
-                        || (entry->all_state))
+                        || (!entry->state_lst && ((GET_INDEX(crt_state)
+                            == (size_t)spec->start_state) || entry->all_state)))
 
                     { ADD_BITSET(set_frag, GET_INDEX(entry->nfa_m)); }
             }

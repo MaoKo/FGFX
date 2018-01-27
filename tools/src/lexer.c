@@ -118,7 +118,7 @@ change_state(lexer_t* lex, int last_match, bool* need_recompute) {
 
     if ((fgfx_begin_table[last_match][lex->crt_state])
             && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
-        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state];
+        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state] ^ _BEGIN;
         (*need_recompute) = true; 
     }
 }

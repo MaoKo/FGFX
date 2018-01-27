@@ -183,16 +183,44 @@ gen_kind_final_table(int filde, lexical_spec_t const* spec, char const* header,
 }
 
 static inline void
-print_begin_entry(int filde, bool* already_print, char const* entry_name,
-                                char const* state_name, char const* out_name) {
+gen_action_state_enum_macro(int filde) {
+    // Gen enum
+	dprintf(filde, ENUM SP BEG_BLOCK NL);
+	dprintf(filde, TAB "_BEGIN"  TAB "= 0x1000" COMMA NL);
+	dprintf(filde, TAB "_PUSH" TAB "= 0x2000" COMMA NL);
+	dprintf(filde, TAB "POP"   TAB "= 0x4000" COMMA NL);
+	dprintf(filde, END_BLOCK SEMI NL NL);
+
+    // Gen macro
+	dprintf(filde, DEFINE(BEGIN(x),(x | _BEGIN)) NL);
+	dprintf(filde, DEFINE(PUSH(x),(x | _PUSH)) NL);
+}
+
+static inline void
+gen_action_entry(int filde, lexical_spec_t* spec, spec_entry_t* crt_entry,
+                    int action, bool* already_print, char const* state_name) {
+
     if (!(*already_print)) {
         dprintf(filde, TAB);
         (*already_print) = true;
     }
 
-    dprintf(filde, "[" TOKEN_PREFIX SEP "%s]", entry_name);
-    dprintf(filde, "[" STATE_PREFIX SEP "%s]", state_name);
-    dprintf(filde, " = " STATE_PREFIX SEP "%s" COMMA SP, out_name);
+    
+    spec_entry_t* out_state = NULL;
+    if (action != POP) {
+        out_state = (spec_entry_t*)AT_VECTOR(spec->state_vect,
+                        action ^ ((action & _BEGIN) ? _BEGIN : _PUSH));
+    }
+
+    dprintf(filde, "[" TOKEN_PREFIX SEP "%s]", crt_entry->name);
+    dprintf(filde, "[" STATE_PREFIX SEP "%s] = ", state_name);
+
+    if (action != POP) {
+        dprintf(filde, "%s(" STATE_PREFIX SEP "%s)" COMMA SP,
+                    (action & _BEGIN) ? "BEGIN" : "PUSH", out_state->name);
+    }
+    else
+        { dprintf(filde, "POP"); }
 }
 
 void
@@ -200,8 +228,8 @@ gen_action_state(int filde, char const* header, lexical_spec_t* spec) {
     size_t size_entry = SIZE_VECTOR(spec->entry_vect);
     size_t size_state = SIZE_VECTOR(spec->state_vect);
 
-    dprintf(filde, STATIC SP "uint%u_t" NL,
-                            min_size_type(size_entry, true));
+    gen_action_state_enum_macro(filde);
+    dprintf(filde, NL STATIC SP "uint%u_t" NL, min_size_type(0x4000, true));
 
     gen_verbatim_file(filde, header);
     dprintf(filde, "_begin_table[%s][%s] = "
@@ -213,25 +241,21 @@ gen_action_state(int filde, char const* header, lexical_spec_t* spec) {
             { continue; }
 
         bool already_print = false;
-        if (((crt_entry->default_state != NONE_STATE) || crt_entry->all_state)
-                    && (crt_entry->default_action != NONE_ACTION)) {
-
-            spec_entry_t* out_state = (spec_entry_t*)AT_VECTOR(spec->state_vect,
-                                            crt_entry->default_action ^ _BEGIN);
-
+        if (crt_entry->default_action != NONE_ACTION) {
             spec_entry_t* crt_state = (spec_entry_t*)
                             AT_VECTOR(spec->state_vect, spec->start_state);
 
             if (crt_entry->all_state) {
                 for (size_t j = 0; j < size_state; ++j) {
                     crt_state = (spec_entry_t*)AT_VECTOR(spec->state_vect, j);
-                    print_begin_entry(filde, &already_print, crt_entry->name,
-                            crt_state->name, out_state->name);
+                    gen_action_entry(filde, spec, crt_entry,
+                                    crt_entry->default_action, &already_print,
+                                    crt_state->name);
                 }
             }
             else {
-                print_begin_entry(filde, &already_print, crt_entry->name,
-                    crt_state->name, out_state->name);
+                gen_action_entry(filde, spec, crt_entry,
+                    crt_entry->default_action, &already_print, crt_state->name);
             }
         }
         else {
@@ -241,11 +265,8 @@ gen_action_state(int filde, char const* header, lexical_spec_t* spec) {
                     spec_entry_t* in_state = ((spec_entry_t*)AT_VECTOR(
                             spec->state_vect, (size_t)it_lst->input));
 
-                    spec_entry_t* out_state = ((spec_entry_t*)AT_VECTOR(
-                            spec->state_vect, (size_t)it_lst->state ^ _BEGIN));
-
-                    print_begin_entry(filde, &already_print, crt_entry->name,
-                            in_state->name, out_state->name);
+                    gen_action_entry(filde, spec, crt_entry, it_lst->state, 
+                                        &already_print, in_state->name);
                 }
                 it_lst = it_lst->next;
             }

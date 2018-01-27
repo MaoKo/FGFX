@@ -113,10 +113,8 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
         return (NULL);
     }
 
-    if (entry->kind == T_TERMINAL) {
-        entry->default_state = NONE_STATE;
-        entry->default_action = NONE_ACTION;
-    }
+    if (entry->kind == T_TERMINAL)
+        { entry->default_action = NONE_ACTION; }
 
     entry->index = SIZE_VECTOR(src_vect);
     PUSH_BACK_VECTOR(src_vect, entry);
@@ -128,7 +126,9 @@ static int spec_state_prefix(lexical_spec_t*, trans_list_t**, bool*);
 static int spec_regex_assign(lexical_spec_t*, spec_entry_t*, int);
 
 static int spec_regex_property(lexical_spec_t*, spec_entry_t*);
+
 static int spec_action_state(lexical_spec_t*, spec_entry_t*);
+static int spec_action_pair(lexical_spec_t*, spec_entry_t*, size_t*);
 
 static int spec_state_token_list(lexical_spec_t*, int);
 static int spec_regex_list(lexical_spec_t*, int);
@@ -186,24 +186,56 @@ spec_action_state(lexical_spec_t* spec, spec_entry_t* entry) {
                         "Missing an open paren in the action list construct.");
         return (ERROR);
     }
+    
+    size_t count_pos = 0;
+    if (spec_action_pair(spec, entry, &count_pos) == ERROR)
+        { return (ERROR); }
 
+    while (peek_token(spec->lex) == T_COMMA) {
+        advance_token(spec->lex);
+        if (peek_token(spec->lex) == T_RPAREN)
+            { break; }
+        else if (spec_action_pair(spec, entry, &count_pos) == ERROR)
+            { return (ERROR); }
+    }
+
+    if (advance_token(spec->lex) != T_RPAREN) {
+        errorf(CURRENT_LINE(spec->lex),
+                    "Missing a close paren in the action list construct.");
+        return (ERROR);
+    }
+    return (DONE);  
+}
+
+int
+spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
     int kind_action = advance_token(spec->lex);
-    if ((kind_action != T_BEGIN) && (kind_action != T_PUSH)
-                                                && (kind_action != T_POP)) {
+    if ((kind_action != T_BEGIN)
+                        && (kind_action != T_PUSH) && (kind_action != T_POP)) {
         errorf(CURRENT_LINE(spec->lex),
                         "Missing a $BEGIN, $PUSH or $POP directive.");
         return (ERROR);
     }
 
-    int kind = peek_token(spec->lex);
-    bool valid_kind = !((kind != T_TERMINAL)
-                        && (kind != T_STAR) && (kind != T_STAY));
-
-    if ((kind_action == T_POP) && (valid_kind)) {
-        errorf(CURRENT_LINE(spec->lex), "A $POP must be followed by nothing.");
+    else if (kind_action == T_POP) {
+        if (peek_token(spec->lex) != T_COMMA) {
+            errorf(CURRENT_LINE(spec->lex), 
+                                    "A comma must follow a $POP directive.");
+        }
+        return (DONE);
+    }
+    else if (advance_token(spec->lex) != T_LPAREN) {
+        errorf(CURRENT_LINE(spec->lex),
+                        "Missing an open paren after the %s directive.",
+                                            KIND_IN2_ACTION(kind_action));
         return (ERROR);
     }
-    else if (!valid_kind) {
+
+    int kind_atom = peek_token(spec->lex);
+    bool valid_kind = !((kind_atom != T_TERMINAL)
+                        && (kind_atom != T_STAR) && (kind_atom != T_STAY));
+
+    if (!valid_kind) {
         errorf(CURRENT_LINE(spec->lex),
                 "Either a token name, a * or $STAY must follow the %s.",
                                             KIND_IN2_ACTION(kind_action));
@@ -212,23 +244,23 @@ spec_action_state(lexical_spec_t* spec, spec_entry_t* entry) {
 
     bool seen_all = false;
 
-    size_t count_pos = 0;
+    size_t local_count = 0;
     size_t count_stay = 0;
 
     while (valid_kind) {
         advance_token(spec->lex);
-        if (kind == T_STAR)
+        if (kind_atom == T_STAR)
             { seen_all = true; }
-        else if (kind == T_STAY)
+        else if (kind_atom == T_STAY)
             { ++count_stay; }
 
         if (seen_all) {
-            if (!count_pos) {
+            if (!local_count) {
                 errorf(CURRENT_LINE(spec->lex),
                             "There must be a state name before the * token.");
                 return (ERROR);
             }
-            else if (kind != T_STAR) {
+            else if (kind_atom != T_STAR) {
                 errorf(CURRENT_LINE(spec->lex),
                         "A state name can't follow the * token.");
                 return (ERROR);
@@ -236,24 +268,37 @@ spec_action_state(lexical_spec_t* spec, spec_entry_t* entry) {
         }
 
         trans_list_t* equiv_state =
-                                trans_list_at(entry->state_lst, count_pos);
+                                trans_list_at(entry->state_lst, (*count_pos));
 
-        if ((!equiv_state) && (count_pos) && (!entry->all_state)) {
+        if ((!equiv_state) && (*count_pos) && (!entry->all_state)) {
             errorf(CURRENT_LINE(spec->lex),
                         "More begin move than the number of state.");
             return (ERROR);
         }
-        else if (kind == T_TERMINAL) {
+        else if (kind_atom == T_TERMINAL) {
             spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
+            size_t index_state = GET_INDEX(crt_state);
+
             if (!crt_state)
                 { return (ERROR); }
             else if (!entry->fragment)
                 { crt_state->is_reach = true; }
 
-            if (equiv_state)
-                { equiv_state->state = BEGIN(GET_INDEX(crt_state)); }
-            else
-                { entry->default_action = BEGIN(GET_INDEX(crt_state)); }
+            bool useless_move = false;
+            if (equiv_state) {
+                equiv_state->state = BUILD_ACTION(kind_action, index_state);
+                if ((size_t)equiv_state->input == index_state)
+                    { useless_move = true; }
+            }
+            else {
+                entry->default_action =
+                                    BUILD_ACTION(kind_action, index_state);
+            }
+
+            if (useless_move) {
+                warnf(0, "Useless to do a $BEGIN on state %s when"
+                            " this state is already active.", crt_state->name);
+            }
         }
         else if (seen_all) {
             if (entry->all_state) {
@@ -262,8 +307,8 @@ spec_action_state(lexical_spec_t* spec, spec_entry_t* entry) {
                 return (ERROR);
             }
 
-            int prev_index =
-                        (trans_list_at(entry->state_lst, count_pos - 1))->state;
+            int prev_index = (trans_list_at(entry->state_lst,
+                                                    (*count_pos) - 1))->state;
 
             while (equiv_state) {
                 equiv_state->state = prev_index;
@@ -274,44 +319,32 @@ spec_action_state(lexical_spec_t* spec, spec_entry_t* entry) {
         if (peek_token(spec->lex) == T_COMMA)
             { advance_token(spec->lex); }
 
-        ++count_pos;
+        ++(*count_pos);
+        ++(local_count);
 
-        kind = peek_token(spec->lex);
-        valid_kind = !((kind != T_TERMINAL)
-                                    && (kind != T_STAR) && (kind != T_STAY));
+        kind_atom = peek_token(spec->lex);
+        valid_kind = !((kind_atom != T_TERMINAL)
+                        && (kind_atom != T_STAR) && (kind_atom != T_STAY));
     }
 
-    if (entry->all_state && count_pos > 1) {
+    if (advance_token(spec->lex) != T_RPAREN) {
+        errorf(CURRENT_LINE(spec->lex),
+                        "Missing a close paren after the %s directive.",
+                                            KIND_IN2_ACTION(kind_action));
+        return (ERROR);
+    }
+    else if (entry->all_state && (*count_pos) > 1) {
         errorf(CURRENT_LINE(spec->lex),
             "A token in all state can't have more than one outgoing begin.");
         return (ERROR);
     }
     else if ((kind_action == T_BEGIN)
-                && (count_stay == ((seen_all) ? count_pos - 1 : count_pos))) {
+            && (count_stay == ((seen_all) ? local_count - 1 : local_count))) {
 
         warnf(CURRENT_LINE(spec->lex), "The $BEGIN directive is useless"
                 " because it goes always to the $STAY directive.");
     }
-
-
-//      TODO
-#if 0
-            else {
-                if (equiv_state->input == equiv_state->state) {
-                    warnf(0, "Useless to do a $BEGIN on state %s when"
-                                " this state is already active.",
-                                ((spec_entry_t*)AT_VECTOR(spec->state_vect,
-                                (size_t)equiv_state->state))->name);
-                }
-            }
-#endif
-
-    if (advance_token(spec->lex) != T_RPAREN) {
-        errorf(CURRENT_LINE(spec->lex),
-                    "Missing a close paren in the action list construct.");
-        return (ERROR);
-    }
-    return (DONE);  
+    return (DONE);
 }
 
 int
@@ -615,8 +648,6 @@ check_validity_token(lexical_spec_t* spec) {
                 if (!crt_entry->state_lst && !crt_entry->all_state) {
                     warnf(0, "Token %s is not prefixed by any state.",
                         crt_entry->name);
-
-                    crt_entry->default_state = spec->start_state;
                 }
             }
         }

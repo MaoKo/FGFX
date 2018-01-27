@@ -119,7 +119,6 @@ typedef struct {
             regex_node_t* regex_ast;
             nfa_automaton_t* nfa_m;
 
-            int default_state;
             int default_action;
             bool all_state;
             trans_list_t* state_lst;

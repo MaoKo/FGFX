@@ -28,6 +28,9 @@ enum {
 #define PUSH(x)                 (x | _PUSH)
 #define POP                     (_POP)
 
+#define BUILD_ACTION(k, i)      ((k == T_BEGIN) ? BEGIN(i)\
+                                        : (k == T_PUSH) ? PUSH(i) : POP)
+
 #define NONE_STATE              (-1)
 #define NONE_ACTION             (-1)
 
