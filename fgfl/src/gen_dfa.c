@@ -216,11 +216,12 @@ gen_action_entry(int filde, lexical_spec_t* spec, spec_entry_t* crt_entry,
     dprintf(filde, "[" STATE_PREFIX SEP "%s] = ", state_name);
 
     if (action != POP) {
-        dprintf(filde, "%s(" STATE_PREFIX SEP "%s)" COMMA SP,
+        dprintf(filde, "%s(" STATE_PREFIX SEP "%s)",
                     (action & _BEGIN) ? "BEGIN" : "PUSH", out_state->name);
     }
     else
         { dprintf(filde, "POP"); }
+    dprintf(filde, COMMA SP);
 }
 
 void
@@ -232,7 +233,7 @@ gen_action_state(int filde, char const* header, lexical_spec_t* spec) {
     dprintf(filde, NL STATIC SP "uint%u_t" NL, min_size_type(0x4000, true));
 
     gen_verbatim_file(filde, header);
-    dprintf(filde, "_begin_table[%s][%s] = "
+    dprintf(filde, "_action_table[%s][%s] = "
                                 BEG_BLOCK NL, MACRO_TOKEN, MACRO_STATE);
 
     for (size_t i = 0; i < size_entry; ++i) {

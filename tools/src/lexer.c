@@ -26,7 +26,11 @@ new_lexer(int filde) {
     lex->last_token = NO_TOKEN;
     lex->lineno = START_LINE;
     
+    lex->stack_state = new_vector();
+    PUSH_BACK_VECTOR(lex->stack_state, (void*)INIT_STATE);
+
     lex->crt_state = INIT_STATE;
+
     lex->nested_com = 0;
 
     return (lex);
@@ -95,6 +99,11 @@ change_lexer_state(lexer_t* lex,
             (*state_table) = fgfx_NESTED_COM_state_table;
             (*final_table) = fgfx_NESTED_COM_final_table;
             break;
+
+        case S_REG_COM:
+            (*state_table) = fgfx_REG_COM_state_table;
+            (*final_table) = fgfx_REG_COM_final_table;
+            break;
     }
 }
 
@@ -116,9 +125,18 @@ change_state(lexer_t* lex, int last_match, bool* need_recompute) {
     else if (last_match == T_END_MULTI)
         { --(lex->nested_com); }
 
-    if ((fgfx_begin_table[last_match][lex->crt_state])
-            && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
-        lex->crt_state = fgfx_begin_table[last_match][lex->crt_state] ^ _BEGIN;
+    int action = fgfx_action_table[last_match][lex->crt_state];
+    if (action && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
+        if (action & _BEGIN)
+            { lex->crt_state = action ^ _BEGIN; }
+        else if (action & _PUSH) {
+            PUSH_BACK_VECTOR(lex->stack_state, (void*)lex->crt_state);
+            lex->crt_state = action ^ _PUSH;
+        }
+        else {
+            lex->crt_state = (size_t)BACK_VECTOR(lex->stack_state);
+            POP_BACK_VECTOR(lex->stack_state);
+        }
         (*need_recompute) = true; 
     }
 }

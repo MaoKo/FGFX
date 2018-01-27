@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "buffer.h"
+#include "vector.h"
 
 #define FILDE_LEX(lex)      ((lex)->filde)
 #define LAST_TOKEN(lex)     ((lex)->last_token)
@@ -21,7 +22,8 @@ typedef struct {
     int last_token;
     buffer_t* push_back;
     buffer_t* last_lexeme;
-    int crt_state;
+    vector_t* stack_state;
+    size_t crt_state;
     int nested_com;
     int lineno;
 } lexer_t;

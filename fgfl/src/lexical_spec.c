@@ -216,13 +216,12 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
                         "Missing a $BEGIN, $PUSH or $POP directive.");
         return (ERROR);
     }
-
-    else if (kind_action == T_POP) {
-        if (peek_token(spec->lex) != T_COMMA) {
+    else if ((kind_action == T_POP)) {
+        if (!in_first(spec->lex, T_COMMA, T_RPAREN, -1)) {
             errorf(CURRENT_LINE(spec->lex), 
-                                    "A comma must follow a $POP directive.");
+                    "A comma or a close paren must follow a $POP directive.");
+            return (ERROR);
         }
-        return (DONE);
     }
     else if (advance_token(spec->lex) != T_LPAREN) {
         errorf(CURRENT_LINE(spec->lex),
@@ -235,27 +234,34 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
     bool valid_kind = !((kind_atom != T_TERMINAL)
                         && (kind_atom != T_STAR) && (kind_atom != T_STAY));
 
-    if (!valid_kind) {
+    if (!valid_kind && (kind_action != T_POP)) {
         errorf(CURRENT_LINE(spec->lex),
                 "Either a token name, a * or $STAY must follow the %s.",
                                             KIND_IN2_ACTION(kind_action));
         return (ERROR);
     }
 
-    bool seen_all = false;
+    size_t seen_all = 0;
 
     size_t local_count = 0;
     size_t count_stay = 0;
 
-    while (valid_kind) {
-        advance_token(spec->lex);
+    while (valid_kind || (kind_action == T_POP)) {
+        if (kind_action != T_POP)
+            { advance_token(spec->lex); }
+
         if (kind_atom == T_STAR)
-            { seen_all = true; }
+            { ++seen_all; }
         else if (kind_atom == T_STAY)
             { ++count_stay; }
 
         if (seen_all) {
-            if (!local_count) {
+            if (seen_all > 1) {
+                errorf(CURRENT_LINE(spec->lex),
+                                        "A '*' can't follow another '*'.");
+                return (ERROR);
+            }
+            else if (!local_count) {
                 errorf(CURRENT_LINE(spec->lex),
                             "There must be a state name before the * token.");
                 return (ERROR);
@@ -272,17 +278,21 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
 
         if ((!equiv_state) && (*count_pos) && (!entry->all_state)) {
             errorf(CURRENT_LINE(spec->lex),
-                        "More begin move than the number of state.");
+                        "More action move than the number of state.");
             return (ERROR);
         }
-        else if (kind_atom == T_TERMINAL) {
-            spec_entry_t* crt_state = add_entry_lexeme(spec, T_STATE);
-            size_t index_state = GET_INDEX(crt_state);
+        else if ((kind_atom == T_TERMINAL) || (kind_action == T_POP)) {
+            spec_entry_t* crt_state = NULL;
+            size_t index_state = 0;
 
-            if (!crt_state)
-                { return (ERROR); }
-            else if (!entry->fragment)
-                { crt_state->is_reach = true; }
+            if (kind_action != T_POP) {
+                crt_state = add_entry_lexeme(spec, T_STATE);
+                if (!crt_state)
+                    { return (ERROR); }
+                else if (!entry->fragment)
+                    { crt_state->is_reach = true; }
+                index_state = GET_INDEX(crt_state);
+            }
 
             bool useless_move = false;
             if (equiv_state) {
@@ -295,7 +305,7 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
                                     BUILD_ACTION(kind_action, index_state);
             }
 
-            if (useless_move) {
+            if (useless_move && (kind_action == T_BEGIN)) {
                 warnf(0, "Useless to do a $BEGIN on state %s when"
                             " this state is already active.", crt_state->name);
             }
@@ -316,11 +326,13 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
             }
         }
 
-        if (peek_token(spec->lex) == T_COMMA)
-            { advance_token(spec->lex); }
-
         ++(*count_pos);
         ++(local_count);
+
+        if (kind_action == T_POP)
+            { return (DONE); }
+        else if (peek_token(spec->lex) == T_COMMA)
+            { advance_token(spec->lex); }
 
         kind_atom = peek_token(spec->lex);
         valid_kind = !((kind_atom != T_TERMINAL)

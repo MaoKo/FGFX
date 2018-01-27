@@ -5,6 +5,7 @@ $STATE
     BEG_CCL, BODY_CCL,
     STRING,
     FINITE_SEQ,
+    REG_COM,
     NESTED_COM,
 };
 
@@ -118,14 +119,21 @@ $SKIP
 
     /* Comments */
     SINGLE_LINE                         = / \/\/.* / ;
-    ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /,  ( $BEGIN (NESTED_COM) ) ;
+
+    ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /, 
+        ( $BEGIN (NESTED_COM) ) ;
+    ( NESTED_COM ) END_MULTI            = / \*+\/  /, 
+        ( $BEGIN (GLOBAL) ) ;
 
     ( NESTED_COM ) CHAR_COMMENT         = / (.|\n) / ;
-    ( NESTED_COM ) END_MULTI            = / \*+\/  /,  ( $BEGIN (GLOBAL) ) ;
 
     /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
             MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
+
+    ( BEG_REGEX, BODY_REGEX ) REG_BEG_COM = / "(?#" /, ( $PUSH (REG_COM,*) ) ;
+    ( REG_COM ) REG_END_COM = / \) /, ( $POP ) ;
+    ( REG_COM ) REG_CHAR_COM = / [^)]+ / ;
 };
 
 $KEYWORD

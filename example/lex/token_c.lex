@@ -57,9 +57,11 @@ $TOKEN
                         ([[:xdigit:]]+?\.[[:xdigit:]]+) /  -> { $FRAGMENT };
 
     DEC_FLOAT   =   /   ({DEC_FRACT}{SCF_EXP}?{FLOAT_SUFF}?)|\
-                        ({DIGIT}+{SCF_EXP}{FLOAT_SUFF}?) / -> { $FRAGMENT };
+                        ({DIGIT}+{SCF_EXP}{FLOAT_SUFF}?) /
+                        -> { $FRAGMENT };
 
-    HEX_FLOAT   =   / 0[xX]({HEX_FRACT}|[[:xdigit:]]){BIN_EXP}{FLOAT_SUFF} / ;
+    HEX_FLOAT   =   / 0[xX]({HEX_FRACT}|[[:xdigit:]]){BIN_EXP}{FLOAT_SUFF} /
+                        -> { $FRAGMENT } ;
 
     /* C Punctuation */
 
