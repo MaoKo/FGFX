@@ -9,6 +9,7 @@ new_regex_node(int kind, ...) {
     regex_node_t* node = NEW(regex_node_t, 1);
     if (!node)
         { return (NULL_NODE); }
+    memset(node, 0, sizeof(*node));
 
     va_list args;
     va_start(args, kind);
@@ -35,8 +36,6 @@ new_regex_node(int kind, ...) {
         case AST_QUES:
         case AST_PLUS:
             node->left = va_arg(args, regex_node_t*);
-            node->right = NULL_NODE;
-
             break;
 
         default:
@@ -259,8 +258,7 @@ remove_useless_epsilon(regex_node_t* root) {
                     FREE(src_node);
                 }
             }
-            else 
-                { return (false); }
+            return (false);
 
         case AST_STAR:
         case AST_QUES:

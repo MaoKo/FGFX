@@ -13,11 +13,13 @@ enum {
 	S_BODY_CCL,
 	S_STRING,
 	S_FINITE_SEQ,
+	S_REG_PARAMS,
+	S_REG_NO_PARAMS,
 	S_REG_COM,
 	S_NESTED_COM,
 };
 
-#define TOTAL_STATE	10
+#define TOTAL_STATE	12
 #define INIT_STATE	S_GLOBAL
 
 enum {
@@ -53,6 +55,12 @@ enum {
 	T_OCT_NUM,
 	T_HEX_NUM,
 	T_REG_CHAR,
+	T_REG_OPTION,
+	T_REG_INVERT,
+	T_IGCASE,
+	T_DOTALL,
+	T_SKIPWS,
+	T_REG_COLON,
 	T_NON_TERMINAL,
 	T_LITERAL,
 	T_UNION,
@@ -80,12 +88,12 @@ enum {
 	T_SKIP,
 	T_TOKEN,
 	T_KEYWORD,
-	T_IGCASE,
+	T_R_IGCASE,
 	T_STATE,
-	T_BEGIN,
 	T_FRAGMENT,
 	T_INITIAL,
 	T_STAY,
+	T_BEGIN,
 	T_PUSH,
 	T_POP,
 	T_CC_FIRST,
@@ -129,12 +137,12 @@ enum {
 	T_EOF,
 };
 
-#define TOTAL_TOKEN	106
+#define TOTAL_TOKEN	112
 
 #if 0
 
 static char const*
-fgfx_token_name_table[106] = {
+fgfx_token_name_table[112] = {
 	"EQUAL",
 	"STAR",
 	"OPEN_REGEX",
@@ -167,6 +175,12 @@ fgfx_token_name_table[106] = {
 	"OCT_NUM",
 	"HEX_NUM",
 	"REG_CHAR",
+	"REG_OPTION",
+	"REG_INVERT",
+	"IGCASE",
+	"DOTALL",
+	"SKIPWS",
+	"REG_COLON",
 	"NON_TERMINAL",
 	"LITERAL",
 	"UNION",
@@ -194,12 +208,12 @@ fgfx_token_name_table[106] = {
 	"SKIP",
 	"TOKEN",
 	"KEYWORD",
-	"IGCASE",
+	"R_IGCASE",
 	"STATE",
-	"BEGIN",
 	"FRAGMENT",
 	"INITIAL",
 	"STAY",
+	"BEGIN",
 	"PUSH",
 	"POP",
 	"CC_FIRST",
@@ -264,8 +278,8 @@ fgfx_action_table[TOTAL_TOKEN][TOTAL_STATE] = {
 	[T_REG_STAR][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_REG_PLUS][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_REG_QUES][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
-	[T_REG_LPAREN][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
-	[T_REG_RPAREN][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
+	[T_REG_LPAREN][S_BEG_REGEX] = PUSH(S_BODY_REGEX), [T_REG_LPAREN][S_BODY_REGEX] = PUSH(S_BODY_REGEX), 
+	[T_REG_RPAREN][S_BEG_REGEX] = POP, [T_REG_RPAREN][S_BODY_REGEX] = POP, 
 	[T_REG_DOT][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_REG_LOOK][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_REG_QUOTE][S_BEG_REGEX] = BEGIN(S_STRING), [T_REG_QUOTE][S_BODY_REGEX] = BEGIN(S_STRING), [T_REG_QUOTE][S_STRING] = BEGIN(S_BODY_REGEX), 
@@ -280,8 +294,11 @@ fgfx_action_table[TOTAL_TOKEN][TOTAL_STATE] = {
 	[T_OCT_NUM][S_BEG_CCL] = BEGIN(S_BODY_CCL), [T_OCT_NUM][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_HEX_NUM][S_BEG_CCL] = BEGIN(S_BODY_CCL), [T_HEX_NUM][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
 	[T_REG_CHAR][S_BEG_CCL] = BEGIN(S_BODY_CCL), [T_REG_CHAR][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
-	[T_BEG_MULTI][S_GLOBAL] = BEGIN(S_NESTED_COM), 
-	[T_END_MULTI][S_NESTED_COM] = BEGIN(S_GLOBAL), 
+	[T_REG_OPTION][S_BODY_REGEX] = PUSH(S_REG_PARAMS), 
+	[T_REG_INVERT][S_REG_PARAMS] = BEGIN(S_REG_NO_PARAMS), 
+	[T_REG_COLON][S_REG_PARAMS] = BEGIN(S_BODY_REGEX), [T_REG_COLON][S_REG_NO_PARAMS] = BEGIN(S_BODY_REGEX), 
+	[T_BEG_MULTI][S_GLOBAL] = PUSH(S_NESTED_COM), [T_BEG_MULTI][S_NESTED_COM] = PUSH(S_NESTED_COM), 
+	[T_END_MULTI][S_NESTED_COM] = POP, 
 	[T_REG_BEG_COM][S_BEG_REGEX] = PUSH(S_REG_COM), [T_REG_BEG_COM][S_BODY_REGEX] = PUSH(S_REG_COM), 
 	[T_REG_END_COM][S_REG_COM] = POP, 
 };
@@ -538,7 +555,7 @@ fgfx_BODY_REGEX_ahead_table[52] = {
 };
 
 static uint8_t
-fgfx_BODY_REGEX_final_table[36][2] = {
+fgfx_BODY_REGEX_final_table[37][2] = {
 	{ 2, 	T_REG_CHAR },
 	{ 3, 	T_REG_CHAR },
 	{ 4, 	T_REG_NOT },
@@ -556,6 +573,7 @@ fgfx_BODY_REGEX_final_table[36][2] = {
 	{ 16, 	T_REG_LBRACE },
 	{ 17, 	T_REG_UNION },
 	{ 21, 	T_REG_DOLLAR },
+	{ 22, 	T_REG_OPTION },
 	{ 24, 	T_CLOSE_REGEX },
 	{ 26, 	T_CLOSE_REGEX },
 	{ 27, 	T_MULTI_LINE },
@@ -746,6 +764,46 @@ fgfx_FINITE_SEQ_final_table[5][2] = {
 	{ 3, 	T_DIGIT },
 	{ 4, 	T_REG_RBRACE },
 	{ 5, 	T_DIGIT },
+	{ 0 },
+};
+
+static uint8_t
+fgfx_REG_PARAMS_state_table[7][256] = {
+/*   0 */	{},
+/*   1 */	{[120]=6, [115]=5, [105]=4, [58]=3, [45]=2},
+/*   2 */	{},
+/*   3 */	{},
+/*   4 */	{},
+/*   5 */	{},
+/*   6 */	{},
+};
+
+static uint8_t
+fgfx_REG_PARAMS_final_table[6][2] = {
+	{ 2, 	T_REG_INVERT },
+	{ 3, 	T_REG_COLON },
+	{ 4, 	T_IGCASE },
+	{ 5, 	T_DOTALL },
+	{ 6, 	T_SKIPWS },
+	{ 0 },
+};
+
+static uint8_t
+fgfx_REG_NO_PARAMS_state_table[6][256] = {
+/*   0 */	{},
+/*   1 */	{[120]=5, [115]=4, [105]=3, [58]=2},
+/*   2 */	{},
+/*   3 */	{},
+/*   4 */	{},
+/*   5 */	{},
+};
+
+static uint8_t
+fgfx_REG_NO_PARAMS_final_table[5][2] = {
+	{ 2, 	T_REG_COLON },
+	{ 3, 	T_IGCASE },
+	{ 4, 	T_DOTALL },
+	{ 5, 	T_SKIPWS },
 	{ 0 },
 };
 

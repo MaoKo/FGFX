@@ -24,7 +24,6 @@ typedef struct {
     buffer_t* last_lexeme;
     vector_t* stack_state;
     size_t crt_state;
-    int nested_com;
     int lineno;
 } lexer_t;
 

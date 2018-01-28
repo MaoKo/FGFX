@@ -33,6 +33,7 @@ static regex_node_t* regex_loneccl(void);
 static bitset_t* regex_ccl(void);
 static bitset_t* regex_cce(int);
 static bitset_t* regex_n_cce(int);
+static regex_node_t* regex_option(void);
 static regex_node_t* regex_dot(void);
 static int regex_char(int);
 
@@ -213,11 +214,14 @@ regex_not(void) {
 
 static regex_node_t*
 regex_atom(void) {
-    if (peek_token(regex_spec->lex) == T_REG_LBRACK)
+    int kind = peek_token(regex_spec->lex);
+    if (kind == T_REG_LBRACK)
         { return (regex_fullccl()); }
-    else if (peek_token(regex_spec->lex) == T_REG_QUOTE)
+    else if (kind == T_REG_QUOTE)
         { return (regex_string()); }
-    else if (peek_token(regex_spec->lex) == T_REG_LPAREN) { 
+    else if (kind == T_REG_OPTION)
+        { return (regex_option()); }
+    else if (kind == T_REG_LPAREN) {
         advance_token(regex_spec->lex);
         regex_node_t* root = regex_union();
 
@@ -229,26 +233,28 @@ regex_atom(void) {
         }
         return (root);
     }
-    else if (peek_token(regex_spec->lex) == T_REG_DOT)
+    else if (kind == T_REG_DOT)
         { return (regex_dot()); }
-    else if (peek_token(regex_spec->lex) == T_REG_BOUND_NAME) {
+    else if (kind == T_REG_BOUND_NAME) {
         advance_token(regex_spec->lex);
         unget_char_back_buffer(LAST_LEXEME(regex_spec->lex), 1);
         return (new_regex_node(AST_BOUND_NAME,
                                 strdup(C_LEXEME(regex_spec->lex) + 1)));
     }
-    else {
-        int kind = peek_token(regex_spec->lex);
+    else if ((kind == T_REG_CHAR)
+                        || (kind == T_OCT_NUM) || (kind == T_HEX_NUM))  {
         int val_lexeme;
         if ((val_lexeme = regex_char(kind)) != ERROR) {
             advance_token(regex_spec->lex);
             return (new_regex_node(AST_SYMBOL, val_lexeme));
         }
-        else {
-            errorf(CURRENT_LINE(regex_spec->lex),
+        else
+            { return (NULL_NODE); }
+    }
+    else {
+        errorf(CURRENT_LINE(regex_spec->lex),
                         "Unrecognized rule. Missing a char in the regex.");
-            return (NULL_NODE);
-        }
+        return (NULL_NODE);
     }
 }
 
@@ -498,6 +504,74 @@ regex_n_cce(int kind_cce) {
     return (NULL_BITSET);
 }
 
+#include <stdio.h>
+static regex_node_t*
+regex_option(void) {
+    advance_token(regex_spec->lex);
+
+    bool igcase = false;
+    bool dotall = false;
+    bool skipws = false;
+
+    int option_kind = peek_token(regex_spec->lex);
+    while ((option_kind == T_IGCASE)
+            || (option_kind == T_DOTALL) || (option_kind == T_SKIPWS)) {
+        advance_token(regex_spec->lex);
+        switch (option_kind) {
+            case T_IGCASE: igcase = true;
+                break;
+
+            case T_DOTALL: dotall = true;
+                break;
+
+            case T_SKIPWS: skipws = true;
+                break;
+        }
+        option_kind = peek_token(regex_spec->lex);
+    }
+
+    if (peek_token(regex_spec->lex) == T_REG_INVERT) {
+        advance_token(regex_spec->lex);
+        option_kind = peek_token(regex_spec->lex);
+
+        while ((option_kind == T_IGCASE)
+                || (option_kind == T_DOTALL) || (option_kind == T_SKIPWS)) {
+            advance_token(regex_spec->lex);
+            switch (option_kind) {
+                case T_IGCASE: igcase = false;
+                    break;
+
+                case T_DOTALL: dotall = false;
+                    break;
+
+                case T_SKIPWS: skipws = false;
+                    break;
+            }
+            option_kind = peek_token(regex_spec->lex);
+        }
+    }
+
+    if (advance_token(regex_spec->lex) != T_REG_COLON) {
+        errorf(CURRENT_LINE(regex_spec->lex),
+                            "Missing a ':' after the regex option.");
+        return (NULL_NODE);
+    }
+
+    printf("igcase = %d\n", igcase);
+    printf("dotall = %d\n", dotall);
+    printf("skipws = %d\n", skipws);
+
+    regex_node_t* root = regex_union();
+    if (!root)
+        { return (NULL_NODE); }
+    else if (advance_token(regex_spec->lex) != T_REG_RPAREN) {
+        errorf(CURRENT_LINE(regex_spec->lex),
+                            "Missing a ')' after the regex option.");
+        return (NULL_NODE);
+    }
+    return (root);
+}
+
 static regex_node_t*
 regex_dot(void) {
     advance_token(regex_spec->lex);
@@ -534,7 +608,7 @@ regex_char(int kind) {
         }
         return (input_c);
     }
-    else if ( kind == T_OCT_NUM) {
+    else if (kind == T_OCT_NUM) {
         char const* first_digit = C_LEXEME(regex_spec->lex) + 1;
         size_t oct_num = 0;
         while (*first_digit) {
@@ -543,7 +617,7 @@ regex_char(int kind) {
         }
         return (oct_num);
     }
-    else if ( kind == T_HEX_NUM) {
+    else if (kind == T_HEX_NUM) {
         char const* first_digit = C_LEXEME(regex_spec->lex) + 2;
         size_t hex_num = 0;
         while (*first_digit) {

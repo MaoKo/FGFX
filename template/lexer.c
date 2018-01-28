@@ -33,6 +33,7 @@ check_present_table(int8_t* table, int token) {
 static int
 get_next_token(void) {
     int last_match = T_ERROR;
+    char const* pos_last_match = NULL;
     if (peek != -1) {
         last_match = peek;
         peek = -1;
@@ -58,8 +59,10 @@ get_next_token(void) {
 
         size_t i = 0;
         while (* /* NAME PREFIX */final_table[i]) {
-            if (* /* NAME PREFIX */final_table[i] == state)
-                { last_match = /* NAME PREFIX */final_table[i][1]; }
+            if (* /* NAME PREFIX */final_table[i] == state) {
+                last_match = /* NAME PREFIX */final_table[i][1];
+                pos_last_match = stream;
+            }
             ++i;        
         }
     }
@@ -71,7 +74,9 @@ get_next_token(void) {
     }
 #endif /* LOOK_TABLE_NOT_DEFINE */
 
-    size_lexeme = (stream - beg_lexeme);
+    size_lexeme = (pos_last_match - beg_lexeme);
+    stream = pos_last_match;
+
     return (last_match);
 }
 

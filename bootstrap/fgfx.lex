@@ -5,13 +5,14 @@ $STATE
     BEG_CCL, BODY_CCL,
     STRING,
     FINITE_SEQ,
+    REG_PARAMS, REG_NO_PARAMS,
     REG_COM,
     NESTED_COM,
 };
 
 $TOKEN
 {
-    /* Fragment */
+    /* Useful Fragment */
 
     LETTER = / [[:alpha:]_] / -> { $FRAGMENT } ;
 
@@ -31,8 +32,10 @@ $TOKEN
     ( BEG_REGEX, BODY_REGEX ) REG_STAR   = / \* /, ( $BEGIN (BODY_REGEX) ) ;
     ( BEG_REGEX, BODY_REGEX ) REG_PLUS   = / \+ /, ( $BEGIN (BODY_REGEX) ) ;
     ( BEG_REGEX, BODY_REGEX ) REG_QUES   = / \? /, ( $BEGIN (BODY_REGEX) ) ;
-    ( BEG_REGEX, BODY_REGEX ) REG_LPAREN = / \( /, ( $BEGIN (BODY_REGEX) ) ;
-    ( BEG_REGEX, BODY_REGEX ) REG_RPAREN = / \) /, ( $BEGIN (BODY_REGEX) ) ;
+
+    ( BEG_REGEX, BODY_REGEX ) REG_LPAREN = / \( /, ( $PUSH (BODY_REGEX, *) ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_RPAREN = / \) /, ( $POP, $POP ) ;
+
     ( BEG_REGEX, BODY_REGEX ) REG_DOT    = / \. /, ( $BEGIN (BODY_REGEX) ) ;
     ( BEG_REGEX, BODY_REGEX ) REG_LOOK   = / \/ /, ( $BEGIN (BODY_REGEX) ) ;
 
@@ -84,6 +87,16 @@ $TOKEN
             REG_CHAR = / \\?. /,
             ( $BEGIN (BODY_CCL, BODY_REGEX) ) ;
 
+    ( BODY_REGEX ) REG_OPTION = / "(?" /,  ( $PUSH (REG_PARAMS) ) ;
+    ( REG_PARAMS ) REG_INVERT = / - /, ( $BEGIN (REG_NO_PARAMS) ) ;
+
+    ( REG_PARAMS, REG_NO_PARAMS ) IGCASE = / i / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) DOTALL = / s / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) SKIPWS = / x / ;
+
+    ( REG_PARAMS, REG_NO_PARAMS ) REG_COLON = / : /,
+        ( $BEGIN (BODY_REGEX, *) ) ;
+
     /* FGFP */
 
     NON_TERMINAL =  / <{TERMINAL}('{1,3})?>   / ;
@@ -115,15 +128,18 @@ $TOKEN
 $SKIP
 {
     /* Space */
-    SPACE       = / [ \t\n]+ / ;
+
+    SPACE = / [ \t\n]+ / ;
 
     /* Comments */
+
     SINGLE_LINE                         = / \/\/.* / ;
 
     ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /, 
-        ( $BEGIN (NESTED_COM) ) ;
+        ( $PUSH (NESTED_COM, *) ) ;
+
     ( NESTED_COM ) END_MULTI            = / \*+\/  /, 
-        ( $BEGIN (GLOBAL) ) ;
+        ( $POP ) ;
 
     ( NESTED_COM ) CHAR_COMMENT         = / (.|\n) / ;
 
@@ -131,7 +147,7 @@ $SKIP
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
             MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
 
-    ( BEG_REGEX, BODY_REGEX ) REG_BEG_COM = / "(?#" /, ( $PUSH (REG_COM,*) ) ;
+    ( BEG_REGEX, BODY_REGEX ) REG_BEG_COM = / "(?#" /, ( $PUSH (REG_COM, *) ) ;
     ( REG_COM ) REG_END_COM = / \) /, ( $POP ) ;
     ( REG_COM ) REG_CHAR_COM = / [^)]+ / ;
 };
@@ -139,8 +155,8 @@ $SKIP
 $KEYWORD
 {
     // FGFL
-    SKIP, TOKEN, KEYWORD, IGCASE, STATE,
-    BEGIN, FRAGMENT, INITIAL, STAY, PUSH, POP,
+    SKIP, TOKEN, KEYWORD, R_IGCASE, STATE, FRAGMENT,
+    INITIAL, STAY, BEGIN, PUSH, POP,
 
     // POSIX character set
     CC_FIRST, // Dummy

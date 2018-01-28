@@ -129,3 +129,16 @@ hash_buffer(buffer_t const* buf) {
         { sum_char += buf->body[i]; }
     return (sum_char);
 }
+
+void
+move_back_buffer(buffer_t* dst_buff, buffer_t* src_buff, size_t size) {
+    if (size > SIZE_BUFFER(src_buff))
+        { size = SIZE_BUFFER(src_buff); }
+    size_t start_index = SIZE_BUFFER(src_buff) - size;
+    for (size_t i = start_index; i < SIZE_BUFFER(src_buff); ++i) {
+        int char_at = CHAR_AT(src_buff, i);
+        write_char_buffer(dst_buff, char_at);
+    }
+    unget_char_back_buffer(src_buff, size);
+}
+

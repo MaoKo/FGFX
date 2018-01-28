@@ -29,5 +29,6 @@ void unget_char_front_buffer(buffer_t*, size_t);
 void unget_char_back_buffer(buffer_t*, size_t);
 void reset_buffer(buffer_t*);
 int hash_buffer(buffer_t const*);
+void move_back_buffer(buffer_t*, buffer_t*, size_t);
 
 #endif /* BUFFER_H */

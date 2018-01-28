@@ -23,9 +23,9 @@ $PRODUCTION
 
     <regex_atom>    ->  <regex_fullccl>
 					|   <regex_string>
+                    |   <regex_option>
 					|   '(' <regex_union> ')'
 					|   '.'
-                    |   REG_SETTING <regex_union> '}'
 					|   BOUND_NAME
 					|   <regex_char>
                     ;
@@ -40,6 +40,15 @@ $PRODUCTION
     <regex_ccl>     ->  { <regex_char> [ '-' <regex_char> ] } => ( $RIGHT ) ;
 
     <regex_string>  ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
+
+    <regex_option>  ->  REG_OPTION { <option_kind> } => ( $RIGHT )
+                            [ REG_INVERT { <option_kind> } => ( $RIGHT) ]
+                            ':' <regex_union> ')'
+                    ;
+
+    <option_kind>   ->  IGCASE | DOTALL | SKIPWS
+                    ;
+
     <regex_char>    ->  CHAR | OCT_NUM | HEX_NUM ;
 };
 
@@ -62,5 +71,6 @@ $ALIAS
     (REG_COMMA  =>  ',')    ,
     (REG_DOT    =>  '.')    ,
     (REG_NOT    =>  '!')    ,
+    (REG_COLON  =>  ':')    ,
     (REG_QUOTE  =>  '\"')   ,
 };

@@ -27,11 +27,7 @@ new_lexer(int filde) {
     lex->lineno = START_LINE;
     
     lex->stack_state = new_vector();
-    PUSH_BACK_VECTOR(lex->stack_state, (void*)INIT_STATE);
-
     lex->crt_state = INIT_STATE;
-
-    lex->nested_com = 0;
 
     return (lex);
 }
@@ -41,6 +37,7 @@ del_lexer(lexer_t* lex) {
     if (lex) {
         del_buffer(lex->push_back);
         del_buffer(lex->last_lexeme);
+        del_vector(lex->stack_state);
     }
     FREE(lex);
 }
@@ -104,6 +101,16 @@ change_lexer_state(lexer_t* lex,
             (*state_table) = fgfx_REG_COM_state_table;
             (*final_table) = fgfx_REG_COM_final_table;
             break;
+
+        case S_REG_PARAMS:
+            (*state_table) = fgfx_REG_PARAMS_state_table;
+            (*final_table) = fgfx_REG_PARAMS_final_table;
+            break;
+
+        case S_REG_NO_PARAMS:
+            (*state_table) = fgfx_REG_NO_PARAMS_state_table;
+            (*final_table) = fgfx_REG_NO_PARAMS_final_table;
+            break;
     }
 }
 
@@ -120,13 +127,8 @@ must_look_ahead(int crt_state, int state) {
 
 static inline void
 change_state(lexer_t* lex, int last_match, bool* need_recompute) {
-    if (last_match == T_BEG_MULTI)
-        { ++(lex->nested_com); }
-    else if (last_match == T_END_MULTI)
-        { --(lex->nested_com); }
-
     int action = fgfx_action_table[last_match][lex->crt_state];
-    if (action && ((lex->crt_state != S_NESTED_COM) || (!lex->nested_com))) {
+    if (action) {
         if (action & _BEGIN)
             { lex->crt_state = action ^ _BEGIN; }
         else if (action & _PUSH) {
@@ -158,19 +160,26 @@ get_next_token(lexer_t* lex) {
         need_recompute = false;
     }
 
+    size_t read_char = 0;
+    size_t pos_last_match = 0;
+
     size_t i;
     for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
         int char_at = CHAR_AT(lex->push_back, i);
+        ++read_char;
+
         state = state_table[state][char_at];
 
-        write_char_buffer(lex->last_lexeme, char_at);
         if (state == DEAD_STATE)
             { break; }
         else { 
             if (char_at == '\n')
                 { ++(lex->lineno); }
-            if (is_final_state(state, final_table) != T_ERROR)
-                { last_match = is_final_state(state, final_table); }
+            if (is_final_state(state, final_table) != T_ERROR) {
+                last_match = is_final_state(state, final_table);
+                pos_last_match = read_char;
+            }
+            write_char_buffer(lex->last_lexeme, char_at);
         }
     }
 
@@ -181,16 +190,25 @@ get_next_token(lexer_t* lex) {
 
     while (state != DEAD_STATE) {
         int exit_st = read(lex->filde, &rd, 1);
+        ++read_char;
+
         if (!exit_st) {
-            if (first_read)
-                { return (T_EOF); }
+            if (first_read) {
+                if (EMPTY_VECTOR(lex->stack_state))
+                    { return (T_EOF); }
+                errorf(0, "The input is terminated but many "
+                                            "states still live on the stack.");
+                return (T_ERROR);
+            }
             break;
         }
 
         // Change state
         state = state_table[state][rd];
-        if (is_final_state(state, final_table) != T_ERROR)
-            { last_match = is_final_state(state, final_table); }
+        if (is_final_state(state, final_table) != T_ERROR) {
+            last_match = is_final_state(state, final_table);
+            pos_last_match = read_char;
+        }
 
         if (must_look_ahead(lex->crt_state, state)) {
             if (unget_input) {
@@ -220,7 +238,7 @@ get_next_token(lexer_t* lex) {
         errorf(CURRENT_LINE(lex),
                         "Lexical error on input '%s'.", error_str);
     }
-    else {
+    else if (!first_read) {
         if (unget_input) {
             if (!check_present_table(fgfx_look_table, last_match)) {
                 unget_char_back_buffer(lex->push_back, 1);
@@ -232,8 +250,8 @@ get_next_token(lexer_t* lex) {
             }
         }
         else {
-            unget_char_back_buffer(lex->last_lexeme, 1);
-            write_char_buffer(lex->push_back, rd);
+            move_back_buffer(lex->push_back,
+                            lex->last_lexeme, read_char - pos_last_match);
         }
     }
 
@@ -272,7 +290,7 @@ advance_token(lexer_t* lex) {
             { (void*)T_SKIP,        "$SKIP" },
             { (void*)T_TOKEN,       "$TOKEN" },
             { (void*)T_KEYWORD,     "$KEYWORD" },
-            { (void*)T_IGCASE,      "$IGCASE" },
+            { (void*)T_R_IGCASE,      "$IGCASE" },
             { (void*)T_STATE,       "$STATE" },
             { (void*)T_BEGIN,       "$BEGIN" },
             { (void*)T_PUSH,        "$PUSH" },
