@@ -75,7 +75,7 @@ cpy_regex_node(regex_node_t* root) {
             { return (new_regex_node(AST_SYMBOL, root->symbol)); }
         else if (root->kind_ast == AST_EPSILON)
             { return (new_regex_node(AST_EPSILON)); }
-        else if (root->kind_ast == AST_CLASS)
+        else if (root->kind_ast == AST_CLASS) 
             { return (new_regex_node(AST_CLASS, dup_bitset(root->class))); }
         else if (root->kind_ast == AST_DOT)
             { return (new_regex_node(AST_DOT, root->is_dotall)); }

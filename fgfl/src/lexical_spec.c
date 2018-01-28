@@ -125,7 +125,7 @@ add_entry_lexeme(lexical_spec_t* spec, int kind) {
 static int spec_state_prefix(lexical_spec_t*, trans_list_t**, bool*);
 static int spec_regex_assign(lexical_spec_t*, spec_entry_t*, int);
 
-static int spec_regex_property(lexical_spec_t*, spec_entry_t*);
+static int spec_regex_opt_fragment(lexical_spec_t*, spec_entry_t*);
 
 static int spec_action_state(lexical_spec_t*, spec_entry_t*);
 static int spec_action_pair(lexical_spec_t*, spec_entry_t*, size_t*);
@@ -134,47 +134,25 @@ static int spec_state_token_list(lexical_spec_t*, int);
 static int spec_regex_list(lexical_spec_t*, int);
 
 int
-spec_regex_property(lexical_spec_t* spec, spec_entry_t* entry) {
-    int kind_property = peek_token(spec->lex);
-
-    if ((kind_property == T_IGCASE) || (kind_property == T_FRAGMENT)) {
+spec_regex_opt_fragment(lexical_spec_t* spec, spec_entry_t* entry) {
+    if (peek_token(spec->lex) == T_ARROW) {
         advance_token(spec->lex);
-        ((kind_property == T_IGCASE)
-                ? (entry->is_igcase = true) : (entry->fragment = true));
-
-        if (peek_token(spec->lex) == T_COMMA) {
+        if (peek_token(spec->lex) == T_FRAGMENT) {
             advance_token(spec->lex);
+            entry->fragment = true;
 
-            if (peek_token(spec->lex) == T_RBRACE)
-                { return (DONE); }
-            else if ((kind_property == T_IGCASE)
-                        && (peek_token(spec->lex) != T_FRAGMENT)) {
+            if (entry->fragment && entry->use_look) {
                 errorf(CURRENT_LINE(spec->lex),
-                                    "$FRAGMENT must follow $IGCASE.");
-                return (ERROR);
-            }
-            else if ((kind_property == T_FRAGMENT)
-                        && (peek_token(spec->lex) != T_IGCASE)) {
-                errorf(CURRENT_LINE(spec->lex),
-                                    "$IGCASE must follow $FRAGMENT.");
-                return (ERROR);
-            }
-
-            advance_token(spec->lex);
-            ((kind_property == T_IGCASE)
-                ? (entry->fragment = true) : (entry->is_igcase = true));
-        }
-
-        if (entry->fragment && entry->use_look) {
-            errorf(CURRENT_LINE(spec->lex),
                             "The token %s use the lookahead feature"
                             " but it's a fragment token.", entry->name);
+                return (ERROR);
+            }
+        }
+        else {
+            errorf(CURRENT_LINE(spec->lex),
+                            "A $FRAGMENT must appear after the '->'.");
             return (ERROR);
         }
-    }
-    else {
-        errorf(CURRENT_LINE(spec->lex), "A $FRAGMENT or $IGCASE must appear.");
-        return (ERROR);
     }
     return (DONE);
 }
@@ -444,29 +422,9 @@ spec_regex_assign(lexical_spec_t* spec,
                             "No found the end of the regex '/'.");
             return (ERROR);
         }
-        else if (peek_token(spec->lex) == T_ARROW) {
-            advance_token(spec->lex);
-            if (advance_token(spec->lex) != T_LBRACE) {
-                errorf(CURRENT_LINE(spec->lex),
-                            "An open brace must follow the '->'.");
-                return (ERROR);
-            }
-            else if (spec_regex_property(spec, entry) == ERROR)
-                { return (ERROR); }
-            else if (advance_token(spec->lex) != T_RBRACE) {
-                errorf(CURRENT_LINE(spec->lex),
-                            "A close brace must follow the '->'.");
-                return (ERROR);
-            }
+        else if (spec_regex_opt_fragment(spec, entry) == ERROR)
+            { return (ERROR); }
 
-            if ((entry->use_lower || entry->use_upper) && entry->is_igcase) {
-                bool both = (entry->use_lower) && (entry->use_upper);
-                warnf(CURRENT_LINE(spec->lex),
-                        "The token %s use [:%s:]%s but it's an igcase token.",
-                        entry->name, (entry->use_lower) ? "lower" : "upper",
-                        (both) ? " and [:upper:]" : "");
-            }
-        }
         if (peek_token(spec->lex) == T_COMMA) {
             advance_token(spec->lex);
             if (spec_action_state(spec, entry) == ERROR)
@@ -641,6 +599,14 @@ check_validity_token(lexical_spec_t* spec) {
                                     AT_VECTOR(spec->entry_vect, (size_t)i);
 
         if (crt_entry->kind == T_TERMINAL) {
+            if (crt_entry->ignore_flag) {
+                bool both = (crt_entry->cce_lower) && (crt_entry->cce_upper);
+                warnf(CURRENT_LINE(spec->lex),
+                    "The token %s use [:%s:]%s but the ignore case is set.",
+                    crt_entry->name, (crt_entry->cce_lower)
+                    ? "lower" : "upper", (both) ? " and [:upper:]" : "");
+            }
+
             if (crt_entry->all_state)
                 { foreach_vector(spec->state_vect, &set_used_state); }
 
@@ -746,8 +712,8 @@ void
 print_token_entry(lexical_spec_t* spec) {
     for (size_t i = 0; i < SIZE_VECTOR(spec->entry_vect); ++i) {
         spec_entry_t* crt_entry = AT_VECTOR(spec->entry_vect, i);
-        printf("Token %s, is_igcase %d, fragment %d.\n",
-                    crt_entry->name, crt_entry->is_igcase, crt_entry->fragment);
+        printf("Token %s, fragment %d.\n",
+                                        crt_entry->name, crt_entry->fragment);
         printf("Root node = %p\n", crt_entry->regex_ast);
     }
 }

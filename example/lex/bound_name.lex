@@ -2,7 +2,7 @@
 
 $TOKEN
 {
-    A  = / A / -> { $FRAGMENT } ;
+    A  = / A / -> $FRAGMENT ;
     C  = / C / ;
     B  = / B{A}{C} / ;
 };

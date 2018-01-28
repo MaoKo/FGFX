@@ -25,7 +25,6 @@ Which create a file called token_c.h.lex ready for lexing.
 
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
-    .   Add $PUSH and $POP to FGFL
     .   Add ! not operator to regex (25%)
     .   Add option (?r-s:pattern) to FGFL
     .   Handle when the first char after the lookahead may be discarded
@@ -34,6 +33,5 @@ Which create a file called token_c.h.lex ready for lexing.
 
     .   Remove unreachable state
     .   Handle when the number of state is 1
-    .   Check useless $BEGIN
     .   Learn MarkDown :)
 

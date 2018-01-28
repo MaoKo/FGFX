@@ -14,7 +14,7 @@ $TOKEN
 {
     /* Useful Fragment */
 
-    LETTER = / [[:alpha:]_] / -> { $FRAGMENT } ;
+    LETTER = / [[:alpha:]_] / -> $FRAGMENT ;
 
     /* FGFL */
 

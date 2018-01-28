@@ -14,5 +14,5 @@ $SKIP
 
 $TOKEN
 {
-    ( INIT ) INT = / int / -> { $IGCASE } ;
+    ( INIT ) INT = / ""(?i:int) / ;
 };

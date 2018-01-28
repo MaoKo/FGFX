@@ -12,8 +12,6 @@
 vector_t* record_nfa_state = NULL;
 vector_t* record_nfa_automata = NULL;
 
-static bool nfa_igcase = false;
-
 static nfa_automaton_t* dfs_regex_node(regex_node_t*);
 
 static void
@@ -143,17 +141,6 @@ regex_node_class(bitset_t* root_class) {
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
 
-    if (nfa_igcase) {
-        int i;
-        while ((i = IT_NEXT(root_class)) != IT_NULL) {
-            if (isalpha(i)) {
-                size_t target = (islower(i) ? toupper(i) : tolower(i));
-                ADD_BITSET(root_class, target);    
-            }   
-        }
-        IT_RESET(root_class);
-    }
-    
     nfa_state_t* new_tail_state = new_nfa_state(EDGE_CLASS,
                                     dup_bitset(root_class), new_head_state);
     if (!new_tail_state) {
@@ -164,25 +151,12 @@ regex_node_class(bitset_t* root_class) {
     return (new_nfa_automaton(NFA_CLASS, new_tail_state, new_head_state));
 }
 
-static nfa_automaton_t*
-regex_node_symbol(regex_node_t* root) {
-    if ((root->kind_ast != AST_SYMBOL))
+static inline nfa_automaton_t*
+regex_node_symbol(int symbol) {
+    nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
+    if (!new_head_state)
         { return (NULL_AUTOMATON); }
-
-    if (nfa_igcase && isalpha(root->symbol)) {
-        root->kind_ast = AST_CLASS;
-        size_t back_symbol = root->symbol;
-        root->class = new_bitset();
-        ADD_BITSET(root->class, back_symbol);
-        return (regex_node_class(root->class));
-    }
-    else {
-        nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
-        if (!new_head_state)
-            { return (NULL_AUTOMATON); }
-
-        return (new_nfa_automaton(NFA_SYMBOL, root->symbol, new_head_state));
-    }
+    return (new_nfa_automaton(NFA_SYMBOL, symbol, new_head_state));
 }
 
 static inline nfa_automaton_t*
@@ -364,7 +338,7 @@ dfs_regex_node(regex_node_t* root) {
                 return (regex_node_closure(root));
 
             case AST_SYMBOL:
-                return (regex_node_symbol(root));
+                return (regex_node_symbol(root->symbol));
 
             case AST_EPSILON:
                 return (regex_node_epsilon());
@@ -385,9 +359,8 @@ dfs_regex_node(regex_node_t* root) {
 static int
 transform_regex_nfa(spec_entry_t* crt_entry) {
     regex_node_t* root = crt_entry->regex_ast;
-    nfa_igcase = crt_entry->is_igcase;
-
     int exit_st = DONE;
+
     if ((crt_entry->nfa_m = dfs_regex_node(root)) == NULL_AUTOMATON)
         { exit_st = ERROR; }
     else

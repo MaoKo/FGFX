@@ -113,11 +113,10 @@ typedef struct {
             bool use_look;
             bool must_skip;
 
-// TODO REMOVE
-            bool is_igcase;
-            bool use_lower;
-            bool use_upper;
-// TODO REMOVE
+            // for Warning
+            bool ignore_flag;
+            bool cce_lower;
+            bool cce_upper;
 
             regex_node_t* regex_ast;
             nfa_automaton_t* nfa_m;

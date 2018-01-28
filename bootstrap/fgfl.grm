@@ -23,8 +23,8 @@ $PRODUCTION
     <state_prefix>      ->  '(' <state_prefix_item> ')' | $EMPTY ;
     <state_prefix_item> ->  <token_list> | '*' ;
 
-    <regex_assign>      ->  '=' REGEX [ '->' '$FRAGMENT' ]
-                                [ ',' <action_state> ] ;
+    <regex_assign>      ->  '=' REGEX <opt_fragment> [ ',' <action_state> ] ;
+    <opt_fragment>      ->  [ '->' '$FRAGMENT' ] ;
 
     <token_list>        ->  TERMINAL [ ',' <opt_token_list> ] ;
     <opt_token_list>    ->  TERMINAL [ ',' <opt_token_list> ] | $EMPTY ;
