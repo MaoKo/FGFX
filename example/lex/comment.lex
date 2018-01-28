@@ -14,5 +14,5 @@ $SKIP
 
 $TOKEN
 {
-    ( INIT ) INT = / ""(?i:int) / ;
+    ( INIT ) INT = / (?i:int) / ;
 };

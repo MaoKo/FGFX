@@ -116,8 +116,6 @@ static inline bool
 must_look_ahead(int crt_state, int state) {
     if (crt_state == S_BODY_CCL && fgfx_BODY_CCL_ahead_table[state])
         { return (true); }
-    else if (crt_state == S_BEG_REGEX && fgfx_BEG_REGEX_ahead_table[state])
-        { return (true); }
     else if (crt_state == S_BODY_REGEX && fgfx_BODY_REGEX_ahead_table[state])
         { return (true); }
     return (false);
@@ -160,6 +158,14 @@ get_next_token(lexer_t* lex) {
 
     size_t read_char = 0;
     size_t pos_last_match = 0;
+
+    // Check for epsilon
+    if (is_final_state(state, final_table) != T_ERROR) {
+        last_match = is_final_state(state, final_table);
+        change_state(lex, last_match, &need_recompute);
+
+        return (last_match);
+    }
 
     size_t i;
     for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
@@ -288,7 +294,6 @@ advance_token(lexer_t* lex) {
             { (void*)T_SKIP,        "$SKIP" },
             { (void*)T_TOKEN,       "$TOKEN" },
             { (void*)T_KEYWORD,     "$KEYWORD" },
-            { (void*)T_R_IGCASE,      "$IGCASE" },
             { (void*)T_STATE,       "$STATE" },
             { (void*)T_BEGIN,       "$BEGIN" },
             { (void*)T_PUSH,        "$PUSH" },
