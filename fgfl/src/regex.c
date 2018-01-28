@@ -34,7 +34,6 @@ static bitset_t* regex_ccl(void);
 static bitset_t* regex_cce(int);
 static bitset_t* regex_n_cce(int);
 static regex_node_t* regex_option(void);
-static regex_node_t* regex_dot(void);
 static int regex_char(int);
 
 static regex_node_t*
@@ -233,8 +232,10 @@ regex_atom(void) {
         }
         return (root);
     }
-    else if (kind == T_REG_DOT)
-        { return (regex_dot()); }
+    else if (kind == T_REG_DOT) {
+        advance_token(regex_spec->lex);
+        return (new_regex_node(AST_DOT, false));
+    }
     else if (kind == T_REG_BOUND_NAME) {
         advance_token(regex_spec->lex);
         unget_char_back_buffer(LAST_LEXEME(regex_spec->lex), 1);
@@ -504,7 +505,6 @@ regex_n_cce(int kind_cce) {
     return (NULL_BITSET);
 }
 
-#include <stdio.h>
 static regex_node_t*
 regex_option(void) {
     advance_token(regex_spec->lex);
@@ -557,10 +557,6 @@ regex_option(void) {
         return (NULL_NODE);
     }
 
-    printf("igcase = %d\n", igcase);
-    printf("dotall = %d\n", dotall);
-    printf("skipws = %d\n", skipws);
-
     regex_node_t* root = regex_union();
     if (!root)
         { return (NULL_NODE); }
@@ -569,15 +565,15 @@ regex_option(void) {
                             "Missing a ')' after the regex option.");
         return (NULL_NODE);
     }
-    return (root);
-}
 
-static regex_node_t*
-regex_dot(void) {
-    advance_token(regex_spec->lex);
-    bitset_t* newl = new_bitset();
-    ADD_BITSET(newl, '\n');
-    return (new_regex_node(AST_CLASS, COMPL_BITSET(newl)));
+    if (igcase)
+        { set_option_ast(root, &set_igcase); }
+    if (dotall)
+        { set_option_ast(root, &set_dotall); }
+    if (skipws)
+        { set_option_ast(root, &set_skipws); }
+        
+    return (root);
 }
 
 static int

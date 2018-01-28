@@ -138,27 +138,24 @@ new_nfa_state(int symbol_edge, ...) {
 }
 
 static nfa_automaton_t*
-regex_node_class(regex_node_t* root) {
-    if ((root->kind_ast != AST_CLASS))
-        { return (NULL_AUTOMATON); }
-
+regex_node_class(bitset_t* root_class) {
     nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
 
     if (nfa_igcase) {
         int i;
-        while ((i = IT_NEXT(root->class)) != IT_NULL) {
+        while ((i = IT_NEXT(root_class)) != IT_NULL) {
             if (isalpha(i)) {
                 size_t target = (islower(i) ? toupper(i) : tolower(i));
-                ADD_BITSET(root->class, target);    
+                ADD_BITSET(root_class, target);    
             }   
         }
-        IT_RESET(root->class);
+        IT_RESET(root_class);
     }
     
     nfa_state_t* new_tail_state = new_nfa_state(EDGE_CLASS,
-                                    dup_bitset(root->class), new_head_state);
+                                    dup_bitset(root_class), new_head_state);
     if (!new_tail_state) {
         del_nfa_state(new_head_state);
         return (NULL_AUTOMATON);
@@ -177,7 +174,7 @@ regex_node_symbol(regex_node_t* root) {
         size_t back_symbol = root->symbol;
         root->class = new_bitset();
         ADD_BITSET(root->class, back_symbol);
-        return (regex_node_class(root));
+        return (regex_node_class(root->class));
     }
     else {
         nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
@@ -193,8 +190,19 @@ regex_node_epsilon(void) {
     nfa_state_t* new_head_state = new_nfa_state(NO_EDGE);
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
-
     return (new_nfa_automaton(NFA_EPSILON, new_head_state));
+}
+
+static inline nfa_automaton_t*
+regex_node_dot(bool is_dotall) {
+    bitset_t* dot_range = new_bitset();
+
+    ADD_BITSET(dot_range, '\n');
+    COMPL_BITSET(dot_range);
+
+    if (is_dotall)
+        { ADD_BITSET(dot_range, '\n'); }
+    return (regex_node_class(dot_range));
 }
 
 static nfa_automaton_t*
@@ -361,8 +369,11 @@ dfs_regex_node(regex_node_t* root) {
             case AST_EPSILON:
                 return (regex_node_epsilon());
 
+            case AST_DOT:
+                return (regex_node_dot(root->is_dotall));
+
             case AST_CLASS:
-                return (regex_node_class(root));
+                return (regex_node_class(root->class));
 
             default:
                 break;

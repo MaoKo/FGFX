@@ -19,6 +19,7 @@ typedef struct regex_node_t {
         AST_PLUS,
         AST_LOOK,
         AST_BOUND_NAME,
+        AST_DOT,
         AST_SYMBOL,
         AST_EPSILON,
         AST_CLASS,
@@ -34,6 +35,8 @@ typedef struct regex_node_t {
         };
         struct // if AST_SYMBOL
             { int symbol; };
+        struct // if AST_DOT
+            { bool is_dotall; };
         struct // if AST_CLASS
             { bitset_t* class; };
     };

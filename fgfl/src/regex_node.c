@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "regex_node.h"
 #include "regex.h"
@@ -30,6 +30,10 @@ new_regex_node(int kind, ...) {
             break;
 
         case AST_EPSILON:
+            break;   
+
+        case AST_DOT:
+            node->is_dotall = va_arg(args, int);
             break;
 
         case AST_STAR:
@@ -73,6 +77,8 @@ cpy_regex_node(regex_node_t* root) {
             { return (new_regex_node(AST_EPSILON)); }
         else if (root->kind_ast == AST_CLASS)
             { return (new_regex_node(AST_CLASS, dup_bitset(root->class))); }
+        else if (root->kind_ast == AST_DOT)
+            { return (new_regex_node(AST_DOT, root->is_dotall)); }
         else if (root->kind_ast == AST_BOUND_NAME) {
             return (new_regex_node(root->kind_ast,
                                                 strdup(root->bound_name)));
@@ -213,6 +219,7 @@ remove_useless_epsilon(regex_node_t* root) {
         { return (false); }
 
     switch (root->kind_ast) {
+        case AST_DOT:
         case AST_SYMBOL:
         case AST_CLASS:
             return (false);
@@ -275,6 +282,71 @@ remove_useless_epsilon(regex_node_t* root) {
         default:
             return (false);
     }
+}
+
+regex_node_t*
+set_dotall(regex_node_t* root) {
+    if (!root)
+        { return (NULL_NODE); }
+    else if (root->kind_ast == AST_DOT)
+        { root->is_dotall = true; }
+    return (root);
+}
+
+regex_node_t*
+set_skipws(regex_node_t* root) {
+    if (!root)
+        { return (NULL_NODE); }
+    else if ((root->kind_ast == AST_SYMBOL) && IS_SKIPWS(root->symbol))
+        { root->kind_ast = AST_EPSILON; }
+    return (root);
+}
+
+regex_node_t*
+set_igcase(regex_node_t* root) {
+    if (!root)
+        { return (NULL_NODE); }
+    else if ((root->kind_ast == AST_SYMBOL) || (root->kind_ast == AST_CLASS)) {
+        if ((root->kind_ast == AST_SYMBOL) && isalpha(root->symbol)) {
+            size_t back_symbol = root->symbol;
+            root->kind_ast = AST_CLASS;
+            root->class = new_bitset();
+
+            ADD_BITSET(root->class, back_symbol);
+        }
+
+        if (root->kind_ast == AST_CLASS) {
+            int i;
+            while ((i = IT_NEXT(root->class)) != IT_NULL) {
+                if (isalpha(i)) {
+                    size_t target = (islower(i) ? toupper(i) : tolower(i));
+                    ADD_BITSET(root->class, target);    
+                }   
+            } 
+            IT_RESET(root->class);
+        }
+    }
+    return (root);
+}
+
+regex_node_t*
+set_option_ast(regex_node_t* root, regex_node_t* (*opt_ptr)(regex_node_t*)) {
+    if (!root)
+        { return (NULL_NODE); }
+    else if (CHILD_NODE(root->kind_ast)) {
+        if (CHILD_NODE(root->left->kind_ast))
+            { root->left = set_option_ast(root->left, opt_ptr); }
+        else
+            { root->left = (*opt_ptr)(root->left); }
+
+        if (root->right && CHILD_NODE(root->right->kind_ast))
+            { root->right = set_option_ast(root->right, opt_ptr); }
+        else
+            { root->right = (*opt_ptr)(root->right); }
+        return (root);
+    }
+    else
+        { return ((*opt_ptr)(root)); }
 }
 
 #if 0
