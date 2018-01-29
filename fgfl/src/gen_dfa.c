@@ -132,10 +132,12 @@ gen_ahead_table(int filde, lexical_spec_t const* spec,
             dprintf(filde, SEP);
             gen_state_name(filde, state);
 
-            dprintf(filde, "ahead_table[%zu] = " BEG_BLOCK NL, size_states);
+            dprintf(filde, "ahead_table[%zu][2] = " BEG_BLOCK NL, size_states);
             first_seen = true;
         }
-        dprintf(filde, TAB "[%ld]=true" COMMA NL, i);
+        dprintf(filde, TAB "[%ld]" SP "=" SP BEG_BLOCK SP "true" COMMA SP
+                        "%s" COMMA SP END_BLOCK COMMA NL, i,
+                        (crt_state->must_reload) ? SP "true" : "false");
     }
     if (first_seen)
         { dprintf(filde, END_BLOCK SEMI NL NL); }

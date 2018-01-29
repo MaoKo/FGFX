@@ -133,14 +133,14 @@ $SKIP
     ( NESTED_COM ) END_MULTI            = / \*+\/  /, 
         ( $POP ) ;
 
-    ( NESTED_COM ) CHAR_COMMENT         = / (.|\n) / ;
+    ( NESTED_COM ) CHAR_COMMENT         = / (?s:.) / ;
 
     /* Multi line in  Regex */
     ( BEG_CCL, BEG_REGEX, BODY_REGEX, STRING, BODY_CCL, )
         MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
 
     ( BEG_REGEX, BODY_REGEX ) REG_BEG_COM = / "(?#" /, ( $PUSH (REG_COM, *) ) ;
-    ( REG_COM ) REG_END_COM = / \) /, ( $POP ) ;
+    ( REG_COM ) REG_END_COM  = / \) /, ( $POP ) ;
     ( REG_COM ) REG_CHAR_COM = / [^)]+ / ;
 
     ( BEG_REGEX ) REG_NOTHING = / ""(?# Move to BODY_REGEX with epsilon ) /,

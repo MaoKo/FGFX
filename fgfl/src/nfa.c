@@ -181,9 +181,6 @@ regex_node_dot(bool is_dotall) {
 
 static nfa_automaton_t*
 regex_node_union(regex_node_t* root) {
-    if (root->kind_ast != AST_UNION)
-        { return (NULL_AUTOMATON); }
-
     nfa_automaton_t* left = dfs_regex_node(root->left);
     if (!left)
         { return (NULL_AUTOMATON); }
@@ -241,7 +238,7 @@ set_states_lookahead(nfa_automaton_t* right) {
  
         case NFA_CLASS:
         case NFA_SYMBOL:
-            right->head_state->beg_look = true;
+            right->head_state->beg_lookahead = true;
             break;
 
         case NFA_EPSILON:
@@ -255,17 +252,23 @@ set_states_lookahead(nfa_automaton_t* right) {
 
 static nfa_automaton_t*
 regex_node_concat(regex_node_t* root) {
-    if ((root->kind_ast != AST_CONCAT) && (root->kind_ast != AST_LOOK))
-        { return (NULL_AUTOMATON); }
-
     nfa_automaton_t* left = dfs_regex_node(root->left);
     if (!left)
         { return (NULL_AUTOMATON); }
+
+    size_t start_state = SIZE_VECTOR(record_nfa_state);
 
     nfa_automaton_t* right = dfs_regex_node(root->right);
     if (!right) {
         del_nfa_automaton(left);
         return (NULL_AUTOMATON);
+    }
+    else if (IS_LOOK(root)) {
+        for (size_t i = start_state; i < SIZE_VECTOR(record_nfa_state); ++i) {
+            nfa_state_t* crt_state = (nfa_state_t*)
+                                        AT_VECTOR(record_nfa_state, i);
+            crt_state->in_look_machine = true;
+        }
     }
 
     if (left->head_state->symbol_edge != EDGE_AUTOMATA) {
@@ -283,9 +286,6 @@ regex_node_concat(regex_node_t* root) {
 
 static nfa_automaton_t*
 regex_node_closure(regex_node_t* root) {
-    if (!IS_CLOSURE(root->kind_ast))
-        { return (NULL_AUTOMATON); }
-
     if (root->kind_ast == AST_QUES) {
         root->right = new_regex_node(AST_EPSILON);
         root->kind_ast = AST_UNION;

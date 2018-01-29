@@ -33,8 +33,10 @@ typedef struct regex_node_t {
             char const* bound_name;
             size_t index_token;
         };
-        struct // if AST_SYMBOL
-            { int symbol; };
+        struct { // if AST_SYMBOL
+            int symbol;
+            bool in_string;
+        };
         struct // if AST_DOT
             { bool is_dotall; };
         struct // if AST_CLASS
@@ -48,7 +50,8 @@ typedef struct nfa_state_t {
     size_t index;
     int final_type;
     bool is_anchor;
-    bool beg_look;
+    bool beg_lookahead;
+    bool in_look_machine;
     int symbol_edge;
     struct nfa_state_t* out_state;
     nfa_automaton_t* edge;
@@ -95,6 +98,7 @@ typedef struct {
     size_t hash_state;
     trans_list_t* trans;
     bool must_ahead;
+    bool must_reload;
     bool is_final;
     int final_entry;
     int final_anchor_entry;

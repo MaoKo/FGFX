@@ -99,7 +99,8 @@ build_regex(lexical_spec_t* spec, spec_entry_t* entry) {
             return (NULL_NODE);
         }
         advance_token(spec->lex);
-        root = new_regex_node(AST_LOOK, root, new_regex_node(AST_SYMBOL, '\n'));
+        root = new_regex_node(AST_LOOK, root,
+                                    new_regex_node(AST_SYMBOL, '\n', false));
     }
     return (root);
 }
@@ -247,7 +248,7 @@ regex_atom(void) {
         int val_lexeme;
         if ((val_lexeme = regex_char(kind)) != ERROR) {
             advance_token(regex_spec->lex);
-            return (new_regex_node(AST_SYMBOL, val_lexeme));
+            return (new_regex_node(AST_SYMBOL, val_lexeme, false));
         }
         else
             { return (NULL_NODE); }
@@ -271,7 +272,7 @@ regex_string(void) {
         if ((kind_char = advance_token(regex_spec->lex)) == T_ERROR)
             { break; }
         regex_node_t* symbol = new_regex_node(AST_SYMBOL,
-                                    regex_char(kind_char));
+                                            regex_char(kind_char), true);
         if (!root_concat)
             { root_concat = symbol; }
         else

@@ -767,26 +767,24 @@ fgfx_REG_COM_final_table[4][2] = {
 };
 
 static uint8_t
-fgfx_NESTED_COM_state_table[9][256] = {
+fgfx_NESTED_COM_state_table[8][256] = {
 /*   0 */	{},
-/*   1 */	{[48 ... 255]=2, [47]=5, [43 ... 46]=2, [42]=4, [11 ... 41]=2, [10]=3, [0 ... 9]=2},
+/*   1 */	{[48 ... 255]=2, [47]=4, [43 ... 46]=2, [42]=3, [0 ... 41]=2},
 /*   2 */	{},
-/*   3 */	{},
-/*   4 */	{[47]=7, [42]=6},
-/*   5 */	{[42]=8},
-/*   6 */	{[47]=7, [42]=6},
+/*   3 */	{[47]=6, [42]=5},
+/*   4 */	{[42]=7},
+/*   5 */	{[47]=6, [42]=5},
+/*   6 */	{},
 /*   7 */	{},
-/*   8 */	{},
 };
 
 static uint8_t
-fgfx_NESTED_COM_final_table[7][2] = {
+fgfx_NESTED_COM_final_table[6][2] = {
 	{ 2, 	T_CHAR_COMMENT },
 	{ 3, 	T_CHAR_COMMENT },
 	{ 4, 	T_CHAR_COMMENT },
-	{ 5, 	T_CHAR_COMMENT },
-	{ 7, 	T_END_MULTI },
-	{ 8, 	T_BEG_MULTI },
+	{ 6, 	T_END_MULTI },
+	{ 7, 	T_BEG_MULTI },
 	{ 0 },
 };
 

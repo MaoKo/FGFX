@@ -218,12 +218,19 @@ build_ahead_table(vector_t* states) {
     for (size_t i = 1; i < SIZE_VECTOR(states); ++i) {
         dfa_state_t* crt_state = (dfa_state_t*)AT_VECTOR(states, i);
         int j;
+
+        bool in_look_machine = false;
         while ((j = IT_NEXT(crt_state->set_state)) != IT_NULL) {
             nfa_state_t* nfa_state = NFA_STATE_AT(j);
-            if (nfa_state->beg_look)
+            if (nfa_state->beg_lookahead)
                 { crt_state->must_ahead = true; }
+            if (!nfa_state->in_look_machine)
+                { in_look_machine = true; }
         }
         IT_RESET(crt_state->set_state);
+
+        if ((in_look_machine) && (crt_state->must_ahead))
+            { crt_state->must_reload = true; }
     }
 }
 
