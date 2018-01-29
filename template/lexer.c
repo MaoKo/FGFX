@@ -41,7 +41,12 @@ get_next_token(void) {
     }
     if (!*stream)
         { return (T_EOF); }
+
     int state = START_STATE;
+#ifndef LOOK_TABLE_NOT_DEFINE
+    int reload = true;
+#endif /* LOOK_TABLE_NOT_DEFINE */
+
     beg_lexeme = stream;
     while (*stream && (state != DEAD_STATE)) {
         state = /* NAME PREFIX */state_table[state][(int)*stream];
@@ -49,8 +54,10 @@ get_next_token(void) {
             { break; }
 
 #ifndef LOOK_TABLE_NOT_DEFINE
-        if (/* NAME PREFIX */ahead_table[state]) {
+        if (* /* NAME PREFIX */ahead_table[state] && reload) {
+            reload = /* NAME PREFIX */ahead_table[state][1];
             unget_input = true;
+
             backup_str = stream;
         }
 #endif /* LOOK_TABLE_NOT_DEFINE */
@@ -72,10 +79,10 @@ get_next_token(void) {
         stream = backup_str;
         unget_input = false;
     }
+    else
 #endif /* LOOK_TABLE_NOT_DEFINE */
-
-    size_lexeme = (pos_last_match - beg_lexeme);
-    stream = pos_last_match;
+        { stream = pos_last_match; }
+    size_lexeme = (stream - beg_lexeme);
 
     return (last_match);
 }

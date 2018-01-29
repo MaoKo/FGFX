@@ -22,14 +22,9 @@ Which create a file called token_c.h.lex ready for lexing.
     .   Improve the algorithm for constructing the
             LALR parsing table
             DFA transition table
-
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
     .   Add ! not operator to regex (25%)
-    .   Handle when the first char after the lookahead may be discarded
-            a/b?c
-            [xX]/[[:xdigit:]]*
-
     .   Remove unreachable state
     .   Handle when the number of state is 1
     .   Learn MarkDown :)

@@ -479,19 +479,19 @@ fgfx_BODY_REGEX_state_table[58][256] = {
 };
 
 static uint8_t
-fgfx_BODY_REGEX_ahead_table[58] = {
-	[20]=true,
-	[21]=true,
-	[23]=true,
-	[24]=true,
-	[25]=true,
-	[26]=true,
-	[34]=true,
-	[35]=true,
-	[36]=true,
-	[37]=true,
-	[39]=true,
-	[51]=true,
+fgfx_BODY_REGEX_ahead_table[58][2] = {
+	[20] = { true, false, },
+	[21] = { true, false, },
+	[23] = { true, false, },
+	[24] = { true, false, },
+	[25] = { true, false, },
+	[26] = { true, false, },
+	[34] = { true, false, },
+	[35] = { true, false, },
+	[36] = { true, false, },
+	[37] = { true, false, },
+	[39] = { true, false, },
+	[51] = { true, false, },
 };
 
 static uint8_t
@@ -625,8 +625,8 @@ fgfx_BODY_CCL_state_table[29][256] = {
 };
 
 static uint8_t
-fgfx_BODY_CCL_ahead_table[29] = {
-	[7]=true,
+fgfx_BODY_CCL_ahead_table[29][2] = {
+	[7] = { true, false, },
 };
 
 static uint8_t

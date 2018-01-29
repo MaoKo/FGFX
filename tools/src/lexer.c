@@ -114,9 +114,9 @@ change_lexer_state(lexer_t* lex,
 
 static inline bool
 must_look_ahead(int crt_state, int state) {
-    if (crt_state == S_BODY_CCL && fgfx_BODY_CCL_ahead_table[state])
+    if (crt_state == S_BODY_CCL && *fgfx_BODY_CCL_ahead_table[state])
         { return (true); }
-    else if (crt_state == S_BODY_REGEX && fgfx_BODY_REGEX_ahead_table[state])
+    else if (crt_state == S_BODY_REGEX && *fgfx_BODY_REGEX_ahead_table[state])
         { return (true); }
     return (false);
 }
@@ -214,11 +214,13 @@ get_next_token(lexer_t* lex) {
             pos_last_match = read_char;
         }
 
-        if (must_look_ahead(lex->crt_state, state)) {
+        if (!unget_input && must_look_ahead(lex->crt_state, state)) {
+#if 0
             if (unget_input) {
                 append_buffer(lex->last_lexeme, lex->push_back);
                 reset_buffer(lex->push_back);
             }
+#endif
             unget_input = true;
         }
 
