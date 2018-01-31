@@ -25,6 +25,7 @@ Which create a file called token_c.h.lex ready for lexing.
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
     .   Add ! not operator to regex (25%)
+    .   Add reverse in regex
     .   Remove unreachable state
     .   Handle when the number of state is 1
     .   Learn MarkDown :)

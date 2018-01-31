@@ -82,9 +82,10 @@ $TOKEN
     ( BODY_REGEX ) REG_OPTION = / "(?" /,  ( $PUSH (REG_PARAMS) ) ;
     ( REG_PARAMS ) REG_INVERT = / - /, ( $BEGIN (REG_NO_PARAMS) ) ;
 
-    ( REG_PARAMS, REG_NO_PARAMS ) IGCASE = / i / ;
-    ( REG_PARAMS, REG_NO_PARAMS ) DOTALL = / s / ;
-    ( REG_PARAMS, REG_NO_PARAMS ) SKIPWS = / x / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) IGCASE  = / i / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) DOTALL  = / s / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) SKIPWS  = / x / ;
+    ( REG_PARAMS, REG_NO_PARAMS ) REVERSE = / r / ;
 
     ( REG_PARAMS, REG_NO_PARAMS ) REG_COLON = / : /,
         ( $BEGIN (BODY_REGEX, *) ) ;

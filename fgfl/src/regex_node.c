@@ -354,3 +354,44 @@ set_option_ast(regex_node_t* root, regex_node_t* (*opt_ptr)(regex_node_t*)) {
     else
         { return ((*opt_ptr)(root)); }
 }
+
+regex_node_t*
+reverse_regex_concat(regex_node_t* root) {
+    if (!root)
+        { return (NULL_NODE); }
+
+    switch (root->kind_ast) {
+        case AST_CONCAT: ;
+            regex_node_t* left  = reverse_regex_concat(root->left);
+            regex_node_t* right = reverse_regex_concat(root->right);
+
+            if (root->left->kind_ast != AST_CONCAT) {
+                root->left  = right;
+                root->right = left;
+            }
+            else {
+                root->right = root->left->right;
+                root->left->right = root->left->left;
+                root->left->left = right;
+            }
+
+            break;
+
+        case AST_UNION:
+            reverse_regex_concat(root->left);
+            reverse_regex_concat(root->right);
+
+            break;
+
+        case AST_QUES:
+        case AST_STAR:
+        case AST_PLUS:
+            reverse_regex_concat(root->left);
+            break;
+    
+        default:
+            break;
+    }
+
+    return (root);
+}

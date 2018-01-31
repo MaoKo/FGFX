@@ -60,6 +60,7 @@ enum {
 	T_IGCASE,
 	T_DOTALL,
 	T_SKIPWS,
+	T_REVERSE,
 	T_REG_COLON,
 	T_NON_TERMINAL,
 	T_LITERAL,
@@ -137,12 +138,12 @@ enum {
 	T_EOF,
 };
 
-#define TOTAL_TOKEN	112
+#define TOTAL_TOKEN	113
 
 #if 0
 
 static char const*
-fgfx_token_name_table[112] = {
+fgfx_token_name_table[113] = {
 	"EQUAL",
 	"STAR",
 	"OPEN_REGEX",
@@ -180,6 +181,7 @@ fgfx_token_name_table[112] = {
 	"IGCASE",
 	"DOTALL",
 	"SKIPWS",
+	"REVERSE",
 	"REG_COLON",
 	"NON_TERMINAL",
 	"LITERAL",
@@ -710,9 +712,32 @@ fgfx_FINITE_SEQ_final_table[5][2] = {
 };
 
 static uint8_t
-fgfx_REG_PARAMS_state_table[7][256] = {
+fgfx_REG_PARAMS_state_table[8][256] = {
 /*   0 */	{},
-/*   1 */	{[120]=6, [115]=5, [105]=4, [58]=3, [45]=2},
+/*   1 */	{[120]=7, [115]=6, [114]=5, [105]=4, [58]=3, [45]=2},
+/*   2 */	{},
+/*   3 */	{},
+/*   4 */	{},
+/*   5 */	{},
+/*   6 */	{},
+/*   7 */	{},
+};
+
+static uint8_t
+fgfx_REG_PARAMS_final_table[7][2] = {
+	{ 2, 	T_REG_INVERT },
+	{ 3, 	T_REG_COLON },
+	{ 4, 	T_IGCASE },
+	{ 5, 	T_REVERSE },
+	{ 6, 	T_DOTALL },
+	{ 7, 	T_SKIPWS },
+	{ 0 },
+};
+
+static uint8_t
+fgfx_REG_NO_PARAMS_state_table[7][256] = {
+/*   0 */	{},
+/*   1 */	{[120]=6, [115]=5, [114]=4, [105]=3, [58]=2},
 /*   2 */	{},
 /*   3 */	{},
 /*   4 */	{},
@@ -721,31 +746,12 @@ fgfx_REG_PARAMS_state_table[7][256] = {
 };
 
 static uint8_t
-fgfx_REG_PARAMS_final_table[6][2] = {
-	{ 2, 	T_REG_INVERT },
-	{ 3, 	T_REG_COLON },
-	{ 4, 	T_IGCASE },
-	{ 5, 	T_DOTALL },
-	{ 6, 	T_SKIPWS },
-	{ 0 },
-};
-
-static uint8_t
-fgfx_REG_NO_PARAMS_state_table[6][256] = {
-/*   0 */	{},
-/*   1 */	{[120]=5, [115]=4, [105]=3, [58]=2},
-/*   2 */	{},
-/*   3 */	{},
-/*   4 */	{},
-/*   5 */	{},
-};
-
-static uint8_t
-fgfx_REG_NO_PARAMS_final_table[5][2] = {
+fgfx_REG_NO_PARAMS_final_table[6][2] = {
 	{ 2, 	T_REG_COLON },
 	{ 3, 	T_IGCASE },
-	{ 4, 	T_DOTALL },
-	{ 5, 	T_SKIPWS },
+	{ 4, 	T_REVERSE },
+	{ 5, 	T_DOTALL },
+	{ 6, 	T_SKIPWS },
 	{ 0 },
 };
 

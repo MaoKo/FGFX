@@ -41,7 +41,7 @@ $PRODUCTION
 
     <regex_string>  ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
 
-    <regex_option>  ->  REG_OPTION { <option_kind> } => ( $RIGHT )
+    <regex_option>  ->  '(?' { <option_kind> } => ( $RIGHT )
                             [ REG_INVERT { <option_kind> } => ( $RIGHT) ]
                             ':' <regex_union> ')'
                     ;
@@ -73,4 +73,5 @@ $ALIAS
     (REG_NOT    =>  '!')    ,
     (REG_COLON  =>  ':')    ,
     (REG_QUOTE  =>  '\"')   ,
+    (REG_OPTION =>  '(?')   ,
 };

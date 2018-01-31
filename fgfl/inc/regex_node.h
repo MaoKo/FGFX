@@ -31,4 +31,6 @@ regex_node_t* set_igcase(regex_node_t*);
 
 regex_node_t* set_option_ast(regex_node_t*, regex_node_t* (*)(regex_node_t*));
 
+regex_node_t* reverse_regex_concat(regex_node_t*);
+
 #endif /* REGEX_NODE_H */

@@ -507,6 +507,8 @@ regex_n_cce(int kind_cce) {
     return (NULL_BITSET);
 }
 
+#include <stdio.h>
+
 static regex_node_t*
 regex_option(void) {
     advance_token(regex_spec->lex);
@@ -514,20 +516,16 @@ regex_option(void) {
     bool igcase = false;
     bool dotall = false;
     bool skipws = false;
+    bool reverse = false;
 
     int option_kind = peek_token(regex_spec->lex);
-    while ((option_kind == T_IGCASE)
-            || (option_kind == T_DOTALL) || (option_kind == T_SKIPWS)) {
+    while (IS_OPTION(option_kind)) {
         advance_token(regex_spec->lex);
         switch (option_kind) {
-            case T_IGCASE: igcase = true;
-                break;
-
-            case T_DOTALL: dotall = true;
-                break;
-
-            case T_SKIPWS: skipws = true;
-                break;
+            case T_IGCASE:  igcase  = true; break;
+            case T_DOTALL:  dotall  = true; break;
+            case T_SKIPWS:  skipws  = true; break;
+            case T_REVERSE: reverse = true; break;
         }
         option_kind = peek_token(regex_spec->lex);
     }
@@ -536,18 +534,13 @@ regex_option(void) {
         advance_token(regex_spec->lex);
         option_kind = peek_token(regex_spec->lex);
 
-        while ((option_kind == T_IGCASE)
-                || (option_kind == T_DOTALL) || (option_kind == T_SKIPWS)) {
+        while (IS_OPTION(option_kind)) {
             advance_token(regex_spec->lex);
             switch (option_kind) {
-                case T_IGCASE: igcase = false;
-                    break;
-
-                case T_DOTALL: dotall = false;
-                    break;
-
-                case T_SKIPWS: skipws = false;
-                    break;
+                case T_IGCASE:  igcase  = false; break;
+                case T_DOTALL:  dotall  = false; break;
+                case T_SKIPWS:  skipws  = false; break;
+                case T_REVERSE: reverse = false; break;
             }
             option_kind = peek_token(regex_spec->lex);
         }
@@ -582,7 +575,10 @@ regex_option(void) {
         { set_option_ast(root, &set_dotall); }
     if (skipws)
         { set_option_ast(root, &set_skipws); }
-        
+
+    if (reverse)
+        { reverse_regex_concat(root); }
+
     return (root);
 }
 
