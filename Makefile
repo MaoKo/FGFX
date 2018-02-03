@@ -5,19 +5,19 @@ CC			:=	cc
 INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
 #CC_OPTI     :=  -O3
 
-CC_FLAGS	:=	-Wall -Wextra -Werror $(addprefix -I,$(INCLUDE))\
-                $(C_STD)  $(CC_OPTI) -g
+CC_FLAGS	:=	-Wall -Wextra $(addprefix -I,$(INCLUDE))\
+                $(C_STD)  $(CC_OPTI) -g # -Werror
 
 CC_MACRO	:=  -DPRINT_DEBUG
 LD_FLAGS	:=	# -pg
 
-include tools/makefile
+include tools/Makefile
 TOOLS_OBJ	:=	$(addprefix tools/,$(TOOLS_OBJ))
 
-include fgfl/makefile
+include fgfl/Makefile
 FGFL_OBJ	:=	$(addprefix fgfl/,$(FGFL_OBJ))
 
-include fgfp/makefile
+include fgfp/Makefile
 FGFP_OBJ	:=	$(addprefix fgfp/,$(FGFP_OBJ))
 
 ALL_OBJ		:=	$(TOOLS_OBJ) $(FGFL_OBJ) $(FGFP_OBJ)

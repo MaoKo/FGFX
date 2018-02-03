@@ -282,13 +282,8 @@ fgfx_action_table[TOTAL_TOKEN][TOTAL_STATE] = {
 	[T_REG_LBRACE][S_BODY_REGEX] = BEGIN(S_FINITE_SEQ), 
 	[T_REG_RBRACE][S_FINITE_SEQ] = BEGIN(S_BODY_REGEX), 
 	[T_REG_LBRACK][S_BODY_REGEX] = BEGIN(S_BEG_CCL), 
-	[T_REG_RBRACK][S_BEG_CCL] = BEGIN(S_BODY_REGEX), [T_REG_RBRACK][S_BODY_CCL] = BEGIN(S_BODY_REGEX), 
+	[T_REG_RBRACK][S_BODY_CCL] = BEGIN(S_BODY_REGEX), 
 	[T_REG_CARET][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), [T_REG_CARET][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
-	[T_CCE][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
-	[T_N_CCE][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
-	[T_OCT_NUM][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
-	[T_HEX_NUM][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
-	[T_REG_CHAR][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
 	[T_REG_OPTION][S_BODY_REGEX] = PUSH(S_REG_PARAMS), 
 	[T_REG_INVERT][S_REG_PARAMS] = BEGIN(S_REG_NO_PARAMS), 
 	[T_REG_COLON][S_REG_PARAMS] = BEGIN(S_BODY_REGEX), [T_REG_COLON][S_REG_NO_PARAMS] = BEGIN(S_BODY_REGEX), 
@@ -296,7 +291,7 @@ fgfx_action_table[TOTAL_TOKEN][TOTAL_STATE] = {
 	[T_END_MULTI][S_NESTED_COM] = POP, 
 	[T_REG_BEG_COM][S_BEG_REGEX] = PUSH(S_REG_COM), [T_REG_BEG_COM][S_BODY_REGEX] = PUSH(S_REG_COM), 
 	[T_REG_END_COM][S_REG_COM] = POP, 
-	[T_REG_NOTHING][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), 
+	[T_REG_NOTHING][S_BEG_REGEX] = BEGIN(S_BODY_REGEX), [T_REG_NOTHING][S_BEG_CCL] = BEGIN(S_BODY_CCL), 
 };
 
 #define START_STATE	1
@@ -391,30 +386,20 @@ fgfx_GLOBAL_final_table[31][2] = {
 };
 
 static uint8_t
-fgfx_BEG_REGEX_state_table[12][256] = {
+fgfx_BEG_REGEX_state_table[6][256] = {
 /*   0 */	{},
-/*   1 */	{[94]=4, [92]=3, [40]=2},
-/*   2 */	{[63]=5},
-/*   3 */	{[10]=6},
-/*   4 */	{},
-/*   5 */	{[35]=7},
-/*   6 */	{[92]=9, [32]=8, [9]=8},
-/*   7 */	{},
-/*   8 */	{[92]=9, [32]=8, [9]=8},
-/*   9 */	{[10]=10},
-/*  10 */	{[92]=9, [32]=11, [9]=11},
-/*  11 */	{[92]=9, [32]=11, [9]=11},
+/*   1 */	{[94]=3, [40]=2},
+/*   2 */	{[63]=4},
+/*   3 */	{},
+/*   4 */	{[35]=5},
+/*   5 */	{},
 };
 
 static uint8_t
-fgfx_BEG_REGEX_final_table[8][2] = {
+fgfx_BEG_REGEX_final_table[4][2] = {
 	{ 1, 	T_REG_NOTHING },
-	{ 4, 	T_REG_CARET },
-	{ 6, 	T_MULTI_LINE },
-	{ 7, 	T_REG_BEG_COM },
-	{ 8, 	T_MULTI_LINE },
-	{ 10, 	T_MULTI_LINE },
-	{ 11, 	T_MULTI_LINE },
+	{ 3, 	T_REG_CARET },
+	{ 5, 	T_REG_BEG_COM },
 	{ 0 },
 };
 
@@ -540,56 +525,16 @@ fgfx_BODY_REGEX_final_table[39][2] = {
 };
 
 static uint8_t
-fgfx_BEG_CCL_state_table[28][256] = {
+fgfx_BEG_CCL_state_table[3][256] = {
 /*   0 */	{},
-/*   1 */	{[95 ... 255]=2, [94]=6, [93]=5, [92]=4, [91]=3, [11 ... 90]=2, [0 ... 9]=2},
+/*   1 */	{[94]=2},
 /*   2 */	{},
-/*   3 */	{[58]=7},
-/*   4 */	{[121 ... 255]=2, [120]=10, [89 ... 119]=2, [88]=10, [56 ... 87]=2, [48 ... 55]=9, [11 ... 47]=2, [10]=8, [0 ... 9]=2},
-/*   5 */	{},
-/*   6 */	{},
-/*   7 */	{[97 ... 122]=11, [95]=11, [94]=12, [65 ... 90]=11},
-/*   8 */	{[92]=14, [32]=13, [9]=13},
-/*   9 */	{[48 ... 55]=15},
-/*  10 */	{[97 ... 102]=16, [65 ... 70]=16, [48 ... 57]=16},
-/*  11 */	{[97 ... 122]=18, [95]=18, [65 ... 90]=18, [58]=17},
-/*  12 */	{[97 ... 122]=19, [95]=19, [65 ... 90]=19},
-/*  13 */	{[92]=14, [32]=13, [9]=13},
-/*  14 */	{[10]=20},
-/*  15 */	{[48 ... 55]=21},
-/*  16 */	{[97 ... 102]=22, [65 ... 70]=22, [48 ... 57]=22},
-/*  17 */	{[93]=23},
-/*  18 */	{[97 ... 122]=18, [95]=18, [65 ... 90]=18, [58]=17},
-/*  19 */	{[97 ... 122]=25, [95]=25, [65 ... 90]=25, [58]=24},
-/*  20 */	{[92]=14, [32]=26, [9]=26},
-/*  21 */	{},
-/*  22 */	{},
-/*  23 */	{},
-/*  24 */	{[93]=27},
-/*  25 */	{[97 ... 122]=25, [95]=25, [65 ... 90]=25, [58]=24},
-/*  26 */	{[92]=14, [32]=26, [9]=26},
-/*  27 */	{},
 };
 
 static uint8_t
-fgfx_BEG_CCL_final_table[18][2] = {
-	{ 2, 	T_REG_CHAR },
-	{ 3, 	T_REG_CHAR },
-	{ 4, 	T_REG_CHAR },
-	{ 5, 	T_REG_RBRACK },
-	{ 6, 	T_REG_CARET },
-	{ 8, 	T_MULTI_LINE },
-	{ 9, 	T_OCT_NUM },
-	{ 10, 	T_REG_CHAR },
-	{ 13, 	T_MULTI_LINE },
-	{ 15, 	T_OCT_NUM },
-	{ 16, 	T_HEX_NUM },
-	{ 20, 	T_MULTI_LINE },
-	{ 21, 	T_OCT_NUM },
-	{ 22, 	T_HEX_NUM },
-	{ 23, 	T_CCE },
-	{ 26, 	T_MULTI_LINE },
-	{ 27, 	T_N_CCE },
+fgfx_BEG_CCL_final_table[3][2] = {
+	{ 1, 	T_REG_NOTHING },
+	{ 2, 	T_REG_CARET },
 	{ 0 },
 };
 

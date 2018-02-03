@@ -146,26 +146,18 @@ get_next_token(lexer_t* lex) {
 
     static bool need_recompute = true;
 
-    int state = START_STATE;
-    int last_match = T_ERROR;
-
-    int rd = 0;
-
     if (need_recompute) {
         change_lexer_state(lex, &state_table, &final_table);
         need_recompute = false;
     }
 
+    int state = START_STATE;
+    int last_match = is_final_state(START_STATE, final_table);
+
+    int rd = 0;
+
     size_t read_char = 0;
     size_t pos_last_match = 0;
-
-    // Check for epsilon
-    if (is_final_state(state, final_table) != T_ERROR) {
-        last_match = is_final_state(state, final_table);
-        change_state(lex, last_match, &need_recompute);
-
-        return (last_match);
-    }
 
     size_t i;
     for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
