@@ -568,20 +568,10 @@ regex_option(void) {
         return (NULL_NODE);
     }
 
-    if (igcase) {
-        set_option_ast(root, &set_igcase);
-        if (regex_entry->cce_lower || regex_entry->cce_upper)
-            { regex_entry->ignore_flag = true; }
-    }
-    if (dotall)
-        { set_option_ast(root, &set_dotall); }
-    if (skipws)
-        { set_option_ast(root, &set_skipws); }
+    if (igcase && (regex_entry->cce_lower || regex_entry->cce_upper))
+        { regex_entry->ignore_flag = true; }
 
-    if (reverse)
-        { reverse_regex_concat(root); }
-
-    return (root);
+    return (new_regex_node(AST_OPTION, igcase, dotall, skipws, reverse, root));
 }
 
 static int

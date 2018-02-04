@@ -14,7 +14,7 @@
 
 #define CHILD_NODE(k)   (IS_CLOSURE(k) || (k == AST_CONCAT)\
                             || (k == AST_UNION) || (k == AST_LOOK)\
-                            || (k == AST_TILDE))
+                            || (k == AST_OPTION) || (k == AST_TILDE))
 
 #define NULL_NODE       (NULL)
 

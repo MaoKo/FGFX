@@ -45,6 +45,16 @@ new_regex_node(int kind, ...) {
             node->left = va_arg(args, regex_node_t*);
             break;
 
+        case AST_OPTION:
+            node->igcase = va_arg(args, int);
+            node->dotall = va_arg(args, int);
+            node->skipws = va_arg(args, int);
+            node->reverse = va_arg(args, int);
+
+            node->left = va_arg(args, regex_node_t*);
+
+            break;
+
         default:
             node->left = va_arg(args, regex_node_t*);
             node->right = va_arg(args, regex_node_t*);
@@ -85,8 +95,12 @@ cpy_regex_node(regex_node_t* root) {
         else if (root->kind_ast == AST_DOT)
             { return (new_regex_node(AST_DOT, root->is_dotall)); }
         else if (root->kind_ast == AST_BOUND_NAME) {
-            return (new_regex_node(root->kind_ast,
+            return (new_regex_node(AST_BOUND_NAME,
                                                 strdup(root->bound_name)));
+        }
+        else if (root->kind_ast == AST_OPTION) {
+            return (new_regex_node(AST_OPTION, root->igcase, root->dotall,
+                                    root->skipws, root->reverse, root->left));
         }
         else if (CHILD_NODE(root->kind_ast)) { 
             regex_node_t* left = cpy_regex_node(root->left);
@@ -219,10 +233,11 @@ remove_useless_epsilon(regex_node_t* root) {
         case AST_STAR:
         case AST_QUES:
         case AST_PLUS:
+        case AST_TILDE:
+        case AST_OPTION:
             if (remove_useless_epsilon(root->left)) {
                 del_regex_node(root->left);
                 root->kind_ast = AST_EPSILON;
-
                 return (true);
             }
             else
@@ -330,6 +345,8 @@ reverse_regex_concat(regex_node_t* root) {
         case AST_QUES:
         case AST_STAR:
         case AST_PLUS:
+        case AST_TILDE:
+        case AST_OPTION:
             reverse_regex_concat(root->left);
             break;
     

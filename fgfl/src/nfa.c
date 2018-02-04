@@ -190,6 +190,22 @@ regex_node_tilde(regex_node_t* root) {
     return (new_m);
 }
 
+static nfa_automaton_t*
+regex_node_option(regex_node_t* root) {
+    regex_node_t* child = root->left;
+    if (root->igcase)
+        { set_option_ast(child, &set_igcase); }
+    if (root->dotall)
+        { set_option_ast(child, &set_dotall); }
+    if (root->skipws)
+        { set_option_ast(child, &set_skipws); }
+    if (root->reverse)
+        { reverse_regex_concat(child); }
+
+    nfa_automaton_t* left = dfs_regex_node(child);
+    return (left);
+}
+
 static inline nfa_automaton_t*
 regex_node_dot(bool is_dotall) {
     bitset_t* dot_range = new_bitset();
@@ -362,6 +378,9 @@ dfs_regex_node(regex_node_t* root) {
 
             case AST_TILDE:
                 return (regex_node_tilde(root->left));
+
+            case AST_OPTION:
+                return (regex_node_option(root));
 
             case AST_SYMBOL:
                 return (regex_node_symbol(root->symbol));
