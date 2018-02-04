@@ -42,7 +42,7 @@ $TOKEN
 
     ( BODY_REGEX ) REG_BOUND_NAME =  / \{{LETTER}({LETTER}|{DIGIT})*\} / ;
  
-    ( BODY_REGEX ) REG_NOT    = / \! / ;
+    ( BODY_REGEX ) REG_TILDE  = / \~ / ;
    
     ( BODY_REGEX ) REG_LBRACE = / \{ /, ( $BEGIN (FINITE_SEQ) ) ;
     ( FINITE_SEQ ) REG_RBRACE = /  } /, ( $BEGIN (BODY_REGEX) ) ;

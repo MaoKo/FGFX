@@ -8,6 +8,7 @@
 #include "nfa.h"
 #include "utils.h"
 #include "bitset.h"
+#include "error.h"
 
 vector_t* record_nfa_state = NULL;
 vector_t* record_nfa_automata = NULL;
@@ -165,6 +166,28 @@ regex_node_epsilon(void) {
     if (!new_head_state)
         { return (NULL_AUTOMATON); }
     return (new_nfa_automaton(NFA_EPSILON, new_head_state));
+}
+
+static nfa_automaton_t*
+regex_node_tilde(regex_node_t* root) {
+    if ((root->kind_ast != AST_SYMBOL) && (root->kind_ast != AST_CLASS)) {
+        errorf(0, "The tilde '~' operator can only apply to"
+                    " symbol or character class.");
+        return (NULL_AUTOMATON);
+    }
+
+    bitset_t* negate_lang = NULL_BITSET;
+    if (root->kind_ast == AST_SYMBOL) {
+        negate_lang = new_bitset();
+        ADD_BITSET(negate_lang, (size_t)root->symbol);
+    }
+    else
+        { negate_lang = dup_bitset(root->class); }
+    
+    nfa_automaton_t* new_m = regex_node_class(COMPL_BITSET(negate_lang));
+    del_bitset(negate_lang);
+
+    return (new_m);
 }
 
 static inline nfa_automaton_t*
@@ -336,6 +359,9 @@ dfs_regex_node(regex_node_t* root) {
             case AST_PLUS:
             case AST_STAR:
                 return (regex_node_closure(root));
+
+            case AST_TILDE:
+                return (regex_node_tilde(root->left));
 
             case AST_SYMBOL:
                 return (regex_node_symbol(root->symbol));

@@ -41,6 +41,7 @@ new_regex_node(int kind, ...) {
         case AST_STAR:
         case AST_QUES:
         case AST_PLUS:
+        case AST_TILDE:
             node->left = va_arg(args, regex_node_t*);
             break;
 
@@ -137,7 +138,7 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
             root->left = cpy_regex_node(target_node);
         }
 
-        /* Check for '*', '?', '+' operator */
+        /* Check for '*', '?', '+', '~' operator */
         if (root->right && root->right->kind_ast == AST_BOUND_NAME) {
             regex_node_t* target_node = ((spec_entry_t*)
                                         AT_VECTOR(spec->entry_vect,
@@ -158,63 +159,6 @@ replace_bound_name_node(regex_node_t* root, lexical_spec_t* spec) {
         memcpy(root, target_node, sizeof(*root));
 
         FREE(target_node);
-    }
-}
-
-void
-invert_node_language(regex_node_t* root) {
-    if (root) {
-        bitset_t* negate_lang = NULL_BITSET;
-
-        switch (root->kind_ast) {
-            case AST_SYMBOL: ;
-                negate_lang = new_bitset();
-
-                ADD_BITSET(negate_lang, (size_t)root->symbol);
-                root->left = new_regex_node(AST_CLASS,
-                                                COMPL_BITSET(negate_lang));  
-                root->kind_ast = AST_STAR;
-                break;
-
-            case AST_CLASS:
-                root->left = new_regex_node(AST_CLASS, 
-                                                COMPL_BITSET(root->class));
-                root->kind_ast = AST_STAR;  
-                break;
-
-            case AST_QUES:
-                // TODO
-                break;               
-
-            case AST_UNION:
-                invert_node_language(root->left);
-                invert_node_language(root->right);
-
-                root->kind_ast = AST_CONCAT;
-
-                break;
-
-            case AST_LOOK:
-            case AST_CONCAT: ;
-                regex_node_t** change_node = NULL_NODE;
-                if (CHILD_NODE(root->left->kind_ast))
-                    { change_node = &root->left->right; }
-                else
-                    { change_node = &root->left; }
-
-                regex_node_t* new_node = cpy_regex_node(*change_node);
-
-                invert_node_language(root->left);
-                (*change_node) = new_regex_node(AST_UNION,
-                                                    root->left, new_node);
-
-                invert_node_language(root->right);
-
-                break;
-
-            default:
-                break;
-        }
     }
 }
 

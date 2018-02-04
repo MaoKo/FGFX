@@ -15,11 +15,11 @@ $PRODUCTION
     <regex_cat>     ->  <regex_closure>
                             { <regex_closure> } => ( $RIGHT ) ;
 
-    <regex_closure> ->  <regex_not>
+    <regex_closure> ->  <regex_tilde>
                             { '*' | '+' | '?' | <finite_seq> } => ( $RIGHT ) ;
     <finite_seq>    ->  '{' DIGIT [ ',' [ DIGIT ] ] '}' ;
 
-    <regex_not>     ->  { '!' } => ( $RIGHT ) <regex_atom> ;
+    <regex_tilde>   ->  { '~' } => ( $RIGHT ) <regex_atom> ;
 
     <regex_atom>    ->  <regex_fullccl>
 					|   <regex_string>
@@ -70,7 +70,7 @@ $ALIAS
     (REG_HYPHEN =>  '-')    ,
     (REG_COMMA  =>  ',')    ,
     (REG_DOT    =>  '.')    ,
-    (REG_NOT    =>  '!')    ,
+    (REG_TILDE  =>  '~')    ,
     (REG_COLON  =>  ':')    ,
     (REG_QUOTE  =>  '\"')   ,
     (REG_OPTION =>  '(?')   ,

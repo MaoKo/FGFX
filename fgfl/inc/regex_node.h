@@ -11,8 +11,10 @@
 #define IS_SKIPWS(c)    ((c == ' ') || (c == '\t') || (c == '\n'))
 
 #define IS_CLOSURE(k)   ((k == AST_STAR) || (k == AST_QUES) || (k == AST_PLUS))
+
 #define CHILD_NODE(k)   (IS_CLOSURE(k) || (k == AST_CONCAT)\
-                            || (k == AST_UNION) || (k == AST_LOOK))
+                            || (k == AST_UNION) || (k == AST_LOOK)\
+                            || (k == AST_TILDE))
 
 #define NULL_NODE       (NULL)
 
@@ -22,7 +24,6 @@ regex_node_t* cpy_regex_node(regex_node_t*);
 regex_node_t* cpy_concat_regex_node(regex_node_t*, size_t);
 void search_kind_regex_node(regex_node_t*, size_t, vector_t*);
 void replace_bound_name_node(regex_node_t*, lexical_spec_t*);
-void invert_node_language(regex_node_t*);
 bool remove_useless_epsilon(regex_node_t*);
 
 regex_node_t* set_dotall(regex_node_t*);

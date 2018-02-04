@@ -18,6 +18,8 @@ typedef struct regex_node_t {
         AST_STAR,
         AST_PLUS,
         AST_LOOK,
+        AST_TILDE,
+        AST_OPTION,
         AST_BOUND_NAME,
         AST_DOT,
         AST_SYMBOL,
@@ -25,7 +27,14 @@ typedef struct regex_node_t {
         AST_CLASS,
     } kind_ast;
     union {
-        struct { // if AST_UNION | AST_CONCAT | AST_CLOSURE
+        struct { // if AST_UNION | AST_CONCAT | AST_LOOk
+                 // | AST_QUES | AST_STAR | AST_PLUS | AST_OPTION
+            struct { // if AST_OPTION
+                bool igcase;
+                bool dotall;
+                bool skipws;
+                bool reverse;
+            };
             struct regex_node_t* left;
             struct regex_node_t* right;
         };
@@ -33,12 +42,12 @@ typedef struct regex_node_t {
             char const* bound_name;
             size_t index_token;
         };
+        struct // if AST_DOT
+            { bool is_dotall; };
         struct { // if AST_SYMBOL
             int symbol;
             bool in_string;
         };
-        struct // if AST_DOT
-            { bool is_dotall; };
         struct // if AST_CLASS
             { bitset_t* class; };
     };

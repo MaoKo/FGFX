@@ -24,7 +24,6 @@ Which create a file called token_c.h.lex ready for lexing.
             DFA transition table
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
-    .   Add ! not operator to regex (25%)
     .   Remove unreachable state
     .   Handle when the number of state is 1
     .   Learn MarkDown :)
