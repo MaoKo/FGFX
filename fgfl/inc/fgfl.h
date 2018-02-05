@@ -48,8 +48,11 @@ typedef struct regex_node_t {
             int symbol;
             bool in_string;
         };
-        struct // if AST_CLASS
-            { bitset_t* class; };
+        struct { // if AST_CLASS
+            bitset_t* class;
+            int cce_lower;
+            int cce_upper;
+        };
     };
 } regex_node_t;
 
@@ -125,11 +128,6 @@ typedef struct {
             bool beg_line;
             bool use_look;
             bool must_skip;
-
-            // for Warning
-            bool ignore_flag;
-            bool cce_lower;
-            bool cce_upper;
 
             regex_node_t* regex_ast;
             nfa_automaton_t* nfa_m;

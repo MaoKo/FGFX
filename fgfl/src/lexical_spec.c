@@ -599,14 +599,6 @@ check_validity_token(lexical_spec_t* spec) {
                                     AT_VECTOR(spec->entry_vect, (size_t)i);
 
         if (crt_entry->kind == T_TERMINAL) {
-            if (crt_entry->ignore_flag) {
-                bool both = (crt_entry->cce_lower) && (crt_entry->cce_upper);
-                warnf(CURRENT_LINE(spec->lex),
-                    "The token %s use [:%s:]%s but the ignore case is set.",
-                    crt_entry->name, (crt_entry->cce_lower)
-                    ? "lower" : "upper", (both) ? " and [:upper:]" : "");
-            }
-
             if (crt_entry->all_state)
                 { foreach_vector(spec->state_vect, &set_used_state); }
 

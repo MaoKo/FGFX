@@ -3,6 +3,7 @@
 
 #include "regex_node.h"
 #include "regex.h"
+#include "error.h"
 
 regex_node_t*
 new_regex_node(int kind, ...) {
@@ -23,6 +24,10 @@ new_regex_node(int kind, ...) {
 
         case AST_CLASS:
             node->class = va_arg(args, bitset_t*);
+
+            node->cce_lower = va_arg(args, int);
+            node->cce_upper = va_arg(args, int);
+
             break;
 
         case AST_BOUND_NAME:
@@ -90,8 +95,10 @@ cpy_regex_node(regex_node_t* root) {
         }
         else if (root->kind_ast == AST_EPSILON)
             { return (new_regex_node(AST_EPSILON)); }
-        else if (root->kind_ast == AST_CLASS) 
-            { return (new_regex_node(AST_CLASS, dup_bitset(root->class))); }
+        else if (root->kind_ast == AST_CLASS)  {
+            return (new_regex_node(AST_CLASS, dup_bitset(root->class),
+                                root->cce_lower, root->cce_upper));
+        }
         else if (root->kind_ast == AST_DOT)
             { return (new_regex_node(AST_DOT, root->is_dotall)); }
         else if (root->kind_ast == AST_BOUND_NAME) {
@@ -281,6 +288,15 @@ set_igcase(regex_node_t* root) {
         }
 
         if (root->kind_ast == AST_CLASS) {
+            if (root->cce_lower != -1) {
+                warnf(root->cce_lower,
+                                "[:lower:] is use in ignore case option.");
+            } 
+            if (root->cce_upper != -1) {
+                warnf(root->cce_upper,
+                                "[:upper:] is use in ignore case option.");
+            } 
+
             int i;
             while ((i = IT_NEXT(root->class)) != IT_NULL) {
                 if (isalpha(i)) {

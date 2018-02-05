@@ -30,7 +30,7 @@ static regex_node_t* regex_atom(void);
 static regex_node_t* regex_string(void);
 static regex_node_t* regex_fullccl(void);
 static regex_node_t* regex_loneccl(void);
-static bitset_t* regex_ccl(void);
+static bitset_t* regex_ccl(bool*, bool*);
 static bitset_t* regex_cce(int);
 static bitset_t* regex_n_cce(int);
 static regex_node_t* regex_option(void);
@@ -344,7 +344,11 @@ regex_loneccl(void) {
 
     if (negate)
         { advance_token(regex_spec->lex); }
-    bitset_t* range = regex_ccl();
+
+    bool cce_lower = false;
+    bool cce_upper = false;
+
+    bitset_t* range = regex_ccl(&cce_lower, &cce_upper);
     if (!range)
         { return (NULL_NODE); }
     else if (advance_token(regex_spec->lex) != T_REG_RBRACK) {
@@ -361,11 +365,13 @@ regex_loneccl(void) {
     else if (negate)
         { COMPL_BITSET(range); }
 
-    return (new_regex_node(AST_CLASS, range));
+    return (new_regex_node(AST_CLASS, range,
+            ((cce_lower) ? CURRENT_LINE(regex_spec->lex) : -1),
+            ((cce_upper) ? CURRENT_LINE(regex_spec->lex) : -1)));
 }
 
 static bitset_t*
-regex_ccl(void) {
+regex_ccl(bool* cce_lower, bool* cce_upper) {
     bitset_t* range = new_bitset();
     while (!in_first(regex_spec->lex, T_REG_RBRACK, T_EOF, -1)) {
         int kind_right = advance_token(regex_spec->lex);
@@ -375,8 +381,13 @@ regex_ccl(void) {
         }
         else if (kind_right > T_CC_FIRST && kind_right < T_CC_LAST) {
             bitset_t* (*cce_ptr)(int) = NULL;
-            if (kind_right < T_CC_MIDDLE)
-                { cce_ptr = &regex_cce; }
+            if (kind_right < T_CC_MIDDLE) {
+                cce_ptr = &regex_cce;
+                if (!*cce_lower)
+                    { (*cce_lower) = (kind_right == T_CCE_LOWER); }
+                if (!*cce_upper)
+                    { (*cce_upper) = (kind_right == T_CCE_UPPER); }
+            }
             else
                 { cce_ptr = &regex_n_cce; }
             bitset_t* cce_range = (*cce_ptr)(kind_right);
@@ -445,7 +456,6 @@ regex_cce(int kind_cce) {
             UNION_BITSET(cce_range, op_range); del_bitset(op_range);
             break;
         case T_CCE_LOWER:
-            regex_entry->cce_lower = true;
             add_range_bitset(cce_range, 'a', 'z' + 1);
             break;
         case T_CCE_PRINT:
@@ -465,7 +475,6 @@ regex_cce(int kind_cce) {
             ADD_BITSET(cce_range, ' ');
             break;
         case T_CCE_UPPER:
-            regex_entry->cce_upper = true;
             add_range_bitset(cce_range, 'A', 'Z' + 1);
             break;
         case T_CCE_XDIGIT:
@@ -508,8 +517,6 @@ regex_n_cce(int kind_cce) {
         }
     return (NULL_BITSET);
 }
-
-#include <stdio.h>
 
 static regex_node_t*
 regex_option(void) {
@@ -554,11 +561,6 @@ regex_option(void) {
         return (NULL_NODE);
     }
 
-    if (!regex_entry->ignore_flag) {
-        regex_entry->cce_lower = false;
-        regex_entry->cce_upper = false;
-    }
-
     regex_node_t* root = regex_union();
     if (!root)
         { return (NULL_NODE); }
@@ -567,9 +569,6 @@ regex_option(void) {
                             "Missing a ')' after the regex option.");
         return (NULL_NODE);
     }
-
-    if (igcase && (regex_entry->cce_lower || regex_entry->cce_upper))
-        { regex_entry->ignore_flag = true; }
 
     return (new_regex_node(AST_OPTION, igcase, dotall, skipws, reverse, root));
 }
