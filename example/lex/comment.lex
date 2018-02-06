@@ -6,10 +6,10 @@ $STATE
 
 $SKIP 
 {
-    ( INIT )    SPACE   = / [ \n\t]+ /                     ;
-    ( * )       BEG_COM = / "(*"     /, ( $BEGIN COMMENT ) ;
-    ( COMMENT ) CHAR    = / (.|\n)   /                     ;
-    ( COMMENT ) END_COM = / "*)"     /, ( $BEGIN INIT    ) ;
+    ( INIT )    SPACE   = / [ \n\t]+ /                       ;
+    ( * )       BEG_COM = / "(*"     /, ( $BEGIN (COMMENT) ) ;
+    ( COMMENT ) CHAR    = / (.|\n)   /                       ;
+    ( COMMENT ) END_COM = / "*)"     /, ( $BEGIN (INIT)  )   ;
 };
 
 $TOKEN

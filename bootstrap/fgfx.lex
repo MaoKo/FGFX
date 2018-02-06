@@ -55,7 +55,7 @@ $TOKEN
     ( BODY_REGEX ) REG_INTER_CLASS = / "{&}" / ;
 
     ( BODY_REGEX ) REG_LBRACK = / \[ /, ( $BEGIN (BEG_CCL)    ) ;
-    ( BODY_CCL )   REG_RBRACK = /  ] /, ( $BEGIN (BODY_REGEX) ) ;
+    ( BEG_CCL, BODY_CCL )   REG_RBRACK = /  ] /, ( $BEGIN (BODY_REGEX, *) ) ;
 
     ( BEG_REGEX, BEG_CCL ) REG_CARET = / \^ /,
         ( $BEGIN (BODY_REGEX, BODY_CCL) ) ;
@@ -64,12 +64,20 @@ $TOKEN
 
     ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
 
-    ( BODY_CCL ) CCE   = / "[:"{LETTER}+":]"  / ;
-    ( BODY_CCL ) N_CCE = / "[:^"{LETTER}+":]" / ;
+    ( BEG_CCL, BODY_CCL ) CCE   = / "[:"{LETTER}+":]"  /,
+        ( $BEGIN (BODY_CCL) ) ;
 
-    ( BODY_REGEX, STRING, BODY_CCL ) OCT_NUM  = / \\[0-7]{1,3} /;
-    ( BODY_REGEX, STRING, BODY_CCL ) HEX_NUM  = / \\[xX][[:xdigit:]]{1,2} / ;
-    ( BODY_REGEX, STRING, BODY_CCL ) REG_CHAR = / \\?. / ;
+    ( BEG_CCL, BODY_CCL ) N_CCE = / "[:^"{LETTER}+":]" /,
+        ( $BEGIN (BODY_CCL) ) ;
+
+    ( BEG_CCL, BODY_REGEX, STRING, BODY_CCL )
+        OCT_NUM  = / \\[0-7]{1,3} /, ( $BEGIN (BODY_CCL) );
+
+    ( BEG_CCL, BODY_REGEX, STRING, BODY_CCL )
+        HEX_NUM  = / \\[xX][[:xdigit:]]{1,2} /, ( $BEGIN (BODY_CCL) ) ;
+
+    ( BEG_CCL, BODY_REGEX, STRING, BODY_CCL )
+        REG_CHAR = / \\?. /, ( $BEGIN (BODY_CCL) ) ;
 
     ( BODY_REGEX ) REG_OPTION = / "(?" /, ( $PUSH (REG_PARAMS) ) ;
     ( REG_PARAMS ) REG_INVERT = / - /, ( $BEGIN (REG_NO_PARAMS) ) ;
@@ -130,7 +138,8 @@ $SKIP
 
     /* Multi line in  Regex */
 
-    ( BODY_REGEX, STRING, BODY_CCL, ) MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
+    ( BEG_CCL, BODY_REGEX, STRING, BODY_CCL, )
+        MULTI_LINE = / (\\\n[[:blank:]]*)+ / ;
 
     /* Regex comment */
 
@@ -138,8 +147,8 @@ $SKIP
     ( REG_COM ) REG_END_COM  = / \) /, ( $POP ) ;
     ( REG_COM ) REG_CHAR_COM = / [^)]+ / ;
 
-    ( BEG_REGEX, BEG_CCL ) REG_NOTHING = / ""(?# Move to BODY with epsilon ) /,
-        ( $BEGIN (BODY_REGEX, BODY_CCL) ) ;
+    ( BEG_REGEX ) REG_NOTHING = / ""(?# Move to BODY with epsilon ) /,
+        ( $BEGIN (BODY_REGEX) ) ;
 };
 
 $KEYWORD

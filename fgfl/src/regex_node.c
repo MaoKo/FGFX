@@ -282,7 +282,9 @@ set_igcase(regex_node_t* root) {
         if ((root->kind_ast == AST_SYMBOL) && isalpha(root->symbol)) {
             size_t back_symbol = root->symbol;
             root->kind_ast = AST_CLASS;
+
             root->class = new_bitset();
+            root->cce_lower = root->cce_upper = -1;
 
             ADD_BITSET(root->class, back_symbol);
         }

@@ -6,6 +6,6 @@ $STATE
 
 $TOKEN
 {
-    ( DEF ) B = / A /, ( $BEGIN ABC );
+    ( DEF ) B = / A /, ( $BEGIN (ABC) );
     ( ABC ) C = / A /;
 };

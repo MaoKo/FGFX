@@ -58,7 +58,7 @@ $TOKEN
 
     DEC_FLOAT   =   /   ({DEC_FRACT}{SCF_EXP}?{FLOAT_SUFF}?)|\
                         ({DIGIT}+{SCF_EXP}{FLOAT_SUFF}?) /
-                        -> $FRAGMENT ;
+                            -> $FRAGMENT ;
 
     HEX_FLOAT   =   / 0[xX]({HEX_FRACT}|[[:xdigit:]]){BIN_EXP}{FLOAT_SUFF} /
                         -> $FRAGMENT ;
@@ -80,8 +80,8 @@ $TOKEN
     STAR        =   / \*    / ;
     PLUS        =   / \+    / ;
     MINUS       =   /  -    / ;
-    TILDE       =   /  ~    / ;
-    EXCLA       =   / \!    / ;
+    TILDE       =   / \~    / ;
+    EXCLA       =   /  !    / ;
 
     DIV         =   / \/    / ;
     MOD         =   /  %    / ;
@@ -92,7 +92,7 @@ $TOKEN
     LESSE       =   /  <=   / ;
     GREATE      =   /  >=   / ;
     EQ          =   /  ==   / ;
-    NEQ         =   / \!=   / ;
+    NEQ         =   /  !=   / ;
     XOR         =   / \^    / ;
     ORB         =   / \|    / ;
     ORL         =   / "||"  / ;

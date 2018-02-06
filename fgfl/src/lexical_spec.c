@@ -297,7 +297,6 @@ spec_action_pair(lexical_spec_t* spec, spec_entry_t* entry, size_t* count_pos) {
 
             int prev_index = (trans_list_at(entry->state_lst,
                                                     (*count_pos) - 1))->state;
-
             while (equiv_state) {
                 equiv_state->state = prev_index;
                 equiv_state = equiv_state->next;

@@ -170,11 +170,18 @@ regex_node_epsilon(void) {
 
 static nfa_automaton_t*
 regex_node_tilde(regex_node_t* root) {
+    size_t count_tilde = 0;
+    while (root->kind_ast == AST_TILDE) {
+        root = root->left;
+        ++count_tilde;
+    }
     if ((root->kind_ast != AST_SYMBOL) && (root->kind_ast != AST_CLASS)) {
         errorf(0, "The tilde '~' operator can only apply to"
                     " symbol or character class.");
         return (NULL_AUTOMATON);
     }
+    else if (count_tilde % 2)
+        { return (dfs_regex_node(root)); }
 
     bitset_t* negate_lang = NULL_BITSET;
     if (root->kind_ast == AST_SYMBOL) {
@@ -215,7 +222,10 @@ regex_node_dot(bool is_dotall) {
 
     if (is_dotall)
         { ADD_BITSET(dot_range, '\n'); }
-    return (regex_node_class(dot_range));
+    nfa_automaton_t* nfa_m = regex_node_class(dot_range);
+
+    del_bitset(dot_range);
+    return (nfa_m);
 }
 
 static nfa_automaton_t*
