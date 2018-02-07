@@ -60,7 +60,7 @@ $TOKEN
     ( BEG_REGEX, BEG_CCL ) REG_CARET = / \^ /,
         ( $BEGIN (BODY_REGEX, BODY_CCL) ) ;
 
-    ( BODY_REGEX ) REG_DOLLAR = / \$/{CLOSE_REGEX} / ;
+    ( BODY_REGEX ) REG_DOLLAR = / $/{CLOSE_REGEX} / ;
 
     ( BODY_CCL ) REG_HYPHEN = / -/[^\]\n] / ;
 

@@ -141,6 +141,8 @@ change_state(lexer_t* lex, int last_match, bool* need_recompute) {
 
 static int
 get_next_token(lexer_t* lex) {
+    (void)fgfx_look_table;
+
     static uint8_t (*state_table)[256] = NULL;
     static uint8_t (*final_table)[2] = NULL;
 
@@ -160,6 +162,7 @@ get_next_token(lexer_t* lex) {
     size_t pos_last_match = 0;
 
     size_t i;
+    size_t buff_look = 0;
     for (i = 0; i < SIZE_BUFFER(lex->push_back); ++i) {
         int char_at = CHAR_AT(lex->push_back, i);
         ++read_char;
@@ -175,11 +178,16 @@ get_next_token(lexer_t* lex) {
                 last_match = is_final_state(state, final_table);
                 pos_last_match = read_char;
             }
-            write_char_buffer(lex->last_lexeme, char_at);
+
+            if (must_look_ahead(lex->crt_state, state) && !buff_look)
+                { buff_look = i; }
         }
     }
 
-    unget_char_front_buffer(lex->push_back, i);
+    move_front_buffer(lex->last_lexeme, lex->push_back,
+                                            pos_last_match - buff_look);
+    if (state != DEAD_STATE)
+        { move_front_buffer(lex->last_lexeme, lex->push_back, i); }
 
     int first_read = true;
     bool unget_input = false;
@@ -206,15 +214,8 @@ get_next_token(lexer_t* lex) {
             pos_last_match = read_char;
         }
 
-        if (!unget_input && must_look_ahead(lex->crt_state, state)) {
-#if 0
-            if (unget_input) {
-                append_buffer(lex->last_lexeme, lex->push_back);
-                reset_buffer(lex->push_back);
-            }
-#endif
-            unget_input = true;
-        }
+        if (!unget_input && must_look_ahead(lex->crt_state, state))
+            { unget_input = true; }
 
         // Write on buffer
         if (unget_input)
@@ -237,17 +238,7 @@ get_next_token(lexer_t* lex) {
                         "Lexical error on input '%s'.", error_str);
     }
     else if (!first_read) {
-        if (unget_input) {
-            if (!check_present_table(fgfx_look_table, last_match)) {
-                unget_char_back_buffer(lex->push_back, 1);
-
-                append_buffer(lex->last_lexeme, lex->push_back);
-                reset_buffer(lex->push_back);
-
-                write_char_buffer(lex->push_back, rd);
-            }
-        }
-        else {
+        if (!unget_input) {
             move_back_buffer(lex->push_back,
                             lex->last_lexeme, read_char - pos_last_match);
         }
