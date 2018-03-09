@@ -57,7 +57,7 @@ $PRODUCTION
 <constant_definition> -> <identifier> EQUAL <cexpression> <semicolon>
         ;
 
-/*<constant> -> <cexpression> ;              /* <good> <stuff>! */
+//<constant> -> <cexpression> ;              /* <good> <stuff>! */
                                              
 <cexpression> -> <csimple_expression>
         | <csimple_expression> <relop> <csimple_expression>
@@ -392,10 +392,16 @@ $PRODUCTION
         ;
 
 /*
- * <this> <forces> <you> <to> <check> <all> <this> <to> <be> <sure> <that> <only> <write> <and>
- * <writeln> <use> <the> 2<nd> <and> 3<rd> <forms>, <you> <really> <can>'<t> <do> <it> <easily> <in>
- * <the> <grammar>, <especially> <since> <write> <and> <writeln> <aren>'<t> <reserved>
- */
+ * <this> <forces> <you> <to> <check> <all> <this>
+    <to> <be> <sure> <that> <only> <write> <and>
+
+ * <writeln> <use> <the> 2<nd> <and> 3<rd> <forms>,
+    <you> <really> <can>'<t> <do> <it> <easily> <in>
+
+ * <the> <grammar>, <especially> <since> <write>
+    <and> <writeln> <aren>'<t> <reserved>
+*/
+
 <actual_parameter> -> <expression>
         | <expression> COLON <expression>
         | <expression> COLON <expression> COLON <expression>
@@ -482,7 +488,11 @@ $PRODUCTION
 <unsigned_real> -> REALNUMBER
         ;
 
-/* <functions> <with> <no> <params> <will> <be> <handled> <by> <plain> <identifier> */
+/*
+    <functions> <with> <no> <params> <will> <be> <handled>
+    <by> <plain> <identifier>
+*/
+
 <function_designator> -> <identifier> <params>
         ;
 

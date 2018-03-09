@@ -65,7 +65,7 @@ gen_token_name(int filde, lexical_spec_t const* spec, char const* header) {
     dprintf(filde, TAB "\"ERROR\"" COMMA NL);
     dprintf(filde, TAB "\"EOF\"" COMMA NL);
 
-    dprintf(filde, END_BLOCK SEMI NL);
+    dprintf(filde, END_BLOCK SEMI NL NL);
     PRINT_END_IF(filde);
 }
 

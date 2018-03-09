@@ -42,14 +42,15 @@ $PRODUCTION
     <regex_string>  ->  '\"' { <regex_char> } => ( $RIGHT ) '\"' ;
 
     <regex_option>  ->  '(?' { <option_kind> } => ( $RIGHT )
-                            [ REG_INVERT { <option_kind> } => ( $RIGHT) ]
+                            [ REG_INVERT { <option_kind> } => ( $RIGHT ) ]
                             ':' <regex_union> ')'
                     ;
 
     <option_kind>   ->  IGCASE | DOTALL | SKIPWS
                     ;
 
-    <regex_char>    ->  CHAR | OCT_NUM | HEX_NUM ;
+    <regex_char>    ->  CHAR | OCT_NUM | HEX_NUM
+                    ;
 };
 
 $ALIAS

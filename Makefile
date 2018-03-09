@@ -3,7 +3,7 @@
 CC			:=	cc
 #C_STD      :=  -std=c99
 INCLUDE		:=	fgfl/inc fgfp/inc tools/inc bootstrap/
-#CC_OPTI     :=  -O3
+#CC_OPTI    :=  -O3
 
 CC_FLAGS	:=	-Wall -Wextra $(addprefix -I,$(INCLUDE))\
                 $(C_STD)  $(CC_OPTI) -g # -Werror

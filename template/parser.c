@@ -8,8 +8,8 @@
 #include "template.grm.h" // insert the output of FGFP
 
 int
-lr_parser(char const* stream) {
-    SET_STREAM(stream);
+lr_parser(char const* crt_stream) {
+    SET_STREAM(crt_stream);
 
     int value_stack[/* Size of value_stack */];
     int value_top = 0;
@@ -18,6 +18,7 @@ lr_parser(char const* stream) {
     int parse_top = 0;
 
     parse_stack[parse_top] = LR_START_STATE;
+
     //Parser Engine
     while (1) {
         int crt_token = peek_token();

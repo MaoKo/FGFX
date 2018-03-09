@@ -99,6 +99,6 @@ gen_goto_table(int filde, cfg_t const* cfg,
 		}
 		dprintf(filde, END_BLOCK COMMA NL);
 	}
-	dprintf(filde, END_BLOCK SEMI NL);
+	dprintf(filde, END_BLOCK SEMI NL NL);
 }
 

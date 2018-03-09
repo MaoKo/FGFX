@@ -200,6 +200,7 @@ get_next_token(lexer_t* lex) {
             if (first_read) {
                 if (EMPTY_VECTOR(lex->stack_state))
                     { return (T_EOF); }
+
                 errorf(0, "The input is terminated but many "
                                             "states still live on the stack.");
                 return (T_ERROR);

@@ -1,0 +1,111 @@
+$EXTERN
+{
+    'tiger.lex.h',
+};
+
+$PRODUCTION
+{
+    <program>   ->  <exp> ;
+
+    <decs>  ->  { <dec> } ;
+
+    <dec>   ->  <tydec>
+            |   <vardec>
+            |   <fundec>
+            ;
+
+    <tydec> ->  TYPE TYPE_ID '=' <ty> ;
+    <ty>    ->  TYPE_ID
+            |   '{' <tyfields> '}'
+            |   ARRAY OF TYPE_ID
+            ;
+
+    <tyfields>  ->  $EMPTY
+                |   ID ':' TYPE_ID { ',' ID ':' TYPE_ID }
+                ;
+
+    <vardec>    ->  VAR IDENT [ ':' TYPE_ID ] ':=' <exp> ;
+
+    <fundec>    ->  FUNCTION IDENT '(' <tyfields> ')'
+                            [ ':' TYPE_ID ] '=' <exp>  ;
+
+    <lvalue>    ->  IDENT
+                |   <lvalue> '.' IDENT
+                |   <lvalue> '[' <exp> ']'
+                ;
+
+    <exp>   ->  <lvalue>
+            |   '(' <expseq> ')'
+            |   IDENT '(' [ <exp> { ',' <exp> } ] ')'
+            |   TYPE_ID '{' [ IDENT '=' <exp> { ',' IDENT '=' <exp> } ] '}'
+            |   TYPE_ID '[' <exp> ']' OF <exp>
+            |   IF <exp> THEN <exp> ELSE <exp>
+            |   IF <exp> THEN <exp>
+            |   WHILE <exp> DO <exp>
+            |   FOR IDENT ':=' <exp> TO <exp> DO <exp>
+            |   BREAK
+            |   LET <decs> IN <expseq> END
+            |   <lvalue> ':=' <exp>
+            |   <opexp>
+            |   '(' <exp> ')'
+            |   STRING
+            |   INT
+            |   NIL
+            ;
+
+    <expseq>    ->  <exp> { ';' <exp> } ;
+
+    <opexp> ->  '-' <exp> ( $MIMIC UNARY )
+            |   <exp> '*'  <exp>
+            |   <exp> '/'  <exp>
+            |   <exp> '-'  <exp>
+            |   <exp> '+'  <exp>
+            |   <exp> '='  <exp>
+            |   <exp> '<>' <exp>
+            |   <exp> '>'  <exp>
+            |   <exp> '<'  <exp>
+            |   <exp> '>=' <exp>
+            |   <exp> '<=' <exp>
+            |   <exp> '&'  <exp>
+            |   <exp> '|'  <exp>
+            ;
+};
+
+$PRECEDENCE
+{
+    $RIGHT      (ELSE),
+
+    $LEFT       ('|'),
+    $LEFT       ('&'),
+    $NONASSOC   ('=', '<>', '>', '<', '>=', '<='),
+    $LEFT       ('+', '-'),
+    $LEFT       ('*', '/'),
+    $LEFT       (UNARY),
+};
+
+$ALIAS
+{
+    (COMMA  =>  ',')    ,
+    (ASSIGN =>  ':=')   ,
+    (COLON  =>  ':')    ,
+    (LBRACE =>  '{')    ,
+    (RBRACE =>  '}')    ,
+    (LPAREN =>  '(')    ,
+    (RPAREN =>  ')')    ,
+    (DOT    =>  '.')    ,
+    (LBRACK =>  '[')    ,
+    (RBRACK =>  ']')    ,
+    (SEMI   =>  ';')    ,
+    (PLUS   =>  '+')    ,
+    (MINUS  =>  '-')    ,
+    (MUL    =>  '*')    ,
+    (DIV    =>  '/')    ,
+    (EQUAL  =>  '=')    ,
+    (DIFF   =>  '<>')   ,  
+    (LESS   =>  '<')    ,
+    (GREAT  =>  '>')    ,
+    (LESSE  =>  '<=')   ,
+    (GREATE =>  '>=')   ,
+    (AND    =>  '&')    ,
+    (OR     =>  '|')    ,
+};

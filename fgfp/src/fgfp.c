@@ -106,11 +106,13 @@ int main(int argc, char* argv[]) {
 	int exit_st = gen_fgfp_file(cfg, get_filename(argv[1]));
 
 #if 0
+
 	print_production(cfg);
 	print_non_terminal(cfg);
 	print_nullable(cfg);
 	print_first_set(cfg);
 	print_follow_set(cfg);
+
 #endif	
 
 	del_cfg(cfg);

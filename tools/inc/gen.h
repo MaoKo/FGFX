@@ -42,7 +42,7 @@
 
 // Dead code
 #define PRINT_IF_0(f)   dprintf(f, "#if 0" NL NL)
-#define PRINT_END_IF(f) dprintf(f, NL "#endif" NL NL)
+#define PRINT_END_IF(f) dprintf(f, "#endif" NL NL)
 
 #define BYTE            (8)
 #define SHORT           (16)

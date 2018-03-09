@@ -108,8 +108,8 @@ $TOKEN
     ARROW  = / -> / ;
     BARROW = / => / ;
 
-    SEMI   =  / ; / ;
-    COMMA  =  / , / ;
+    SEMI   = /  ; / ;
+    COMMA  = /  , / ;
 
     LBRACE = / \{ / ;
     RBRACE = /  } / ;
@@ -131,10 +131,8 @@ $SKIP
     ( GLOBAL, NESTED_COM ) BEG_MULTI    = / \/\*   /, 
         ( $PUSH (NESTED_COM, *) ) ;
 
-    ( NESTED_COM ) END_MULTI            = / \*+\/  /, 
-        ( $POP ) ;
-
     ( NESTED_COM ) CHAR_COMMENT         = / (?s:.) / ;
+    ( NESTED_COM ) END_MULTI            = / \*+\/  /, ( $POP ) ;
 
     /* Multi line in  Regex */
 

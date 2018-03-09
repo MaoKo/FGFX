@@ -12,8 +12,9 @@ But I prefer do that, if the user want to conserve the LR(1) table.
 Git clone the repository.
 Then, type: make
 
-After you can do: ./efgfl example/lex/token_c.lex
-Which create a file called token_c.h.lex ready for lexing.
+After you can do:
+    ./efgfl example/lex/token_c.lex
+Which create a file called token_c.lex.h ready for lexing.
 
 ### TODO ###
     .   More accurate handle of error in FGFX
@@ -25,6 +26,5 @@ Which create a file called token_c.h.lex ready for lexing.
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
     .   Remove unreachable state
-    .   Handle when the number of state is 1
     .   Learn MarkDown :)
 

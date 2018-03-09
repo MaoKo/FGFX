@@ -8,7 +8,7 @@
 #include "utils.h"
 #include "vector.h"
 
-// Hash for speed
+// Hash for speed (TODO implement with hash.c)
 static vector_t* record_lr0_item[HASH_LR] = {};
 static vector_t* record_kernel[HASH_LR] = {};
 
@@ -326,6 +326,7 @@ merge_lr1_item(lr1_item_t const* llr, lr1_item_t const* rlr) {
 
 	bitset_t* new_look = dup_bitset(llr->lookahead);
 	UNION_BITSET(new_look, rlr->lookahead);
+
 	size_t index = new_lr1_item(PROD(CORE(llr)), DOT(CORE(llr)), new_look);
 
 	del_bitset(new_look);
