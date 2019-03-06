@@ -1,4 +1,4 @@
-#ifndef REGEX_NONE_H
+#ifndef REGEX_NODE_H
 #define REGEX_NODE_H
 
 #include <stdlib.h>
