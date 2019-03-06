@@ -10,7 +10,7 @@ print_error(size_t lineno, char const* label, char const* color,
     // Color Output
     int tty = isatty(STDERR_FILENO);
     if (tty)
-        { fprintf(stderr, color); }
+        { fprintf(stderr, "%s", color); }
     fprintf(stderr, "(%s", label);
     if (lineno)
         { fprintf(stderr, ":%zu", lineno); }
