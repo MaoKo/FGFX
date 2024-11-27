@@ -26,5 +26,3 @@ Which create a file called token_c.lex.h ready for lexing.
     .   Add error recovery mechanism
     .   Add group element ( ... | ... ) in FGFP
     .   Remove unreachable state
-    .   Learn MarkDown :)
-
