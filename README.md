@@ -1,28 +1,47 @@
-FGFL (Fast Generate, Fast Lexer) and FGFP (Fast Generate, Fast Parser)
-are scientific tools.
-The purpose of FGFL is to create from lexical specification (example/lex/ folder)
-a DFA ready for lexical analysis.
-The goal of FGFP is to create from a grammar description a LALR(1) parsing table.
-Also for speed, maybe, I replace the Vector with Hash.
-For constructing the LALR parsing table, I use the step-by-step approach, which
-whenever I found similar LR(0) state, I merge them.
-But I prefer do that, if the user want to conserve the LR(1) table.
+# **FGFX - Générateur de Lexer et Parser Automatisé**
 
-### How to make? ###
-Git clone the repository.
-Then, type: make
+---
 
-After you can do:
-    ./efgfl example/lex/token_c.lex
-Which create a file called token_c.lex.h ready for lexing.
+## **Introduction**
+**FGFX** est un outil minimaliste et performant qui automatise la génération d'analyseurs lexicaux (**lexers**) et syntaxiques (**parsers**) à partir d'expressions régulières et de grammaires définies.  
 
-### TODO ###
-    .   More accurate handle of error in FGFX
-    .   Optimizing FOLLOW set
-    .   Handle if file already exist
-    .   Improve the algorithm for constructing the
-            LALR parsing table
-            DFA transition table
-    .   Add error recovery mechanism
-    .   Add group element ( ... | ... ) in FGFP
-    .   Remove unreachable state
+Conçu pour les développeurs travaillant sur des compilateurs, interpréteurs ou autres outils basés sur l'analyse syntaxique, **FGFX** simplifie considérablement le processus de création et d'intégration d'analyseurs personnalisés.
+
+---
+
+## **Fonctionnalités**
+- 📜 **Génération de lexers :**  
+  - À partir d'expressions régulières pour analyser et catégoriser les tokens d'un langage.
+- 🔧 **Génération de parsers :**  
+  - Basé sur des grammaires formelles pour construire des arbres syntaxiques.  
+  - Supporte les grammaires sans ambiguïtés.
+- ⚡ **Rapide et modulaire :**  
+  - Implémenté en **C**, garantissant des performances élevées.  
+  - Interface simple et flexible, adaptée aux projets existants.
+
+---
+
+## **Structure du Projet**
+- `lexer/` : Contient les outils et fonctions pour la génération d'analyseurs lexicaux.  
+- `parser/` : Fournit les structures et algorithmes pour créer et manipuler des analyseurs syntaxiques.  
+- `examples/` : Exemples illustrant l'utilisation de FGFX pour générer des lexers et parsers.  
+- `docs/` : Documentation détaillée sur les fonctionnalités et l'architecture.
+
+---
+
+## **Prérequis**
+- Un compilateur **C** (GCC ou Clang recommandé).  
+- **Make** pour automatiser la compilation.  
+
+---
+
+## *TODO* ##
+-   More accurate handle of error in FGFX
+-   Optimizing FOLLOW set
+-   Handle if file already exist
+-   Improve the algorithm for constructing the
+-  LALR parsing table
+-  DFA transition table
+-   Add error recovery mechanism
+-   Add group element ( ... | ... ) in FGFP
+-   Remove unreachable state
